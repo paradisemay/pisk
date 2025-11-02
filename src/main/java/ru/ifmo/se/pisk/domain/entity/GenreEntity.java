@@ -1,14 +1,17 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "genres")
+@Table(name = "genre")
 public class GenreEntity {
 
     @Id
@@ -20,6 +23,12 @@ public class GenreEntity {
 
     @Column(length = 512)
     private String description;
+
+    @ManyToMany(mappedBy = "genres")
+    private Set<TrackEntity> tracks = new HashSet<>();
+
+    @ManyToMany(mappedBy = "genres")
+    private Set<AlbumEntity> albums = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -43,5 +52,21 @@ public class GenreEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Set<TrackEntity> getTracks() {
+        return tracks;
+    }
+
+    public void setTracks(Set<TrackEntity> tracks) {
+        this.tracks = tracks;
+    }
+
+    public Set<AlbumEntity> getAlbums() {
+        return albums;
+    }
+
+    public void setAlbums(Set<AlbumEntity> albums) {
+        this.albums = albums;
     }
 }

@@ -12,9 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.ifmo.se.pisk.domain.ComplaintStatus;
+import ru.ifmo.se.pisk.domain.entity.ComplaintEntity;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.repository.ComplaintRepository;
-import ru.ifmo.se.pisk.repository.entity.ComplaintEntity;
-import ru.ifmo.se.pisk.repository.entity.TrackEntity;
 import ru.ifmo.se.pisk.service.dto.ComplaintDecisionCommand;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,7 +41,7 @@ class ComplaintServiceTest {
         track.setId(10L);
         entity.setTrack(track);
         entity.setStatus(ComplaintStatus.OPEN);
-        ru.ifmo.se.pisk.repository.entity.UserEntity complainant = new ru.ifmo.se.pisk.repository.entity.UserEntity();
+        UserEntity complainant = new UserEntity();
         complainant.setId(3L);
         entity.setComplainant(complainant);
         when(complaintRepository.findById(1L)).thenReturn(java.util.Optional.of(entity));

@@ -10,9 +10,9 @@ import ru.ifmo.se.pisk.domain.AuditAction;
 import ru.ifmo.se.pisk.domain.UserProfile;
 import ru.ifmo.se.pisk.domain.UserRole;
 import ru.ifmo.se.pisk.domain.UserStatus;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.UserRepository;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
 
 @Service
 public class UserService {
@@ -29,12 +29,12 @@ public class UserService {
 
     @Transactional
     public UserProfile registerUser(String username, String email, String rawPassword, UserRole role) {
-        userRepository.findByUsername(username).ifPresent(u -> {
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalArgumentException("Имя пользователя уже занято");
-        });
-        userRepository.findByEmail(email).ifPresent(u -> {
+        }
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("Email уже используется");
-        });
+        }
         UserEntity entity = new UserEntity();
         entity.setUsername(username);
         entity.setEmail(email);

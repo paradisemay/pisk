@@ -12,14 +12,14 @@ import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.SubscriptionInfo;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.UserProfile;
-import ru.ifmo.se.pisk.repository.entity.AlbumEntity;
-import ru.ifmo.se.pisk.repository.entity.AuditEntity;
-import ru.ifmo.se.pisk.repository.entity.ComplaintEntity;
-import ru.ifmo.se.pisk.repository.entity.GenreEntity;
-import ru.ifmo.se.pisk.repository.entity.RatingEntity;
-import ru.ifmo.se.pisk.repository.entity.SubscriptionEntity;
-import ru.ifmo.se.pisk.repository.entity.TrackEntity;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
+import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
+import ru.ifmo.se.pisk.domain.entity.AuditEntity;
+import ru.ifmo.se.pisk.domain.entity.ComplaintEntity;
+import ru.ifmo.se.pisk.domain.entity.GenreEntity;
+import ru.ifmo.se.pisk.domain.entity.RatingEntity;
+import ru.ifmo.se.pisk.domain.entity.SubscriptionEntity;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 
 public final class DomainMapper {
 

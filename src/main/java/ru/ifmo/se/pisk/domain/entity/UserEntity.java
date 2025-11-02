@@ -1,8 +1,9 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -10,8 +11,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Entity;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -56,6 +57,24 @@ public class UserEntity {
     @CollectionTable(name = "user_subscriptions", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "artist_id")
     private Set<Long> subscriptionArtistIds = new HashSet<>();
+
+    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
+    private Set<TrackEntity> tracks = new HashSet<>();
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Set<AlbumEntity> albums = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<RatingEntity> ratings = new HashSet<>();
+
+    @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
+    private Set<CommentEntity> comments = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<TrackLikeEntity> likes = new HashSet<>();
+
+    @OneToMany(mappedBy = "complainant", fetch = FetchType.LAZY)
+    private Set<ComplaintEntity> complaints = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -135,5 +154,53 @@ public class UserEntity {
 
     public void setSubscriptionArtistIds(Set<Long> subscriptionArtistIds) {
         this.subscriptionArtistIds = subscriptionArtistIds;
+    }
+
+    public Set<TrackEntity> getTracks() {
+        return tracks;
+    }
+
+    public void setTracks(Set<TrackEntity> tracks) {
+        this.tracks = tracks;
+    }
+
+    public Set<AlbumEntity> getAlbums() {
+        return albums;
+    }
+
+    public void setAlbums(Set<AlbumEntity> albums) {
+        this.albums = albums;
+    }
+
+    public Set<RatingEntity> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(Set<RatingEntity> ratings) {
+        this.ratings = ratings;
+    }
+
+    public Set<CommentEntity> getComments() {
+        return comments;
+    }
+
+    public void setComments(Set<CommentEntity> comments) {
+        this.comments = comments;
+    }
+
+    public Set<TrackLikeEntity> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Set<TrackLikeEntity> likes) {
+        this.likes = likes;
+    }
+
+    public Set<ComplaintEntity> getComplaints() {
+        return complaints;
+    }
+
+    public void setComplaints(Set<ComplaintEntity> complaints) {
+        this.complaints = complaints;
     }
 }

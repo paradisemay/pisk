@@ -6,10 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AuditAction;
 import ru.ifmo.se.pisk.domain.SubscriptionInfo;
 import ru.ifmo.se.pisk.domain.SubscriptionStatus;
+import ru.ifmo.se.pisk.domain.entity.SubscriptionEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.SubscriptionRepository;
-import ru.ifmo.se.pisk.repository.entity.SubscriptionEntity;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
 
 @Service
 public class SubscriptionService {

@@ -1,4 +1,4 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,13 +10,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "albums")
+@Table(name = "album")
 public class AlbumEntity {
 
     @Id
@@ -26,24 +27,27 @@ public class AlbumEntity {
     @Column(nullable = false, length = 128)
     private String title;
 
-    @Column(length = 512)
+    @Column(length = 1024)
     private String description;
 
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
+    @Column(name = "cover_url", length = 255)
+    private String coverUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "owner_id")
     private UserEntity owner;
 
-    @ManyToMany
-    @JoinTable(name = "album_genres",
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "album_genre",
             joinColumns = @JoinColumn(name = "album_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id"))
     private Set<GenreEntity> genres = new HashSet<>();
 
-    @Column(name = "cover_url")
-    private String coverUrl;
+    @OneToMany(mappedBy = "album", fetch = FetchType.LAZY)
+    private Set<TrackEntity> tracks = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -77,6 +81,14 @@ public class AlbumEntity {
         this.releaseDate = releaseDate;
     }
 
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
+    }
+
     public UserEntity getOwner() {
         return owner;
     }
@@ -93,11 +105,11 @@ public class AlbumEntity {
         this.genres = genres;
     }
 
-    public String getCoverUrl() {
-        return coverUrl;
+    public Set<TrackEntity> getTracks() {
+        return tracks;
     }
 
-    public void setCoverUrl(String coverUrl) {
-        this.coverUrl = coverUrl;
+    public void setTracks(Set<TrackEntity> tracks) {
+        this.tracks = tracks;
     }
 }

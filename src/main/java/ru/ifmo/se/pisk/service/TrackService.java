@@ -15,14 +15,16 @@ import ru.ifmo.se.pisk.domain.AuditAction;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.TrackStatus;
+import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
+import ru.ifmo.se.pisk.domain.entity.GenreEntity;
+import ru.ifmo.se.pisk.domain.entity.RatingEntity;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
+import ru.ifmo.se.pisk.domain.entity.TrackStatusHistoryEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.RatingRepository;
 import ru.ifmo.se.pisk.repository.TrackRepository;
-import ru.ifmo.se.pisk.repository.entity.AlbumEntity;
-import ru.ifmo.se.pisk.repository.entity.GenreEntity;
-import ru.ifmo.se.pisk.repository.entity.RatingEntity;
-import ru.ifmo.se.pisk.repository.entity.TrackEntity;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
+import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 
@@ -37,6 +39,7 @@ public class TrackService {
     private final FileStorageService fileStorageService;
     private final AuditService auditService;
     private final RateLimitService rateLimitService;
+    private final TrackStatusHistoryRepository trackStatusHistoryRepository;
 
     public TrackService(TrackRepository trackRepository,
                         RatingRepository ratingRepository,
@@ -45,7 +48,8 @@ public class TrackService {
                         GenreService genreService,
                         FileStorageService fileStorageService,
                         AuditService auditService,
-                        RateLimitService rateLimitService) {
+                        RateLimitService rateLimitService,
+                        TrackStatusHistoryRepository trackStatusHistoryRepository) {
         this.trackRepository = trackRepository;
         this.ratingRepository = ratingRepository;
         this.userService = userService;
@@ -54,6 +58,7 @@ public class TrackService {
         this.fileStorageService = fileStorageService;
         this.auditService = auditService;
         this.rateLimitService = rateLimitService;
+        this.trackStatusHistoryRepository = trackStatusHistoryRepository;
     }
 
     @Transactional
@@ -88,6 +93,11 @@ public class TrackService {
         entity.setFileSize(command.fileSize());
         entity.setUploadedAt(Instant.now());
         TrackEntity saved = trackRepository.save(entity);
+        TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
+        history.setTrack(saved);
+        history.setToStatus(saved.getStatus());
+        history.setActorId(artistId);
+        trackStatusHistoryRepository.save(history);
         auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artistId,
                 Map.of("status", saved.getStatus().name()));
         return DomainMapper.toTrackInfo(saved);
@@ -96,10 +106,17 @@ public class TrackService {
     @Transactional
     public TrackInfo changeStatus(Long trackId, TrackStatus status, Long moderatorId) {
         TrackEntity entity = requireTrack(trackId);
+        TrackStatus previous = entity.getStatus();
         entity.setStatus(status);
         if (status == TrackStatus.PUBLISHED) {
             entity.setPublishedAt(Instant.now());
         }
+        TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
+        history.setTrack(entity);
+        history.setFromStatus(previous);
+        history.setToStatus(status);
+        history.setActorId(moderatorId);
+        trackStatusHistoryRepository.save(history);
         auditService.record(AuditAction.TRACK_STATUS_CHANGED, "Track", trackId.toString(), moderatorId,
                 Map.of("status", status.name()));
         return DomainMapper.toTrackInfo(entity);
@@ -129,15 +146,15 @@ public class TrackService {
     }
 
     private void recalculateTrackRating(TrackEntity track) {
-        var ratings = ratingRepository.findByTrack(track);
-        if (ratings.isEmpty()) {
+        Double average = ratingRepository.calculateAverageForTrack(track);
+        Long count = ratingRepository.countByTrack(track);
+        if (average == null || count == null || count == 0) {
             track.setAverageRating(0);
             track.setRatingsCount(0);
             return;
         }
-        double avg = ratings.stream().mapToInt(RatingEntity::getValue).average().orElse(0);
-        track.setAverageRating(avg);
-        track.setRatingsCount(ratings.size());
+        track.setAverageRating(average);
+        track.setRatingsCount(count);
     }
 
     @Transactional
