@@ -1,0 +1,12 @@
+package ru.ifmo.se.pisk.domain;
+
+public enum AuditAction {
+    USER_REGISTERED,
+    TRACK_UPLOADED,
+    TRACK_STATUS_CHANGED,
+    RATING_CREATED,
+    SUBSCRIPTION_UPDATED,
+    COMPLAINT_FILED,
+    COMPLAINT_RESOLVED,
+    RATE_LIMIT_TRIGGERED
+}
