@@ -1,4 +1,4 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

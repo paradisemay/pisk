@@ -15,9 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.ifmo.se.pisk.domain.SubscriptionStatus;
+import ru.ifmo.se.pisk.domain.entity.SubscriptionEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.repository.SubscriptionRepository;
-import ru.ifmo.se.pisk.repository.entity.SubscriptionEntity;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 class SubscriptionServiceTest {

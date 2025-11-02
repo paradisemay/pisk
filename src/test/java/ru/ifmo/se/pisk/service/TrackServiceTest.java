@@ -3,14 +3,13 @@ package ru.ifmo.se.pisk.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.time.Instant;
-import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +19,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.TrackStatus;
+import ru.ifmo.se.pisk.domain.entity.GenreEntity;
+import ru.ifmo.se.pisk.domain.entity.RatingEntity;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
+import ru.ifmo.se.pisk.domain.entity.TrackStatusHistoryEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.repository.RatingRepository;
 import ru.ifmo.se.pisk.repository.TrackRepository;
-import ru.ifmo.se.pisk.repository.entity.AlbumEntity;
-import ru.ifmo.se.pisk.repository.entity.GenreEntity;
-import ru.ifmo.se.pisk.repository.entity.RatingEntity;
-import ru.ifmo.se.pisk.repository.entity.TrackEntity;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
+import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 
@@ -49,6 +49,8 @@ class TrackServiceTest {
     private AuditService auditService;
     @Mock
     private RateLimitService rateLimitService;
+    @Mock
+    private TrackStatusHistoryRepository trackStatusHistoryRepository;
 
     @InjectMocks
     private TrackService trackService;
@@ -75,6 +77,7 @@ class TrackServiceTest {
         saved.setStoragePath("tracks/42/file.mp3");
         saved.setUploadedAt(Instant.now());
         when(trackRepository.save(any(TrackEntity.class))).thenReturn(saved);
+        when(trackStatusHistoryRepository.save(any(TrackStatusHistoryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TrackUploadCommand command = new TrackUploadCommand(
                 "Test",
@@ -127,7 +130,8 @@ class TrackServiceTest {
         persisted.setComment("Great");
         persisted.setCreatedAt(Instant.now());
         when(ratingRepository.save(any(RatingEntity.class))).thenReturn(persisted);
-        when(ratingRepository.findByTrack(track)).thenReturn(List.of(persisted));
+        when(ratingRepository.calculateAverageForTrack(track)).thenReturn(5.0);
+        when(ratingRepository.countByTrack(track)).thenReturn(1L);
 
         RatingCommand command = new RatingCommand(15L, 7L, 5, "Great");
         RatingInfo info = trackService.rateTrack(command);

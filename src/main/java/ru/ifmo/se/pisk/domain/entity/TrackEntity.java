@@ -1,5 +1,6 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.HashSet;
@@ -19,7 +21,7 @@ import java.util.Set;
 import ru.ifmo.se.pisk.domain.TrackStatus;
 
 @Entity
-@Table(name = "tracks")
+@Table(name = "track")
 public class TrackEntity {
 
     @Id
@@ -44,11 +46,26 @@ public class TrackEntity {
     @JoinColumn(name = "artist_id", nullable = false)
     private UserEntity artist;
 
-    @ManyToMany
-    @JoinTable(name = "track_genres",
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "track_genre",
             joinColumns = @JoinColumn(name = "track_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id"))
     private Set<GenreEntity> genres = new HashSet<>();
+
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RatingEntity> ratings = new HashSet<>();
+
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CommentEntity> comments = new HashSet<>();
+
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<TrackLikeEntity> likes = new HashSet<>();
+
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ComplaintEntity> complaints = new HashSet<>();
+
+    @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<TrackStatusHistoryEntity> statusHistory = new HashSet<>();
 
     @Column(name = "storage_path", nullable = false, length = 255)
     private String storagePath;
@@ -128,6 +145,46 @@ public class TrackEntity {
 
     public void setGenres(Set<GenreEntity> genres) {
         this.genres = genres;
+    }
+
+    public Set<RatingEntity> getRatings() {
+        return ratings;
+    }
+
+    public void setRatings(Set<RatingEntity> ratings) {
+        this.ratings = ratings;
+    }
+
+    public Set<CommentEntity> getComments() {
+        return comments;
+    }
+
+    public void setComments(Set<CommentEntity> comments) {
+        this.comments = comments;
+    }
+
+    public Set<TrackLikeEntity> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(Set<TrackLikeEntity> likes) {
+        this.likes = likes;
+    }
+
+    public Set<ComplaintEntity> getComplaints() {
+        return complaints;
+    }
+
+    public void setComplaints(Set<ComplaintEntity> complaints) {
+        this.complaints = complaints;
+    }
+
+    public Set<TrackStatusHistoryEntity> getStatusHistory() {
+        return statusHistory;
+    }
+
+    public void setStatusHistory(Set<TrackStatusHistoryEntity> statusHistory) {
+        this.statusHistory = statusHistory;
     }
 
     public String getStoragePath() {

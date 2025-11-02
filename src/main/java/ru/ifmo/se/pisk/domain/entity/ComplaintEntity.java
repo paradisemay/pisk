@@ -1,4 +1,4 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,7 +30,7 @@ public class ComplaintEntity {
     @JoinColumn(name = "complainant_id", nullable = false)
     private UserEntity complainant;
 
-    @Column(nullable = false, length = 512)
+    @Column(nullable = false, length = 2048)
     private String reason;
 
     @Enumerated(EnumType.STRING)
@@ -43,7 +43,7 @@ public class ComplaintEntity {
     @Column(name = "resolved_at")
     private Instant resolvedAt;
 
-    @Column(name = "moderator_note", length = 512)
+    @Column(name = "moderator_note", length = 2048)
     private String moderatorNote;
 
     public Long getId() {

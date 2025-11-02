@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AlbumInfo;
+import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
+import ru.ifmo.se.pisk.domain.entity.GenreEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.AlbumRepository;
-import ru.ifmo.se.pisk.repository.entity.AlbumEntity;
-import ru.ifmo.se.pisk.repository.entity.GenreEntity;
-import ru.ifmo.se.pisk.repository.entity.UserEntity;
 
 @Service
 public class AlbumService {

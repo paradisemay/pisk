@@ -1,4 +1,4 @@
-package ru.ifmo.se.pisk.repository.entity;
+package ru.ifmo.se.pisk.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,10 +9,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 
 @Entity
-@Table(name = "ratings")
+@Table(name = "user_rating", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_rating_track_user", columnNames = {"track_id", "user_id"})
+})
 public class RatingEntity {
 
     @Id
@@ -30,7 +33,7 @@ public class RatingEntity {
     @Column(nullable = false)
     private int value;
 
-    @Column(length = 512)
+    @Column(length = 1024)
     private String comment;
 
     @Column(name = "created_at", nullable = false)

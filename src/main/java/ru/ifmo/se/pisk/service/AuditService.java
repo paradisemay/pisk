@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AuditAction;
 import ru.ifmo.se.pisk.domain.AuditRecord;
+import ru.ifmo.se.pisk.domain.entity.AuditEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.AuditRepository;
-import ru.ifmo.se.pisk.repository.entity.AuditEntity;
 
 @Service
 public class AuditService {
