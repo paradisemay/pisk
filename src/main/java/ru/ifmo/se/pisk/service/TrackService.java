@@ -2,6 +2,7 @@ package ru.ifmo.se.pisk.service;
 
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -123,8 +124,22 @@ public class TrackService {
         entity.setComment(command.comment());
         RatingEntity saved = ratingRepository.save(entity);
         recalculateTrackRating(track);
-        auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user.getId(),
-                Map.of("value", Integer.toString(command.value())));
+        Map<String, String> ratingMetadata = Map.of("value", Integer.toString(command.value()));
+        auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user.getId(), ratingMetadata);
+        if (command.value() <= 2) {
+            Map<String, String> lowRatingMetadata = new HashMap<>();
+            lowRatingMetadata.put("value", Integer.toString(command.value()));
+            if (command.comment() != null && !command.comment().isBlank()) {
+                lowRatingMetadata.put("comment", command.comment());
+            }
+            auditService.record(
+                    AuditAction.LOW_RATING_RECEIVED,
+                    "Track",
+                    track.getId().toString(),
+                    user.getId(),
+                    Map.copyOf(lowRatingMetadata)
+            );
+        }
         return DomainMapper.toRatingInfo(saved);
     }
 

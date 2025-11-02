@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import ru.ifmo.se.pisk.domain.AlbumInfo;
 import ru.ifmo.se.pisk.domain.AuditRecord;
-import ru.ifmo.se.pisk.domain.ComplaintInfo;
 import ru.ifmo.se.pisk.domain.GenreInfo;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.SubscriptionInfo;
@@ -14,7 +13,6 @@ import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.UserProfile;
 import ru.ifmo.se.pisk.repository.entity.AlbumEntity;
 import ru.ifmo.se.pisk.repository.entity.AuditEntity;
-import ru.ifmo.se.pisk.repository.entity.ComplaintEntity;
 import ru.ifmo.se.pisk.repository.entity.GenreEntity;
 import ru.ifmo.se.pisk.repository.entity.RatingEntity;
 import ru.ifmo.se.pisk.repository.entity.SubscriptionEntity;
@@ -93,19 +91,6 @@ public final class DomainMapper {
                 entity.getArtist().getId(),
                 entity.getStatus(),
                 entity.getCreatedAt()
-        );
-    }
-
-    public static ComplaintInfo toComplaintInfo(ComplaintEntity entity) {
-        return new ComplaintInfo(
-                entity.getId(),
-                entity.getTrack().getId(),
-                entity.getComplainant().getId(),
-                entity.getReason(),
-                entity.getStatus(),
-                entity.getCreatedAt(),
-                entity.getResolvedAt(),
-                entity.getModeratorNote()
         );
     }
 

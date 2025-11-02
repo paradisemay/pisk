@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.ifmo.se.pisk.domain.AuditAction;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.TrackStatus;
 import ru.ifmo.se.pisk.repository.RatingRepository;
@@ -134,6 +135,32 @@ class TrackServiceTest {
 
         assertThat(info.value()).isEqualTo(5);
         assertThat(track.getAverageRating()).isEqualTo(5);
-        verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(7L), anyMap());
+        verify(auditService).record(eq(AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(7L), anyMap());
+    }
+
+    @Test
+    void rateTrackRecordsLowRatingAudit() {
+        TrackEntity track = new TrackEntity();
+        track.setId(25L);
+        when(trackRepository.findById(25L)).thenReturn(java.util.Optional.of(track));
+        UserEntity user = new UserEntity();
+        user.setId(11L);
+        when(userService.requireUser(11L)).thenReturn(user);
+        when(ratingRepository.findByTrackAndUser(track, user)).thenReturn(java.util.Optional.empty());
+        RatingEntity persisted = new RatingEntity();
+        persisted.setId(2L);
+        persisted.setTrack(track);
+        persisted.setUser(user);
+        persisted.setValue(2);
+        persisted.setComment("Плохо сведено");
+        persisted.setCreatedAt(Instant.now());
+        when(ratingRepository.save(any(RatingEntity.class))).thenReturn(persisted);
+        when(ratingRepository.findByTrack(track)).thenReturn(List.of(persisted));
+
+        RatingCommand command = new RatingCommand(25L, 11L, 2, "Плохо сведено");
+        trackService.rateTrack(command);
+
+        verify(auditService).record(eq(AuditAction.RATING_CREATED), eq("Track"), eq("25"), eq(11L), anyMap());
+        verify(auditService).record(eq(AuditAction.LOW_RATING_RECEIVED), eq("Track"), eq("25"), eq(11L), anyMap());
     }
 }

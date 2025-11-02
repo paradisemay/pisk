@@ -2,7 +2,6 @@ package ru.ifmo.se.pisk.controller.mapper;
 
 import ru.ifmo.se.pisk.controller.dto.AlbumResponse;
 import ru.ifmo.se.pisk.controller.dto.AuditResponse;
-import ru.ifmo.se.pisk.controller.dto.ComplaintResponse;
 import ru.ifmo.se.pisk.controller.dto.GenreResponse;
 import ru.ifmo.se.pisk.controller.dto.RatingResponse;
 import ru.ifmo.se.pisk.controller.dto.SubscriptionResponse;
@@ -10,7 +9,6 @@ import ru.ifmo.se.pisk.controller.dto.TrackResponse;
 import ru.ifmo.se.pisk.controller.dto.UserResponse;
 import ru.ifmo.se.pisk.domain.AlbumInfo;
 import ru.ifmo.se.pisk.domain.AuditRecord;
-import ru.ifmo.se.pisk.domain.ComplaintInfo;
 import ru.ifmo.se.pisk.domain.GenreInfo;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.SubscriptionInfo;
@@ -77,19 +75,6 @@ public final class ApiMapper {
 
     public static SubscriptionResponse toSubscriptionResponse(SubscriptionInfo info) {
         return new SubscriptionResponse(info.id(), info.followerId(), info.artistId(), info.status(), info.createdAt());
-    }
-
-    public static ComplaintResponse toComplaintResponse(ComplaintInfo info) {
-        return new ComplaintResponse(
-                info.id(),
-                info.trackId(),
-                info.complainantId(),
-                info.reason(),
-                info.status(),
-                info.createdAt(),
-                info.resolvedAt(),
-                info.moderatorNote()
-        );
     }
 
     public static AuditResponse toAuditResponse(AuditRecord record) {
