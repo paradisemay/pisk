@@ -167,7 +167,7 @@ public class TrackService {
 
     @Transactional(readOnly = true)
     public Page<TrackInfo> searchTracks(String title, Set<Long> genreIds, Pageable pageable) {
-        Specification<TrackEntity> spec = Specification.where(null);
+        Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
         if (title != null && !title.isBlank()) {
             spec = spec.and((root, query, builder) -> builder.like(builder.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
         }
