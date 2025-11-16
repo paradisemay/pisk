@@ -1,8 +1,6 @@
 package ru.ifmo.se.pisk.domain.entity;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,7 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -53,10 +50,11 @@ public class UserEntity {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_subscriptions", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "artist_id")
-    private Set<Long> subscriptionArtistIds = new HashSet<>();
+    @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY)
+    private Set<SubscriptionEntity> subscriptionsAsFollower = new HashSet<>();
+
+    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
+    private Set<SubscriptionEntity> subscriptionsAsArtist = new HashSet<>();
 
     @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
     private Set<TrackEntity> tracks = new HashSet<>();
@@ -148,12 +146,20 @@ public class UserEntity {
         this.lastLoginAt = lastLoginAt;
     }
 
-    public Set<Long> getSubscriptionArtistIds() {
-        return subscriptionArtistIds;
+    public Set<SubscriptionEntity> getSubscriptionsAsFollower() {
+        return subscriptionsAsFollower;
     }
 
-    public void setSubscriptionArtistIds(Set<Long> subscriptionArtistIds) {
-        this.subscriptionArtistIds = subscriptionArtistIds;
+    public void setSubscriptionsAsFollower(Set<SubscriptionEntity> subscriptionsAsFollower) {
+        this.subscriptionsAsFollower = subscriptionsAsFollower;
+    }
+
+    public Set<SubscriptionEntity> getSubscriptionsAsArtist() {
+        return subscriptionsAsArtist;
+    }
+
+    public void setSubscriptionsAsArtist(Set<SubscriptionEntity> subscriptionsAsArtist) {
+        this.subscriptionsAsArtist = subscriptionsAsArtist;
     }
 
     public Set<TrackEntity> getTracks() {

@@ -11,11 +11,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import ru.ifmo.se.pisk.domain.SubscriptionStatus;
 
 @Entity
-@Table(name = "subscriptions")
+@Table(name = "subscriptions", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_subscriptions_follower_artist", columnNames = {"follower_id", "artist_id"})
+})
 public class SubscriptionEntity {
 
     @Id
