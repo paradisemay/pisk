@@ -72,9 +72,10 @@ public class TrackService {
         }
         UserEntity artist = userService.requireUser(artistId);
         AlbumEntity album = command.albumId() != null ? albumService.requireAlbum(command.albumId()) : null;
-        Set<GenreEntity> genres = command.genreIds() == null ? new HashSet<>() : command.genreIds().stream()
-                .map(genreService::requireGenre)
-                .collect(Collectors.toSet());
+        Set<GenreEntity> genres = new HashSet<>();
+        if (command.genreId() != null) {
+            genres.add(genreService.requireGenre(command.genreId()));
+        }
         String storagePath;
         try (InputStream inputStream = command.dataSupplier().get()) {
             storagePath = fileStorageService.storeTrack(artistId, command.originalFilename(), inputStream);
@@ -85,9 +86,8 @@ public class TrackService {
         entity.setArtist(artist);
         entity.setAlbum(album);
         entity.setGenres(genres);
-        entity.setTitle(command.title());
+        entity.setTitle(command.name());
         entity.setDurationSeconds(command.durationSeconds());
-        entity.setStatus(TrackStatus.PENDING_REVIEW);
         entity.setStoragePath(storagePath);
         entity.setContentType(command.contentType());
         entity.setFileSize(command.fileSize());

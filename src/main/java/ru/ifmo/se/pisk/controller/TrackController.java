@@ -44,10 +44,13 @@ public class TrackController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TrackResponse> upload(@RequestParam Long artistId,
-                                                @RequestParam String title,
+                                                @RequestParam String name,
                                                 @RequestParam long durationSeconds,
                                                 @RequestParam(required = false) Long albumId,
-                                                @RequestParam(required = false) Set<Long> genreIds,
+                                                @RequestParam(required = false) Long genreId,
+                                                @RequestParam(defaultValue = "false") boolean explicit,
+                                                @RequestParam(defaultValue = "false") boolean inoagent,
+                                                @RequestParam(defaultValue = "0") int numberOnAlbum,
                                                 @RequestParam("file") MultipartFile file) {
         Supplier<InputStream> supplier = () -> {
             try {
@@ -57,10 +60,13 @@ public class TrackController {
             }
         };
         TrackUploadCommand command = new TrackUploadCommand(
-                title,
+                name,
                 durationSeconds,
                 albumId,
-                genreIds,
+                genreId,
+                explicit,
+                inoagent,
+                numberOnAlbum,
                 file.getContentType(),
                 file.getSize(),
                 file.getOriginalFilename(),
@@ -105,10 +111,10 @@ public class TrackController {
     @GetMapping(value = "/{trackId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> download(@PathVariable Long trackId) {
         var info = trackService.getTrackInfo(trackId);
-        Resource resource = fileStorageService.load(info.storagePath());
-        MediaType mediaType = info.contentType() != null ? MediaType.parseMediaType(info.contentType()) : MediaType.APPLICATION_OCTET_STREAM;
+        Resource resource = fileStorageService.load(info.filepath());
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
         return ResponseEntity.ok()
-                .contentLength(info.fileSize())
+                .contentLength(info.filesize())
                 .contentType(mediaType)
                 .header("Content-Disposition", "attachment; filename=" + info.id() + ".bin")
                 .body(resource);
