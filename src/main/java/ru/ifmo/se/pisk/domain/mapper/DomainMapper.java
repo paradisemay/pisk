@@ -10,6 +10,7 @@ import ru.ifmo.se.pisk.domain.ComplaintInfo;
 import ru.ifmo.se.pisk.domain.GenreInfo;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.SubscriptionInfo;
+import ru.ifmo.se.pisk.domain.SubscriptionStatus;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.UserProfile;
 import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
@@ -35,7 +36,10 @@ public final class DomainMapper {
                 entity.getStatus(),
                 entity.getCreatedAt(),
                 entity.getLastLoginAt(),
-                Set.copyOf(entity.getSubscriptionArtistIds())
+                entity.getSubscriptionsAsFollower().stream()
+                        .filter(subscription -> subscription.getStatus() == SubscriptionStatus.ACTIVE)
+                        .map(subscription -> subscription.getArtist().getId())
+                        .collect(Collectors.toUnmodifiableSet())
         );
     }
 
