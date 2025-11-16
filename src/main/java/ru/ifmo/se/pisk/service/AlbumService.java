@@ -2,13 +2,11 @@ package ru.ifmo.se.pisk.service;
 
 import java.time.LocalDate;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AlbumInfo;
 import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
 import ru.ifmo.se.pisk.domain.entity.GenreEntity;
-import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.AlbumRepository;
 
@@ -27,17 +25,23 @@ public class AlbumService {
 
     @Transactional
     public AlbumInfo createAlbum(Long ownerId, String title, String description, LocalDate releaseDate, Set<Long> genreIds, String coverUrl) {
-        UserEntity owner = userService.requireUser(ownerId);
+        userService.requireUser(ownerId);
         AlbumEntity entity = new AlbumEntity();
-        entity.setOwner(owner);
-        entity.setTitle(title);
+        entity.setName(title);
         entity.setDescription(description);
-        entity.setReleaseDate(releaseDate);
-        if (genreIds != null && !genreIds.isEmpty()) {
-            Set<GenreEntity> genres = genreIds.stream().map(genreService::requireGenre).collect(Collectors.toSet());
-            entity.setGenres(genres);
-        }
         entity.setCoverUrl(coverUrl);
+        if (releaseDate != null) {
+            entity.setUploadDate(releaseDate.atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
+            entity.setPublicationDate(entity.getUploadDate());
+        }
+        if (genreIds != null && !genreIds.isEmpty()) {
+            GenreEntity genre = genreService.requireGenre(genreIds.iterator().next());
+            entity.setGenre(genre);
+        }
+        entity.setTrackNumber(0);
+        entity.setAverageRating(0);
+        entity.setExplicit(false);
+        entity.setInoagent(false);
         return DomainMapper.toAlbumInfo(albumRepository.save(entity));
     }
 

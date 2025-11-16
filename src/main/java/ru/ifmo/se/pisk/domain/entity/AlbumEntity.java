@@ -7,14 +7,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.Instant;
 
 @Entity
 @Table(name = "album")
@@ -24,30 +19,40 @@ public class AlbumEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 128)
-    private String title;
+    @Column(nullable = false, length = 200)
+    private String name;
 
-    @Column(length = 1024)
+    @Column(length = 1024, nullable = false)
     private String description;
 
-    @Column(name = "release_date")
-    private LocalDate releaseDate;
+    @Column(name = "upload_date", nullable = false)
+    private Instant uploadDate = Instant.now();
 
     @Column(name = "cover_url", length = 255)
     private String coverUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
-    private UserEntity owner;
+    @JoinColumn(name = "genre")
+    private GenreEntity genre;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "album_genre",
-            joinColumns = @JoinColumn(name = "album_id"),
-            inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private Set<GenreEntity> genres = new HashSet<>();
+    @Column(name = "track_number", nullable = false)
+    private int trackNumber;
 
-    @OneToMany(mappedBy = "album", fetch = FetchType.LAZY)
-    private Set<TrackEntity> tracks = new HashSet<>();
+    @Column(name = "explicit", nullable = false)
+    private boolean explicit;
+
+    @Column(name = "inoagent", nullable = false)
+    private boolean inoagent;
+
+    @Column(name = "avg_rating", nullable = false)
+    private double averageRating;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "label_id")
+    private LabelEntity label;
+
+    @Column(name = "publication_date")
+    private Instant publicationDate;
 
     public Long getId() {
         return id;
@@ -57,12 +62,12 @@ public class AlbumEntity {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -73,12 +78,12 @@ public class AlbumEntity {
         this.description = description;
     }
 
-    public LocalDate getReleaseDate() {
-        return releaseDate;
+    public Instant getUploadDate() {
+        return uploadDate;
     }
 
-    public void setReleaseDate(LocalDate releaseDate) {
-        this.releaseDate = releaseDate;
+    public void setUploadDate(Instant uploadDate) {
+        this.uploadDate = uploadDate;
     }
 
     public String getCoverUrl() {
@@ -89,27 +94,59 @@ public class AlbumEntity {
         this.coverUrl = coverUrl;
     }
 
-    public UserEntity getOwner() {
-        return owner;
+    public GenreEntity getGenre() {
+        return genre;
     }
 
-    public void setOwner(UserEntity owner) {
-        this.owner = owner;
+    public void setGenre(GenreEntity genre) {
+        this.genre = genre;
     }
 
-    public Set<GenreEntity> getGenres() {
-        return genres;
+    public int getTrackNumber() {
+        return trackNumber;
     }
 
-    public void setGenres(Set<GenreEntity> genres) {
-        this.genres = genres;
+    public void setTrackNumber(int trackNumber) {
+        this.trackNumber = trackNumber;
     }
 
-    public Set<TrackEntity> getTracks() {
-        return tracks;
+    public boolean isExplicit() {
+        return explicit;
     }
 
-    public void setTracks(Set<TrackEntity> tracks) {
-        this.tracks = tracks;
+    public void setExplicit(boolean explicit) {
+        this.explicit = explicit;
+    }
+
+    public boolean isInoagent() {
+        return inoagent;
+    }
+
+    public void setInoagent(boolean inoagent) {
+        this.inoagent = inoagent;
+    }
+
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public LabelEntity getLabel() {
+        return label;
+    }
+
+    public void setLabel(LabelEntity label) {
+        this.label = label;
+    }
+
+    public Instant getPublicationDate() {
+        return publicationDate;
+    }
+
+    public void setPublicationDate(Instant publicationDate) {
+        this.publicationDate = publicationDate;
     }
 }

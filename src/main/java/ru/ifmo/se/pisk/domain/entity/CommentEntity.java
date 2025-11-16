@@ -24,7 +24,7 @@ public class CommentEntity {
     private TrackEntity track;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private UserEntity author;
 
     @Column(nullable = false, length = 2048)

@@ -48,37 +48,37 @@ public final class DomainMapper {
     public static AlbumInfo toAlbumInfo(AlbumEntity entity) {
         return new AlbumInfo(
                 entity.getId(),
-                entity.getTitle(),
+                entity.getName(),
                 entity.getDescription(),
-                entity.getReleaseDate() != null ? entity.getReleaseDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC) : null,
+                entity.getUploadDate(),
                 entity.getCoverUrl(),
-                entity.getGenres().stream().findFirst().map(GenreEntity::getId).orElse(null),
-                entity.getTracks() != null ? entity.getTracks().size() : 0,
-                false,
-                false,
-                0,
-                entity.getOwner() != null ? entity.getOwner().getId() : null,
-                entity.getReleaseDate() != null ? entity.getReleaseDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC) : null
+                entity.getGenre() != null ? entity.getGenre().getId() : null,
+                entity.getTrackNumber(),
+                entity.isExplicit(),
+                entity.isInoagent(),
+                entity.getAverageRating(),
+                entity.getLabel() != null ? entity.getLabel().getId() : null,
+                entity.getPublicationDate()
         );
     }
 
     public static TrackInfo toTrackInfo(TrackEntity entity) {
         return new TrackInfo(
                 entity.getId(),
-                entity.getTitle(),
-                entity.getArtist() != null ? entity.getArtist().getId() : null,
+                entity.getName(),
+                entity.getAuthor() != null ? entity.getAuthor().getId() : null,
                 entity.getAlbum() != null ? entity.getAlbum().getId() : null,
-                null,
-                entity.getGenres().stream().findFirst().map(GenreEntity::getId).orElse(null),
+                entity.getArtist() != null ? entity.getArtist().getId() : null,
+                entity.getGenre() != null ? entity.getGenre().getId() : null,
                 entity.getStoragePath(),
-                0,
-                false,
-                false,
+                entity.getNumberOnAlbum(),
+                entity.isExplicit(),
+                entity.isInoagent(),
                 entity.getDurationSeconds(),
                 entity.getFileSize(),
                 entity.getUploadedAt(),
-                entity.getAverageRating(),
-                (int) entity.getRatingsCount()
+                entity.getRateCount() > 0 ? ((double) entity.getRating()) / entity.getRateCount() : 0,
+                entity.getRateCount()
         );
     }
 
