@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
 import ru.ifmo.se.pisk.domain.TrackStatus;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
@@ -18,6 +19,8 @@ public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSp
     Optional<TrackEntity> findByIdAndAuthor(Long id, UserEntity author);
 
     Page<TrackEntity> findByGenre_Id(Long genreId, Pageable pageable);
+
+    java.util.List<TrackEntity> findByAlbum(AlbumEntity album);
 
     @Query("select t from TrackEntity t where lower(t.name) like lower(concat('%', :query, '%'))")
     Page<TrackEntity> searchByName(@Param("query") String query, Pageable pageable);

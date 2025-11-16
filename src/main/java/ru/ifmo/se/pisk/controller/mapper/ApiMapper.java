@@ -72,7 +72,9 @@ public final class ApiMapper {
                 info.filesize(),
                 info.uploadDate(),
                 info.averageRating(),
-                info.rateCount()
+                info.rateCount(),
+                info.likeCount(),
+                info.commentCount()
         );
     }
 

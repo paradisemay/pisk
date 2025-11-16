@@ -17,7 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.ifmo.se.pisk.domain.RatingInfo;
-import ru.ifmo.se.pisk.domain.TrackStatus;
+import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
 import ru.ifmo.se.pisk.domain.entity.GenreEntity;
 import ru.ifmo.se.pisk.domain.entity.RatingEntity;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
@@ -55,11 +55,15 @@ class TrackServiceTest {
     private TrackService trackService;
 
     private UserEntity artist;
+    private AlbumEntity album;
 
     @BeforeEach
     void setUp() {
         artist = new UserEntity();
         artist.setId(42L);
+        album = new AlbumEntity();
+        album.setId(10L);
+        album.setTrackNumber(5);
     }
 
     @Test
@@ -68,11 +72,13 @@ class TrackServiceTest {
         GenreEntity genre = new GenreEntity();
         genre.setId(5L);
         when(genreService.requireGenre(5L)).thenReturn(genre);
+        when(albumService.requireAlbum(10L)).thenReturn(album);
         when(fileStorageService.storeTrack(eq(42L), any(), any())).thenReturn("tracks/42/file.mp3");
         TrackEntity saved = new TrackEntity();
         saved.setId(100L);
-        saved.setArtist(artist);
-        saved.setStatus(TrackStatus.PENDING_REVIEW);
+        saved.setAuthor(artist);
+        saved.setAlbum(album);
+        saved.setGenre(genre);
         saved.setStoragePath("tracks/42/file.mp3");
         saved.setUploadedAt(Instant.now());
         when(trackRepository.save(any(TrackEntity.class))).thenReturn(saved);
@@ -81,11 +87,11 @@ class TrackServiceTest {
         TrackUploadCommand command = new TrackUploadCommand(
                 "Test",
                 120,
-                null,
+                10L,
                 5L,
                 false,
                 false,
-                0,
+                1,
                 "audio/mpeg",
                 1024L,
                 "test.mp3",
@@ -121,6 +127,7 @@ class TrackServiceTest {
     void rateTrackRecalculatesAverage() {
         TrackEntity track = new TrackEntity();
         track.setId(15L);
+        track.setAlbum(album);
         when(trackRepository.findById(15L)).thenReturn(java.util.Optional.of(track));
         UserEntity user = new UserEntity();
         user.setId(7L);
@@ -141,7 +148,8 @@ class TrackServiceTest {
         RatingInfo info = trackService.rateTrack(command);
 
         assertThat(info.value()).isEqualTo(5);
-        assertThat(track.getAverageRating()).isEqualTo(5);
+        assertThat(track.getRateCount()).isEqualTo(1);
+        assertThat(track.getRating()).isEqualTo(5);
         verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(user), anyMap());
     }
 }

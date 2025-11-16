@@ -17,6 +17,8 @@ public record TrackResponse(
         long filesize,
         Instant uploadDate,
         double averageRating,
-        int rateCount
+        int rateCount,
+        long likeCount,
+        long commentCount
 ) {
 }

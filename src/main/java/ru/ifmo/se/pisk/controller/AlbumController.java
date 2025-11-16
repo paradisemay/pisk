@@ -28,7 +28,11 @@ public class AlbumController {
                         request.title(),
                         request.description(),
                         request.releaseDate(),
-                        request.genreIds(),
+                        request.genreId(),
+                        request.labelId(),
+                        request.trackNumber(),
+                        request.explicit(),
+                        request.inoagent(),
                         request.coverUrl()
                 )
         );
