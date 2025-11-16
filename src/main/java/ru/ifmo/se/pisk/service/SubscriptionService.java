@@ -28,6 +28,9 @@ public class SubscriptionService {
     public SubscriptionInfo subscribe(Long followerId, Long artistId) {
         UserEntity follower = userService.requireUser(followerId);
         UserEntity artist = userService.requireUser(artistId);
+        if (follower.equals(artist)) {
+            throw new IllegalArgumentException("Нельзя подписаться на самого себя");
+        }
         SubscriptionEntity entity = subscriptionRepository.findByFollowerAndArtist(follower, artist)
                 .orElseGet(() -> {
                     SubscriptionEntity subscription = new SubscriptionEntity();
@@ -38,7 +41,11 @@ public class SubscriptionService {
         entity.setStatus(SubscriptionStatus.ACTIVE);
         SubscriptionEntity saved = subscriptionRepository.save(entity);
         auditService.record(AuditAction.SUBSCRIPTION_UPDATED, "Subscription", saved.getId().toString(), follower,
-                Map.of("status", saved.getStatus().name()));
+                Map.of(
+                        "status", saved.getStatus().name(),
+                        "follower", saved.getFollower().getId().toString(),
+                        "artist", saved.getArtist().getId().toString()
+                ));
         return DomainMapper.toSubscriptionInfo(saved);
     }
 
@@ -49,7 +56,11 @@ public class SubscriptionService {
         UserEntity moderator = userService.requireUser(moderatorId);
         entity.setStatus(status);
         auditService.record(AuditAction.SUBSCRIPTION_UPDATED, "Subscription", subscriptionId.toString(), moderator,
-                Map.of("status", status.name()));
+                Map.of(
+                        "status", status.name(),
+                        "follower", entity.getFollower().getId().toString(),
+                        "artist", entity.getArtist().getId().toString()
+                ));
         return DomainMapper.toSubscriptionInfo(entity);
     }
 }

@@ -78,7 +78,9 @@ public final class DomainMapper {
                 entity.getFileSize(),
                 entity.getUploadedAt(),
                 entity.getRateCount() > 0 ? ((double) entity.getRating()) / entity.getRateCount() : 0,
-                entity.getRateCount()
+                entity.getRateCount(),
+                entity.getLikes() == null ? 0 : entity.getLikes().size(),
+                entity.getComments() == null ? 0 : entity.getComments().size()
         );
     }
 

@@ -2,10 +2,8 @@ package ru.ifmo.se.pisk.service;
 
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -70,12 +68,21 @@ public class TrackService {
         if (command.fileSize() <= 0) {
             throw new IllegalArgumentException("Размер файла должен быть положительным");
         }
-        UserEntity artist = userService.requireUser(artistId);
-        AlbumEntity album = command.albumId() != null ? albumService.requireAlbum(command.albumId()) : null;
-        Set<GenreEntity> genres = new HashSet<>();
-        if (command.genreId() != null) {
-            genres.add(genreService.requireGenre(command.genreId()));
+        if (command.genreId() == null) {
+            throw new IllegalArgumentException("Жанр обязателен");
         }
+        if (command.albumId() == null) {
+            throw new IllegalArgumentException("Альбом обязателен");
+        }
+        if (command.numberOnAlbum() < 1) {
+            throw new IllegalArgumentException("Номер трека в альбоме должен быть положительным");
+        }
+        UserEntity artist = userService.requireUser(artistId);
+        AlbumEntity album = albumService.requireAlbum(command.albumId());
+        if (command.numberOnAlbum() > album.getTrackNumber()) {
+            throw new IllegalArgumentException("Номер трека превышает размер альбома");
+        }
+        GenreEntity genre = genreService.requireGenre(command.genreId());
         String storagePath;
         try (InputStream inputStream = command.dataSupplier().get()) {
             storagePath = fileStorageService.storeTrack(artistId, command.originalFilename(), inputStream);
@@ -85,7 +92,7 @@ public class TrackService {
         TrackEntity entity = new TrackEntity();
         entity.setAuthor(artist);
         entity.setAlbum(album);
-        entity.setGenre(genres.stream().findFirst().orElse(null));
+        entity.setGenre(genre);
         entity.setName(command.name());
         entity.setDurationSeconds(command.durationSeconds());
         entity.setStoragePath(storagePath);
@@ -95,13 +102,25 @@ public class TrackService {
         entity.setExplicit(command.explicit());
         entity.setInoagent(command.inoagent());
         TrackEntity saved = trackRepository.save(entity);
+        album.setTrackNumber(Math.max(album.getTrackNumber(), saved.getNumberOnAlbum()));
+        if (saved.isExplicit()) {
+            album.setExplicit(true);
+        }
+        if (saved.isInoagent()) {
+            album.setInoagent(true);
+        }
         TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
         history.setTrack(saved);
         history.setToStatus(saved.getStatus());
         history.setActor(artist);
         trackStatusHistoryRepository.save(history);
         auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artist,
-                Map.of("status", saved.getStatus().name()));
+                Map.of(
+                        "genre_id", genre.getId().toString(),
+                        "explicit", Boolean.toString(saved.isExplicit()),
+                        "inoagent", Boolean.toString(saved.isInoagent()),
+                        "number_on_album", Integer.toString(saved.getNumberOnAlbum())
+                ));
         return DomainMapper.toTrackInfo(saved);
     }
 
@@ -141,7 +160,11 @@ public class TrackService {
         RatingEntity saved = ratingRepository.save(entity);
         recalculateTrackRating(track);
         auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user,
-                Map.of("value", Integer.toString(command.value())));
+                Map.of(
+                        "value", Integer.toString(command.value()),
+                        "rate_count", Integer.toString(track.getRateCount()),
+                        "rating_cached", Long.toString(track.getRating())
+                ));
         return DomainMapper.toRatingInfo(saved);
     }
 
@@ -155,6 +178,21 @@ public class TrackService {
         }
         track.setRating(Math.round(average * count));
         track.setRateCount(count.intValue());
+        if (track.getAlbum() != null) {
+            updateAlbumRating(track.getAlbum());
+        }
+    }
+
+    private void updateAlbumRating(AlbumEntity album) {
+        var tracks = trackRepository.findByAlbum(album);
+        long totalRating = 0;
+        long totalRates = 0;
+        for (TrackEntity trackEntity : tracks) {
+            totalRating += trackEntity.getRating();
+            totalRates += trackEntity.getRateCount();
+        }
+        double average = totalRates == 0 ? 0 : ((double) totalRating) / totalRates;
+        album.setAverageRating(average);
     }
 
     @Transactional
@@ -175,11 +213,15 @@ public class TrackService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TrackInfo> findTracks(TrackStatus status, Pageable pageable) {
-        if (status != null) {
-            return trackRepository.findByStatus(status, pageable).map(DomainMapper::toTrackInfo);
+    public Page<TrackInfo> findTracks(Boolean explicit, Boolean inoagent, Pageable pageable) {
+        Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
+        if (explicit != null) {
+            spec = spec.and((root, query, builder) -> builder.equal(root.get("explicit"), explicit));
         }
-        return trackRepository.findAll(pageable).map(DomainMapper::toTrackInfo);
+        if (inoagent != null) {
+            spec = spec.and((root, query, builder) -> builder.equal(root.get("inoagent"), inoagent));
+        }
+        return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
     }
 
     @Transactional(readOnly = true)

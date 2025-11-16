@@ -93,14 +93,15 @@ public class TrackController {
     }
 
     @GetMapping
-    public Page<TrackResponse> findTracks(@RequestParam(required = false) TrackStatus status,
+    public Page<TrackResponse> findTracks(@RequestParam(required = false) Boolean explicit,
+                                          @RequestParam(required = false) Boolean inoagent,
                                           @RequestParam(required = false) String title,
                                           @RequestParam(required = false) Set<Long> genreIds,
                                           Pageable pageable) {
         if (title != null || (genreIds != null && !genreIds.isEmpty())) {
             return trackService.searchTracks(title, genreIds, pageable).map(ApiMapper::toTrackResponse);
         }
-        return trackService.findTracks(status, pageable).map(ApiMapper::toTrackResponse);
+        return trackService.findTracks(explicit, inoagent, pageable).map(ApiMapper::toTrackResponse);
     }
 
     @GetMapping("/{trackId}")
