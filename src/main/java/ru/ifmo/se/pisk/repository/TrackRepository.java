@@ -14,16 +14,17 @@ import ru.ifmo.se.pisk.domain.entity.UserEntity;
 
 public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSpecificationExecutor<TrackEntity> {
     Page<TrackEntity> findByStatus(TrackStatus status, Pageable pageable);
-    Page<TrackEntity> findByArtist(UserEntity artist, Pageable pageable);
-    Optional<TrackEntity> findByIdAndArtist(Long id, UserEntity artist);
+    Page<TrackEntity> findByAuthor(UserEntity author, Pageable pageable);
+    Optional<TrackEntity> findByIdAndAuthor(Long id, UserEntity author);
 
-    @Query("select t from TrackEntity t join t.genres g where g.id in :genreIds")
-    Page<TrackEntity> findByGenres(@Param("genreIds") Iterable<Long> genreIds, Pageable pageable);
+    Page<TrackEntity> findByGenre_Id(Long genreId, Pageable pageable);
 
-    @Query("select t from TrackEntity t where lower(t.title) like lower(concat('%', :query, '%'))")
-    Page<TrackEntity> searchByTitle(@Param("query") String query, Pageable pageable);
+    @Query("select t from TrackEntity t where lower(t.name) like lower(concat('%', :query, '%'))")
+    Page<TrackEntity> searchByName(@Param("query") String query, Pageable pageable);
 
-    @Query("select new ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate(t.artist.id, avg(r.value), count(r)) "
-            + "from TrackEntity t join t.ratings r group by t.artist.id order by avg(r.value) desc")
+    @Query("select new ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate(t.author.id, "
+            + "case when sum(t.rateCount) = 0 then 0 else sum(t.rating) / sum(t.rateCount) end, "
+            + "sum(t.rateCount)) from TrackEntity t group by t.author.id order by "
+            + "case when sum(t.rateCount) = 0 then 0 else sum(t.rating) / sum(t.rateCount) end desc")
     List<ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate> findTopArtistsByAverageRating(Pageable pageable);
 }

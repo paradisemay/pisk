@@ -83,15 +83,17 @@ public class TrackService {
             throw new IllegalStateException("Не удалось сохранить файл трека", ex);
         }
         TrackEntity entity = new TrackEntity();
-        entity.setArtist(artist);
+        entity.setAuthor(artist);
         entity.setAlbum(album);
-        entity.setGenres(genres);
-        entity.setTitle(command.name());
+        entity.setGenre(genres.stream().findFirst().orElse(null));
+        entity.setName(command.name());
         entity.setDurationSeconds(command.durationSeconds());
         entity.setStoragePath(storagePath);
-        entity.setContentType(command.contentType());
         entity.setFileSize(command.fileSize());
         entity.setUploadedAt(Instant.now());
+        entity.setNumberOnAlbum(command.numberOnAlbum());
+        entity.setExplicit(command.explicit());
+        entity.setInoagent(command.inoagent());
         TrackEntity saved = trackRepository.save(entity);
         TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
         history.setTrack(saved);
@@ -109,9 +111,6 @@ public class TrackService {
         UserEntity moderator = userService.requireUser(moderatorId);
         TrackStatus previous = entity.getStatus();
         entity.setStatus(status);
-        if (status == TrackStatus.PUBLISHED) {
-            entity.setPublishedAt(Instant.now());
-        }
         TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
         history.setTrack(entity);
         history.setFromStatus(previous);
@@ -150,12 +149,12 @@ public class TrackService {
         Double average = ratingRepository.calculateAverageForTrack(track);
         Long count = ratingRepository.countByTrack(track);
         if (average == null || count == null || count == 0) {
-            track.setAverageRating(0);
-            track.setRatingsCount(0);
+            track.setRating(0);
+            track.setRateCount(0);
             return;
         }
-        track.setAverageRating(average);
-        track.setRatingsCount(count);
+        track.setRating(Math.round(average * count));
+        track.setRateCount(count.intValue());
     }
 
     @Transactional
@@ -187,12 +186,11 @@ public class TrackService {
     public Page<TrackInfo> searchTracks(String title, Set<Long> genreIds, Pageable pageable) {
         Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
         if (title != null && !title.isBlank()) {
-            spec = spec.and((root, query, builder) -> builder.like(builder.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
+            spec = spec.and((root, query, builder) -> builder.like(builder.lower(root.get("name")), "%" + title.toLowerCase() + "%"));
         }
         if (genreIds != null && !genreIds.isEmpty()) {
             spec = spec.and((root, query, builder) -> {
-                query.distinct(true);
-                return root.join("genres").get("id").in(genreIds);
+                return root.get("genre").get("id").in(genreIds);
             });
         }
         return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);

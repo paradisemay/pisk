@@ -28,29 +28,58 @@ public class TrackEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 128)
-    private String title;
+    @Column(nullable = false, length = 200)
+    private String name;
 
-    @Column(name = "duration_seconds", nullable = false)
-    private long durationSeconds;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private TrackStatus status = TrackStatus.DRAFT;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private UserEntity author;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "album_id")
     private AlbumEntity album;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "artist_id", nullable = false)
-    private UserEntity artist;
+    @JoinColumn(name = "genre_id")
+    private GenreEntity genre;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "track_genre",
-            joinColumns = @JoinColumn(name = "track_id"),
-            inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private Set<GenreEntity> genres = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "artist_id")
+    private ArtistEntity artist;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TrackStatus status = TrackStatus.DRAFT;
+
+    @Column(name = "duration", nullable = false)
+    private long durationSeconds;
+
+    @Column(name = "filesize", nullable = false)
+    private long fileSize;
+
+    @Column(name = "rating", nullable = false)
+    private long rating;
+
+    @Column(name = "rate_count", nullable = false)
+    private int rateCount;
+
+    @Column(name = "play_count")
+    private long playCount;
+
+    @Column(name = "upload_date", nullable = false)
+    private Instant uploadedAt = Instant.now();
+
+    @Column(name = "filepath", nullable = false, length = 255)
+    private String storagePath;
+
+    @Column(name = "number_on_album")
+    private int numberOnAlbum;
+
+    @Column(name = "explicit", nullable = false)
+    private boolean explicit;
+
+    @Column(name = "inoagent", nullable = false)
+    private boolean inoagent;
 
     @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RatingEntity> ratings = new HashSet<>();
@@ -67,30 +96,6 @@ public class TrackEntity {
     @OneToMany(mappedBy = "track", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TrackStatusHistoryEntity> statusHistory = new HashSet<>();
 
-    @Column(name = "storage_path", nullable = false, length = 255)
-    private String storagePath;
-
-    @Column(name = "content_type", nullable = false, length = 64)
-    private String contentType;
-
-    @Column(name = "file_size", nullable = false)
-    private long fileSize;
-
-    @Column(name = "uploaded_at", nullable = false)
-    private Instant uploadedAt = Instant.now();
-
-    @Column(name = "published_at")
-    private Instant publishedAt;
-
-    @Column(name = "average_rating")
-    private double averageRating;
-
-    @Column(name = "ratings_count")
-    private long ratingsCount;
-
-    @Column(name = "play_count")
-    private long playCount;
-
     public Long getId() {
         return id;
     }
@@ -99,12 +104,12 @@ public class TrackEntity {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public long getDurationSeconds() {
@@ -131,20 +136,28 @@ public class TrackEntity {
         this.album = album;
     }
 
-    public UserEntity getArtist() {
+    public UserEntity getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(UserEntity author) {
+        this.author = author;
+    }
+
+    public GenreEntity getGenre() {
+        return genre;
+    }
+
+    public void setGenre(GenreEntity genre) {
+        this.genre = genre;
+    }
+
+    public ArtistEntity getArtist() {
         return artist;
     }
 
-    public void setArtist(UserEntity artist) {
+    public void setArtist(ArtistEntity artist) {
         this.artist = artist;
-    }
-
-    public Set<GenreEntity> getGenres() {
-        return genres;
-    }
-
-    public void setGenres(Set<GenreEntity> genres) {
-        this.genres = genres;
     }
 
     public Set<RatingEntity> getRatings() {
@@ -195,20 +208,28 @@ public class TrackEntity {
         this.storagePath = storagePath;
     }
 
-    public String getContentType() {
-        return contentType;
-    }
-
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
     public long getFileSize() {
         return fileSize;
     }
 
     public void setFileSize(long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public long getRating() {
+        return rating;
+    }
+
+    public void setRating(long rating) {
+        this.rating = rating;
+    }
+
+    public int getRateCount() {
+        return rateCount;
+    }
+
+    public void setRateCount(int rateCount) {
+        this.rateCount = rateCount;
     }
 
     public Instant getUploadedAt() {
@@ -219,28 +240,28 @@ public class TrackEntity {
         this.uploadedAt = uploadedAt;
     }
 
-    public Instant getPublishedAt() {
-        return publishedAt;
+    public int getNumberOnAlbum() {
+        return numberOnAlbum;
     }
 
-    public void setPublishedAt(Instant publishedAt) {
-        this.publishedAt = publishedAt;
+    public void setNumberOnAlbum(int numberOnAlbum) {
+        this.numberOnAlbum = numberOnAlbum;
     }
 
-    public double getAverageRating() {
-        return averageRating;
+    public boolean isExplicit() {
+        return explicit;
     }
 
-    public void setAverageRating(double averageRating) {
-        this.averageRating = averageRating;
+    public void setExplicit(boolean explicit) {
+        this.explicit = explicit;
     }
 
-    public long getRatingsCount() {
-        return ratingsCount;
+    public boolean isInoagent() {
+        return inoagent;
     }
 
-    public void setRatingsCount(long ratingsCount) {
-        this.ratingsCount = ratingsCount;
+    public void setInoagent(boolean inoagent) {
+        this.inoagent = inoagent;
     }
 
     public long getPlayCount() {
