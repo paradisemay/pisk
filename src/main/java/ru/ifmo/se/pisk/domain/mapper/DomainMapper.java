@@ -1,8 +1,6 @@
 package ru.ifmo.se.pisk.domain.mapper;
 
-import java.time.Duration;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import ru.ifmo.se.pisk.domain.AlbumInfo;
 import ru.ifmo.se.pisk.domain.AuditRecord;
@@ -44,7 +42,7 @@ public final class DomainMapper {
     }
 
     public static GenreInfo toGenreInfo(GenreEntity entity) {
-        return new GenreInfo(entity.getId(), entity.getName(), entity.getDescription());
+        return new GenreInfo(entity.getId(), entity.getName(), entity.getDescription(), null, 0);
     }
 
     public static AlbumInfo toAlbumInfo(AlbumEntity entity) {
@@ -52,10 +50,15 @@ public final class DomainMapper {
                 entity.getId(),
                 entity.getTitle(),
                 entity.getDescription(),
-                entity.getReleaseDate(),
+                entity.getReleaseDate() != null ? entity.getReleaseDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC) : null,
+                entity.getCoverUrl(),
+                entity.getGenres().stream().findFirst().map(GenreEntity::getId).orElse(null),
+                entity.getTracks() != null ? entity.getTracks().size() : 0,
+                false,
+                false,
+                0,
                 entity.getOwner() != null ? entity.getOwner().getId() : null,
-                entity.getGenres().stream().map(GenreEntity::getId).collect(Collectors.toUnmodifiableSet()),
-                entity.getCoverUrl()
+                entity.getReleaseDate() != null ? entity.getReleaseDate().atStartOfDay().toInstant(java.time.ZoneOffset.UTC) : null
         );
     }
 
@@ -63,19 +66,19 @@ public final class DomainMapper {
         return new TrackInfo(
                 entity.getId(),
                 entity.getTitle(),
-                Duration.ofSeconds(entity.getDurationSeconds()),
-                entity.getStatus(),
-                entity.getAlbum() != null ? entity.getAlbum().getId() : null,
                 entity.getArtist() != null ? entity.getArtist().getId() : null,
-                entity.getGenres().stream().map(GenreEntity::getId).collect(Collectors.toUnmodifiableSet()),
+                entity.getAlbum() != null ? entity.getAlbum().getId() : null,
+                null,
+                entity.getGenres().stream().findFirst().map(GenreEntity::getId).orElse(null),
                 entity.getStoragePath(),
-                entity.getContentType(),
+                0,
+                false,
+                false,
+                entity.getDurationSeconds(),
                 entity.getFileSize(),
                 entity.getUploadedAt(),
-                entity.getPublishedAt(),
                 entity.getAverageRating(),
-                entity.getRatingsCount(),
-                entity.getPlayCount()
+                (int) entity.getRatingsCount()
         );
     }
 

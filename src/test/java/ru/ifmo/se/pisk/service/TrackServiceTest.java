@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.time.Instant;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -83,9 +82,12 @@ class TrackServiceTest {
                 "Test",
                 120,
                 null,
-                Set.of(5L),
+                5L,
+                false,
+                false,
+                0,
                 "audio/mpeg",
-                1024,
+                1024L,
                 "test.mp3",
                 () -> new ByteArrayInputStream("data".getBytes())
         );
@@ -93,7 +95,6 @@ class TrackServiceTest {
         var result = trackService.uploadTrack(42L, command);
 
         assertThat(result.id()).isEqualTo(100L);
-        assertThat(result.status()).isEqualTo(TrackStatus.PENDING_REVIEW);
         verify(rateLimitService).checkRateLimit("track-upload:42");
     }
 
@@ -103,9 +104,12 @@ class TrackServiceTest {
                 "Bad",
                 0,
                 null,
-                Set.of(),
+                null,
+                false,
+                false,
+                0,
                 "audio/mpeg",
-                10,
+                10L,
                 "bad.mp3",
                 () -> new ByteArrayInputStream(new byte[0])
         );

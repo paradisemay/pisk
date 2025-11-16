@@ -1,15 +1,19 @@
 package ru.ifmo.se.pisk.domain;
 
-import java.time.LocalDate;
-import java.util.Set;
+import java.time.Instant;
 
 public record AlbumInfo(
         Long id,
-        String title,
+        String name,
         String description,
-        LocalDate releaseDate,
-        Long ownerId,
-        Set<Long> genreIds,
-        String coverUrl
+        Instant uploadDate,
+        String coverUrl,
+        Long genreId,
+        int trackNumber,
+        boolean explicit,
+        boolean inoagent,
+        double averageRating,
+        Long labelId,
+        Instant publicationDate
 ) {
 }

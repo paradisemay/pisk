@@ -36,38 +36,43 @@ public final class ApiMapper {
     }
 
     public static GenreResponse toGenreResponse(GenreInfo info) {
-        return new GenreResponse(info.id(), info.name(), info.description());
+        return new GenreResponse(info.id(), info.title(), info.description(), info.color(), info.averageRating());
     }
 
     public static AlbumResponse toAlbumResponse(AlbumInfo info) {
         return new AlbumResponse(
                 info.id(),
-                info.title(),
+                info.name(),
                 info.description(),
-                info.releaseDate(),
-                info.ownerId(),
-                info.genreIds(),
-                info.coverUrl()
+                info.uploadDate(),
+                info.coverUrl(),
+                info.genreId(),
+                info.trackNumber(),
+                info.explicit(),
+                info.inoagent(),
+                info.averageRating(),
+                info.labelId(),
+                info.publicationDate()
         );
     }
 
     public static TrackResponse toTrackResponse(TrackInfo info) {
         return new TrackResponse(
                 info.id(),
-                info.title(),
-                info.duration(),
-                info.status(),
+                info.name(),
+                info.authorId(),
                 info.albumId(),
                 info.artistId(),
-                info.genreIds(),
-                info.storagePath(),
-                info.contentType(),
-                info.fileSize(),
-                info.uploadedAt(),
-                info.publishedAt(),
+                info.genreId(),
+                info.filepath(),
+                info.numberOnAlbum(),
+                info.explicit(),
+                info.inoagent(),
+                info.durationSeconds(),
+                info.filesize(),
+                info.uploadDate(),
                 info.averageRating(),
-                info.ratingsCount(),
-                info.playCount()
+                info.rateCount()
         );
     }
 

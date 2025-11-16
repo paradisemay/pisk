@@ -1,15 +1,17 @@
 package ru.ifmo.se.pisk.controller.dto;
 
-import java.time.LocalDate;
-import java.util.Set;
-
 public record AlbumResponse(
         Long id,
-        String title,
+        String name,
         String description,
-        LocalDate releaseDate,
-        Long ownerId,
-        Set<Long> genreIds,
-        String coverUrl
+        java.time.Instant uploadDate,
+        String coverUrl,
+        Long genreId,
+        int trackNumber,
+        boolean explicit,
+        boolean inoagent,
+        double averageRating,
+        Long labelId,
+        java.time.Instant publicationDate
 ) {
 }
