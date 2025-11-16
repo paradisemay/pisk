@@ -43,7 +43,7 @@ public class UserService {
         entity.setStatus(UserStatus.PENDING);
         entity.setCreatedAt(Instant.now());
         UserEntity saved = userRepository.save(entity);
-        auditService.record(AuditAction.USER_REGISTERED, "User", saved.getId().toString(), saved.getId(), Map.of());
+        auditService.record(AuditAction.USER_REGISTERED, "User", saved.getId().toString(), saved, Map.of());
         return DomainMapper.toUserProfile(saved);
     }
 

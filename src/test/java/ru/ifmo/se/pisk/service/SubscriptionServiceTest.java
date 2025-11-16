@@ -2,9 +2,9 @@ package ru.ifmo.se.pisk.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -59,6 +59,6 @@ class SubscriptionServiceTest {
 
         assertThat(response.id()).isEqualTo(10L);
         assertThat(response.status()).isEqualTo(SubscriptionStatus.ACTIVE);
-        verify(auditService).record(any(), anyString(), anyString(), anyLong(), anyMap());
+        verify(auditService).record(any(), anyString(), anyString(), eq(follower), anyMap());
     }
 }

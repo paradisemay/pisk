@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AuditAction;
 import ru.ifmo.se.pisk.domain.AuditRecord;
 import ru.ifmo.se.pisk.domain.entity.AuditEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.AuditRepository;
 
@@ -20,12 +21,12 @@ public class AuditService {
     }
 
     @Transactional
-    public void record(AuditAction action, String entityType, String entityId, Long actorId, Map<String, String> metadata) {
+    public void record(AuditAction action, String entityType, String entityId, UserEntity actor, Map<String, String> metadata) {
         AuditEntity entity = new AuditEntity();
         entity.setAction(action);
         entity.setEntityType(entityType);
         entity.setEntityId(entityId);
-        entity.setActorId(actorId);
+        entity.setActor(actor);
         if (metadata != null) {
             entity.setMetadata(metadata);
         }

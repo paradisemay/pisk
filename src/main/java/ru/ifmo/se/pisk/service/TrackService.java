@@ -96,9 +96,9 @@ public class TrackService {
         TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
         history.setTrack(saved);
         history.setToStatus(saved.getStatus());
-        history.setActorId(artistId);
+        history.setActor(artist);
         trackStatusHistoryRepository.save(history);
-        auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artistId,
+        auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artist,
                 Map.of("status", saved.getStatus().name()));
         return DomainMapper.toTrackInfo(saved);
     }
@@ -106,6 +106,7 @@ public class TrackService {
     @Transactional
     public TrackInfo changeStatus(Long trackId, TrackStatus status, Long moderatorId) {
         TrackEntity entity = requireTrack(trackId);
+        UserEntity moderator = userService.requireUser(moderatorId);
         TrackStatus previous = entity.getStatus();
         entity.setStatus(status);
         if (status == TrackStatus.PUBLISHED) {
@@ -115,9 +116,9 @@ public class TrackService {
         history.setTrack(entity);
         history.setFromStatus(previous);
         history.setToStatus(status);
-        history.setActorId(moderatorId);
+        history.setActor(moderator);
         trackStatusHistoryRepository.save(history);
-        auditService.record(AuditAction.TRACK_STATUS_CHANGED, "Track", trackId.toString(), moderatorId,
+        auditService.record(AuditAction.TRACK_STATUS_CHANGED, "Track", trackId.toString(), moderator,
                 Map.of("status", status.name()));
         return DomainMapper.toTrackInfo(entity);
     }
@@ -140,7 +141,7 @@ public class TrackService {
         entity.setComment(command.comment());
         RatingEntity saved = ratingRepository.save(entity);
         recalculateTrackRating(track);
-        auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user.getId(),
+        auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user,
                 Map.of("value", Integer.toString(command.value())));
         return DomainMapper.toRatingInfo(saved);
     }

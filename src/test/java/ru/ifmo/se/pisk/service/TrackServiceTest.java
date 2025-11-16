@@ -138,6 +138,6 @@ class TrackServiceTest {
 
         assertThat(info.value()).isEqualTo(5);
         assertThat(track.getAverageRating()).isEqualTo(5);
-        verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(7L), anyMap());
+        verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(user), anyMap());
     }
 }
