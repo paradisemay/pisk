@@ -37,8 +37,9 @@ public class TrackStatusHistoryEntity {
     @Column(name = "changed_at", nullable = false)
     private Instant changedAt = Instant.now();
 
-    @Column(name = "actor_id")
-    private Long actorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_id", nullable = false)
+    private UserEntity actor;
 
     public Long getId() {
         return id;
@@ -80,11 +81,11 @@ public class TrackStatusHistoryEntity {
         this.changedAt = changedAt;
     }
 
-    public Long getActorId() {
-        return actorId;
+    public UserEntity getActor() {
+        return actor;
     }
 
-    public void setActorId(Long actorId) {
-        this.actorId = actorId;
+    public void setActor(UserEntity actor) {
+        this.actor = actor;
     }
 }

@@ -37,7 +37,7 @@ public class SubscriptionService {
                 });
         entity.setStatus(SubscriptionStatus.ACTIVE);
         SubscriptionEntity saved = subscriptionRepository.save(entity);
-        auditService.record(AuditAction.SUBSCRIPTION_UPDATED, "Subscription", saved.getId().toString(), followerId,
+        auditService.record(AuditAction.SUBSCRIPTION_UPDATED, "Subscription", saved.getId().toString(), follower,
                 Map.of("status", saved.getStatus().name()));
         return DomainMapper.toSubscriptionInfo(saved);
     }
@@ -46,8 +46,9 @@ public class SubscriptionService {
     public SubscriptionInfo updateStatus(Long subscriptionId, SubscriptionStatus status, Long moderatorId) {
         SubscriptionEntity entity = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Подписка не найдена"));
+        UserEntity moderator = userService.requireUser(moderatorId);
         entity.setStatus(status);
-        auditService.record(AuditAction.SUBSCRIPTION_UPDATED, "Subscription", subscriptionId.toString(), moderatorId,
+        auditService.record(AuditAction.SUBSCRIPTION_UPDATED, "Subscription", subscriptionId.toString(), moderator,
                 Map.of("status", status.name()));
         return DomainMapper.toSubscriptionInfo(entity);
     }

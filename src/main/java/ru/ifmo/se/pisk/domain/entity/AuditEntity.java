@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -36,8 +37,9 @@ public class AuditEntity {
     @Column(name = "entity_id", nullable = false, length = 64)
     private String entityId;
 
-    @Column(name = "actor_id")
-    private Long actorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_id", nullable = false)
+    private UserEntity actor;
 
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt = Instant.now();
@@ -80,12 +82,12 @@ public class AuditEntity {
         this.entityId = entityId;
     }
 
-    public Long getActorId() {
-        return actorId;
+    public UserEntity getActor() {
+        return actor;
     }
 
-    public void setActorId(Long actorId) {
-        this.actorId = actorId;
+    public void setActor(UserEntity actor) {
+        this.actor = actor;
     }
 
     public Instant getOccurredAt() {

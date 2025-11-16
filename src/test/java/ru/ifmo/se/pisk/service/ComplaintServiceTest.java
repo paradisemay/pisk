@@ -45,12 +45,15 @@ class ComplaintServiceTest {
         complainant.setId(3L);
         entity.setComplainant(complainant);
         when(complaintRepository.findById(1L)).thenReturn(java.util.Optional.of(entity));
+        UserEntity moderator = new UserEntity();
+        moderator.setId(5L);
+        when(userService.requireUser(5L)).thenReturn(moderator);
 
         ComplaintDecisionCommand command = new ComplaintDecisionCommand(1L, 5L, ComplaintStatus.RESOLVED, "ok");
         var response = complaintService.decideComplaint(command);
 
         assertThat(response.status()).isEqualTo(ComplaintStatus.RESOLVED);
         verify(trackService).changeStatus(10L, ru.ifmo.se.pisk.domain.TrackStatus.ARCHIVED, 5L);
-        verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.COMPLAINT_RESOLVED), eq("Complaint"), eq("1"), eq(5L), anyMap());
+        verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.COMPLAINT_RESOLVED), eq("Complaint"), eq("1"), eq(moderator), anyMap());
     }
 }

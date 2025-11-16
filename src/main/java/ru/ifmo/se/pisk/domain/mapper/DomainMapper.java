@@ -122,7 +122,7 @@ public final class DomainMapper {
                 entity.getAction(),
                 entity.getEntityType(),
                 entity.getEntityId(),
-                entity.getActorId(),
+                entity.getActor().getId(),
                 entity.getOccurredAt(),
                 metadata
         );

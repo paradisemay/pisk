@@ -53,7 +53,7 @@ public class ComplaintService {
         if (openComplaints >= TRACK_COMPLAINT_THRESHOLD && track.getStatus() == TrackStatus.PUBLISHED) {
             trackService.changeStatus(track.getId(), TrackStatus.PENDING_REVIEW, complainantId);
         }
-        auditService.record(AuditAction.COMPLAINT_FILED, "Complaint", saved.getId().toString(), complainantId,
+        auditService.record(AuditAction.COMPLAINT_FILED, "Complaint", saved.getId().toString(), complainant,
                 Map.of("trackId", trackId.toString()));
         return DomainMapper.toComplaintInfo(saved);
     }
@@ -62,13 +62,14 @@ public class ComplaintService {
     public ComplaintInfo decideComplaint(ComplaintDecisionCommand command) {
         ComplaintEntity entity = complaintRepository.findById(command.complaintId())
                 .orElseThrow(() -> new IllegalArgumentException("Жалоба не найдена"));
+        UserEntity moderator = userService.requireUser(command.moderatorId());
         entity.setStatus(command.targetStatus());
         entity.setModeratorNote(command.moderatorNote());
         entity.setResolvedAt(Instant.now());
         if (command.targetStatus() == ComplaintStatus.RESOLVED) {
             trackService.changeStatus(entity.getTrack().getId(), TrackStatus.ARCHIVED, command.moderatorId());
         }
-        auditService.record(AuditAction.COMPLAINT_RESOLVED, "Complaint", entity.getId().toString(), command.moderatorId(),
+        auditService.record(AuditAction.COMPLAINT_RESOLVED, "Complaint", entity.getId().toString(), moderator,
                 Map.of("status", command.targetStatus().name()));
         return DomainMapper.toComplaintInfo(entity);
     }
