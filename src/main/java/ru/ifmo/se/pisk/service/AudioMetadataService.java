@@ -24,7 +24,7 @@ public class AudioMetadataService {
                 AudioFile audioFile = AudioFileIO.read(tempFile.toFile());
                 AudioHeader header = audioFile.getAudioHeader();
                 Tag tag = audioFile.getTag();
-                Artwork artwork = tag != null ? tag.getFirstArtwork() : null;
+                Artwork artwork = tag != null ? (Artwork) tag.getFirstArtwork() : null;
                 return new AudioMetadata(
                         tag != null ? emptyToNull(tag.getFirst(FieldKey.TITLE)) : null,
                         header != null ? header.getTrackLength() : 0,

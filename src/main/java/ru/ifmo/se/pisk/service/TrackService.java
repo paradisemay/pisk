@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.TrackStatus;
+import ru.ifmo.se.pisk.domain.entity.TrackStatusHistoryEntity;
 import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
@@ -36,6 +37,7 @@ import ru.ifmo.se.pisk.domain.entity.RatingEntity;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
+import ru.ifmo.se.pisk.service.AuditService;
 import ru.ifmo.se.pisk.repository.TrackRepository;
 import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
 import ru.ifmo.se.pisk.repository.RatingRepository;

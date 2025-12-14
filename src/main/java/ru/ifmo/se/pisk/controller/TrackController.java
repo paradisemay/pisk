@@ -204,7 +204,6 @@ public class TrackController {
     public ResponseEntity<?> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
         var info = trackService.getTrackInfo(trackId);
         Resource resource = fileStorageService.load(info.filepath());
-        byte[] data = readAllBytes(resource);
         MediaType mediaType = resolveMediaType(resource, info);
         try {
             byte[] data = resource.getInputStream().readAllBytes();

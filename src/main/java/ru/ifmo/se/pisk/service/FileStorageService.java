@@ -47,19 +47,19 @@ public class FileStorageService {
     }
 
     public void validateTrack(String originalFilename, String contentType, long fileSize) {
-        validate(originalFilename, contentType, fileSize, ALLOWED_CONTENT_TYPES, MAX_FILE_SIZE);
+        validate(originalFilename, contentType, fileSize);
     }
 
     public void validateAvatar(String originalFilename, String contentType, long fileSize) {
-        validate(originalFilename, contentType, fileSize, ALLOWED_AVATAR_CONTENT_TYPES, MAX_AVATAR_FILE_SIZE);
+        validate(originalFilename, contentType, fileSize);
     }
 
-    private void validate(String originalFilename, String contentType, long fileSize, Set<String> allowedTypes, long maxSize) {
+    public void validate(String originalFilename, String contentType, long fileSize) {
         if (!StringUtils.hasText(originalFilename)) throw new IllegalArgumentException("Пустое имя файла");
-        if (!allowedTypes.contains(contentType)) {
+        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
             throw new IllegalArgumentException("Формат файла не поддерживается: " + contentType);
         }
-        if (fileSize <= 0 || fileSize > maxSize) {
+        if (fileSize <= 0 || fileSize > MAX_FILE_SIZE) {
             throw new IllegalArgumentException("Размер файла превышает допустимый лимит: " + (fileSize / (1024 * 1024)) + "MB");
         }
     }
