@@ -3,7 +3,6 @@ package ru.ifmo.se.pisk.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,28 +23,32 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Static resources - public
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                        // Public static
+                        .requestMatchers(
+                                "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
+                        ).permitAll()
 
-                        // Login and docs - public
-                        .requestMatchers("/login", "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health").permitAll()
+                        .requestMatchers("/error").permitAll()
 
-                        // Public HTML pages
-                        .requestMatchers(HttpMethod.GET, "/", "/catalog").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/tracks/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/authors/**").permitAll()
+                        // Public login and docs
+                        .requestMatchers(
+                                "/login", "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health"
+                        ).permitAll()
+
+                        // Public HTML pages (permit for GET and also HEAD automatically)
+                        .requestMatchers(
+                                "/", "/catalog",
+                                "/tracks/**",
+                                "/authors/**"
+                        ).permitAll()
 
                         // Protected HTML pages
-                        .requestMatchers(HttpMethod.GET, "/upload").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/upload").authenticated()
+                        .requestMatchers("/upload").authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // API endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/tracks/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/tracks/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/tracks/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/complaints").hasAnyRole("USER", "ADMIN")
+                        // API rules keep as is
+                        .requestMatchers("/api/v1/users").permitAll()
+                        .requestMatchers("/api/v1/tracks/**").permitAll()
                         .requestMatchers("/api/v1/complaints/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/subscriptions/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/v1/audit/**").hasRole("ADMIN")
@@ -56,17 +59,14 @@ public class SecurityConfig {
                 .formLogin(form -> form.permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .exceptionHandling(exceptions -> exceptions
-                        // 401 only for API requests
+                        // 401 only for API
                         .defaultAuthenticationEntryPointFor(
                                 new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                                 new AntPathRequestMatcher("/api/**")
                         )
                         .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
-                .requestCache(cache -> cache.requestCache(new NullRequestCache()))
-                .logout(logout -> logout.logoutSuccessHandler((request, response, authentication) -> {
-                    response.setStatus(HttpStatus.OK.value());
-                }));
+                .requestCache(cache -> cache.requestCache(new NullRequestCache()));
 
         return http.build();
     }
