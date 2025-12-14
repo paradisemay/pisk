@@ -1,45 +1,35 @@
 package ru.ifmo.se.pisk.web.form;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import org.springframework.web.multipart.MultipartFile;
 
 public class UploadTrackForm {
 
-    @NotNull
-    private Long artistId;
+    @NotBlank
+    private String artistName;
 
     @NotBlank
     private String name;
 
-    @NotNull
-    @Positive
-    private Long durationSeconds;
+    @NotBlank
+    private String genreName;
 
-    @NotNull
-    private Long albumId;
-
-    @NotNull
-    private Long genreId;
+    private String albumName;
 
     private boolean explicit;
 
     private boolean inoagent;
 
-    @Min(1)
-    private int numberOnAlbum = 1;
-
     @NotNull
     private MultipartFile file;
 
-    public Long getArtistId() {
-        return artistId;
+    public String getArtistName() {
+        return artistName;
     }
 
-    public void setArtistId(Long artistId) {
-        this.artistId = artistId;
+    public void setArtistName(String artistName) {
+        this.artistName = artistName;
     }
 
     public String getName() {
@@ -50,28 +40,20 @@ public class UploadTrackForm {
         this.name = name;
     }
 
-    public Long getDurationSeconds() {
-        return durationSeconds;
+    public String getGenreName() {
+        return genreName;
     }
 
-    public void setDurationSeconds(Long durationSeconds) {
-        this.durationSeconds = durationSeconds;
+    public void setGenreName(String genreName) {
+        this.genreName = genreName;
     }
 
-    public Long getAlbumId() {
-        return albumId;
+    public String getAlbumName() {
+        return albumName;
     }
 
-    public void setAlbumId(Long albumId) {
-        this.albumId = albumId;
-    }
-
-    public Long getGenreId() {
-        return genreId;
-    }
-
-    public void setGenreId(Long genreId) {
-        this.genreId = genreId;
+    public void setAlbumName(String albumName) {
+        this.albumName = albumName;
     }
 
     public boolean isExplicit() {
@@ -88,14 +70,6 @@ public class UploadTrackForm {
 
     public void setInoagent(boolean inoagent) {
         this.inoagent = inoagent;
-    }
-
-    public int getNumberOnAlbum() {
-        return numberOnAlbum;
-    }
-
-    public void setNumberOnAlbum(int numberOnAlbum) {
-        this.numberOnAlbum = numberOnAlbum;
     }
 
     public MultipartFile getFile() {

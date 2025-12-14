@@ -37,4 +37,26 @@ public class GenreService {
     public List<GenreInfo> listAll() {
         return genreRepository.findAll().stream().map(DomainMapper::toGenreInfo).toList();
     }
+
+    @Transactional
+    public GenreEntity findOrCreateByName(String name) {
+        if (!org.springframework.util.StringUtils.hasText(name)) {
+            throw new IllegalArgumentException("Жанр обязателен");
+        }
+        return genreRepository.findByNameIgnoreCase(name.trim())
+                .orElseGet(() -> {
+                    GenreEntity entity = new GenreEntity();
+                    entity.setName(name.trim());
+                    entity.setDescription("");
+                    return genreRepository.save(entity);
+                });
+    }
+
+    @Transactional(readOnly = true)
+    public List<GenreEntity> search(String namePart) {
+        if (!org.springframework.util.StringUtils.hasText(namePart)) {
+            return List.of();
+        }
+        return genreRepository.searchByName(namePart.trim());
+    }
 }

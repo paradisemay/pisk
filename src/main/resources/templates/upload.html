@@ -15,9 +15,10 @@
         <form th:action="@{/upload}" th:object="${uploadForm}" method="post" enctype="multipart/form-data" class="form-grid">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <label>
-                <span th:text="#{upload.field.artistId}">Artist ID</span>
-                <input type="number" th:field="*{artistId}">
-                <span class="error" th:if="${#fields.hasErrors('artistId')}" th:errors="*{artistId}"></span>
+                <span th:text="#{upload.field.artist}">Artist</span>
+                <input type="text" th:field="*{artistName}" list="artist-suggestions" autocomplete="on" placeholder=""
+                       th:placeholder="#{upload.field.artist.placeholder}">
+                <span class="error" th:if="${#fields.hasErrors('artistName')}" th:errors="*{artistName}"></span>
             </label>
             <label>
                 <span th:text="#{upload.field.name}">Name</span>
@@ -25,22 +26,16 @@
                 <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
             </label>
             <label>
-                <span th:text="#{upload.field.duration}">Duration</span>
-                <input type="number" th:field="*{durationSeconds}">
-                <span class="error" th:if="${#fields.hasErrors('durationSeconds')}" th:errors="*{durationSeconds}"></span>
+                <span th:text="#{upload.field.album}">Album</span>
+                <input type="text" th:field="*{albumName}" list="album-suggestions" autocomplete="on" placeholder=""
+                       th:placeholder="#{upload.field.album.placeholder}">
+                <span class="error" th:if="${#fields.hasErrors('albumName')}" th:errors="*{albumName}"></span>
             </label>
             <label>
-                <span th:text="#{upload.field.albumId}">Album</span>
-                <input type="number" th:field="*{albumId}">
-                <span class="error" th:if="${#fields.hasErrors('albumId')}" th:errors="*{albumId}"></span>
-            </label>
-            <label>
-                <span th:text="#{upload.field.genreId}">Genre</span>
-                <select th:field="*{genreId}">
-                    <option value="" th:text="#{upload.field.genre.placeholder}"></option>
-                    <option th:each="genre : ${genres}" th:value="${genre.id}" th:text="${genre.title}"></option>
-                </select>
-                <span class="error" th:if="${#fields.hasErrors('genreId')}" th:errors="*{genreId}"></span>
+                <span th:text="#{upload.field.genre}">Genre</span>
+                <input type="text" th:field="*{genreName}" list="genre-suggestions" autocomplete="on"
+                       th:placeholder="#{upload.field.genre.placeholder}">
+                <span class="error" th:if="${#fields.hasErrors('genreName')}" th:errors="*{genreName}"></span>
             </label>
             <label class="inline">
                 <input type="checkbox" th:field="*{explicit}">
@@ -50,16 +45,16 @@
                 <input type="checkbox" th:field="*{inoagent}">
                 <span th:text="#{upload.field.inoagent}">Inoagent</span>
             </label>
-            <label>
-                <span th:text="#{upload.field.numberOnAlbum}">Number</span>
-                <input type="number" th:field="*{numberOnAlbum}">
-                <span class="error" th:if="${#fields.hasErrors('numberOnAlbum')}" th:errors="*{numberOnAlbum}"></span>
-            </label>
             <label class="file-field">
                 <span th:text="#{upload.field.file}">File</span>
                 <input type="file" th:field="*{file}">
                 <span class="error" th:if="${#fields.hasErrors('file')}" th:errors="*{file}"></span>
             </label>
+            <datalist id="genre-suggestions">
+                <option th:each="genre : ${genres}" th:value="${genre.title}"></option>
+            </datalist>
+            <datalist id="artist-suggestions"></datalist>
+            <datalist id="album-suggestions"></datalist>
             <div class="actions">
                 <button type="submit" class="pill" th:text="#{upload.submit}">Upload</button>
             </div>

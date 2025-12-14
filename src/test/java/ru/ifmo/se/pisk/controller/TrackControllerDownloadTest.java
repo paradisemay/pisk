@@ -12,6 +12,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.ifmo.se.pisk.domain.TrackInfo;
+import ru.ifmo.se.pisk.service.AudioMetadataService;
 import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.TrackService;
 
@@ -33,6 +34,9 @@ class TrackControllerDownloadTest {
 
     @MockBean
     private FileStorageService fileStorageService;
+
+    @MockBean
+    private AudioMetadataService audioMetadataService;
 
     @Test
     void shouldReturnFullContentWithHeadersWhenRangeNotProvided() throws Exception {

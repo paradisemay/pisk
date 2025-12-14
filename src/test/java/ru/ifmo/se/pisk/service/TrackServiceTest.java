@@ -43,11 +43,11 @@ class TrackServiceTest {
     @Mock
     private GenreService genreService;
     @Mock
+    private ArtistService artistService;
+    @Mock
     private FileStorageService fileStorageService;
     @Mock
     private AuditService auditService;
-    @Mock
-    private RateLimitService rateLimitService;
     @Mock
     private TrackStatusHistoryRepository trackStatusHistoryRepository;
 
@@ -71,8 +71,9 @@ class TrackServiceTest {
         when(userService.requireUser(42L)).thenReturn(artist);
         GenreEntity genre = new GenreEntity();
         genre.setId(5L);
-        when(genreService.requireGenre(5L)).thenReturn(genre);
-        when(albumService.requireAlbum(10L)).thenReturn(album);
+        when(genreService.findOrCreateByName("Rock")).thenReturn(genre);
+        when(albumService.findOrCreateSimple(eq("Album"), eq(genre), eq(false), eq(false), eq(1), any())).thenReturn(album);
+        when(artistService.findOrCreateByName("Tester")).thenReturn(new ru.ifmo.se.pisk.domain.entity.ArtistEntity());
         when(fileStorageService.storeTrack(eq(42L), any(), any())).thenReturn("tracks/42/file.mp3");
         TrackEntity saved = new TrackEntity();
         saved.setId(100L);
@@ -82,42 +83,46 @@ class TrackServiceTest {
         saved.setStoragePath("tracks/42/file.mp3");
         saved.setUploadedAt(Instant.now());
         when(trackRepository.save(any(TrackEntity.class))).thenReturn(saved);
-        when(trackStatusHistoryRepository.save(any(TrackStatusHistoryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TrackUploadCommand command = new TrackUploadCommand(
                 "Test",
+                "Tester",
+                "Rock",
+                "Album",
                 120,
-                10L,
-                5L,
                 false,
                 false,
                 1,
                 "audio/mpeg",
                 1024L,
                 "test.mp3",
-                () -> new ByteArrayInputStream("data".getBytes())
+                () -> new ByteArrayInputStream("data".getBytes()),
+                null,
+                null
         );
 
         var result = trackService.uploadTrack(42L, command);
 
         assertThat(result.id()).isEqualTo(100L);
-        verify(rateLimitService).checkRateLimit("track-upload:42");
     }
 
     @Test
     void uploadTrackRejectsNonPositiveDuration() {
         TrackUploadCommand command = new TrackUploadCommand(
                 "Bad",
+                "Tester",
+                "Rock",
+                null,
                 0,
-                null,
-                null,
                 false,
                 false,
                 0,
                 "audio/mpeg",
                 10L,
                 "bad.mp3",
-                () -> new ByteArrayInputStream(new byte[0])
+                () -> new ByteArrayInputStream(new byte[0]),
+                null,
+                null
         );
 
         assertThrows(IllegalArgumentException.class, () -> trackService.uploadTrack(42L, command));
