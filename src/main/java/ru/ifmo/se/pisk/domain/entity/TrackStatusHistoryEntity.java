@@ -39,7 +39,7 @@ public class TrackStatusHistoryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "actor_id", nullable = false)
-    private UserEntity actor;
+    private ArtistEntity actor;
 
     public Long getId() {
         return id;
@@ -81,11 +81,11 @@ public class TrackStatusHistoryEntity {
         this.changedAt = changedAt;
     }
 
-    public UserEntity getActor() {
+    public ArtistEntity getActor() {
         return actor;
     }
 
-    public void setActor(UserEntity actor) {
+    public void setActor(ArtistEntity actor) {
         this.actor = actor;
     }
 }

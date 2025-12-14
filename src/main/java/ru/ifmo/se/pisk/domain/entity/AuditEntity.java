@@ -37,9 +37,15 @@ public class AuditEntity {
     @Column(name = "entity_id", nullable = false, length = 64)
     private String entityId;
 
+    // актор-артист (nullable)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "actor_id", nullable = false)
-    private UserEntity actor;
+    @JoinColumn(name = "artist_id")
+    private ArtistEntity artist;
+
+    // актор-пользователь (nullable)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt = Instant.now();
@@ -82,12 +88,20 @@ public class AuditEntity {
         this.entityId = entityId;
     }
 
-    public UserEntity getActor() {
-        return actor;
+    public ArtistEntity getArtist() {
+        return artist;
     }
 
-    public void setActor(UserEntity actor) {
-        this.actor = actor;
+    public void setArtist(ArtistEntity artist) {
+        this.artist = artist;
+    }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 
     public Instant getOccurredAt() {
