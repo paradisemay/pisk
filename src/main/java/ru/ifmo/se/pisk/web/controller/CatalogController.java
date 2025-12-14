@@ -44,7 +44,7 @@ public class CatalogController {
                           @PageableDefault(size = 9, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable,
                           HttpServletRequest request,
                           Model model) {
-        Page<TrackInfo> tracks = trackService.findTracks(explicit, inoagent, title, genreIds, pageable);
+        Page<TrackInfo> tracks = trackService.searchTracks(explicit, inoagent, title, genreIds, pageable);  // TODO: fix
         Map<Long, String> genreNames = genreService.listAll().stream()
                 .collect(Collectors.toMap(GenreInfo::id, GenreInfo::title));
         Page<TrackView> view = tracks.map(info -> toView(info, genreNames));

@@ -205,7 +205,7 @@ public class TrackController {
                     .contentType(mediaType)
                     .contentLength(contentLength)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                    .body(region);
+                    .body(region.getResource());
         }
 
         HttpRange range = ranges.get(0);
@@ -218,7 +218,7 @@ public class TrackController {
                 .contentType(mediaType)
                 .contentLength(region.getCount())
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                .body(region);
+                .body(region.getResource());
     }
 
     private MediaType resolveMediaType(Resource resource, ru.ifmo.se.pisk.domain.TrackInfo info) {
