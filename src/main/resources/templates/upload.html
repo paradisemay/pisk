@@ -13,6 +13,7 @@
             <div class="pill" th:if="${uploadSuccess}" th:text="#{upload.success}"></div>
         </div>
         <form th:action="@{/upload}" th:object="${uploadForm}" method="post" enctype="multipart/form-data" class="form-grid">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <label>
                 <span th:text="#{upload.field.artistId}">Artist ID</span>
                 <input type="number" th:field="*{artistId}">

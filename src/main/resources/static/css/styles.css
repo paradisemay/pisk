@@ -224,7 +224,31 @@ h1 { margin: 8px 0 6px; }
     align-items: center;
 }
 
-.password-field input { flex: 1; }
+.password-field input {
+    flex: 1;
+    min-width: 0;
+}
+
+.password-field [data-password-toggle] {
+    width: auto;
+    padding: 8px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle-icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    fill: none;
+}
+
+.password-toggle-icon.hidden {
+    display: none;
+}
 
 .ghost.tiny {
     padding: 8px 10px;
