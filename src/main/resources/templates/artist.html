@@ -31,6 +31,7 @@
                 <a th:href="@{/tracks/{id}(id=${track.id})}" th:text="${track.name}">Track</a>
             </div>
             <div class="card-meta" th:text="${track.genreTitle}">Genre</div>
+            <div class="card-meta" th:text="${track.formattedDuration}">03:45</div>
             <div class="tags">
                 <span class="tag" th:if="${track.explicit}" th:text="#{track.metadata.explicit}"></span>
                 <span class="tag" th:if="${track.inoagent}" th:text="#{track.metadata.inoagent}"></span>

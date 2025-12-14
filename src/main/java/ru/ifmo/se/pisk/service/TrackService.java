@@ -8,24 +8,40 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.ifmo.se.pisk.domain.AuditAction;
-import ru.ifmo.se.pisk.domain.RatingInfo;
-import ru.ifmo.se.pisk.domain.TrackInfo;
-import ru.ifmo.se.pisk.domain.TrackStatus;
-import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
-import ru.ifmo.se.pisk.domain.entity.GenreEntity;
-import ru.ifmo.se.pisk.domain.entity.RatingEntity;
-import ru.ifmo.se.pisk.domain.entity.TrackEntity;
-import ru.ifmo.se.pisk.domain.entity.TrackStatusHistoryEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
-import ru.ifmo.se.pisk.repository.RatingRepository;
+import ru.ifmo.se.pisk.model.Author;
+import ru.ifmo.se.pisk.model.Track;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import ru.ifmo.se.pisk.domain.TrackInfo;
+import ru.ifmo.se.pisk.domain.TrackStatus;
+import ru.ifmo.se.pisk.domain.RatingInfo;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
+import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
+import ru.ifmo.se.pisk.domain.entity.ArtistEntity;
+import ru.ifmo.se.pisk.domain.entity.GenreEntity;
+import ru.ifmo.se.pisk.domain.entity.RatingEntity;
+import ru.ifmo.se.pisk.service.dto.RatingCommand;
+import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
+import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
 import ru.ifmo.se.pisk.repository.TrackRepository;
 import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
+import ru.ifmo.se.pisk.repository.RatingRepository;
 import ru.ifmo.se.pisk.repository.specification.TrackSpecifications;
-import ru.ifmo.se.pisk.service.dto.RatingCommand;
-import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
-import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
+import java.time.Instant;
+import java.util.Map;
 
 @Service
 public class TrackService {
@@ -37,8 +53,8 @@ public class TrackService {
     private final AlbumService albumService;
     private final FileStorageService fileStorageService;
     private final AuditService auditService;
+    private final ArtistService artistService;
     private final RatingRepository ratingRepository;
-    private final RateLimitService rateLimitService;
 
     public TrackService(TrackRepository trackRepository,
                         TrackStatusHistoryRepository trackStatusHistoryRepository,
@@ -47,8 +63,8 @@ public class TrackService {
                         AlbumService albumService,
                         FileStorageService fileStorageService,
                         AuditService auditService,
-                        RatingRepository ratingRepository,
-                        RateLimitService rateLimitService) {
+                        ArtistService artistService,
+                        RatingRepository ratingRepository) {
         this.trackRepository = trackRepository;
         this.trackStatusHistoryRepository = trackStatusHistoryRepository;
         this.userService = userService;
@@ -56,8 +72,8 @@ public class TrackService {
         this.albumService = albumService;
         this.fileStorageService = fileStorageService;
         this.auditService = auditService;
+        this.artistService = artistService;
         this.ratingRepository = ratingRepository;
-        this.rateLimitService = rateLimitService;
     }
 
 
@@ -80,19 +96,24 @@ public class TrackService {
         if (command.durationSeconds() <= 0) {
             throw new IllegalArgumentException("Длительность должна быть положительной");
         }
-        rateLimitService.checkRateLimit("track-upload:" + artistId);
-        fileStorageService.validateTrack(command.originalFilename(), command.contentType(), command.fileSize());
-        UserEntity artist = userService.requireUser(artistId);
-        GenreEntity genre = command.genreId() != null ? genreService.requireGenre(command.genreId()) : null;
-        AlbumEntity album = command.albumId() != null ? albumService.requireAlbum(command.albumId()) : null;
+        UserEntity author = userService.requireUser(artistId);
+        ArtistEntity artist = artistService.findOrCreateByName(command.artistName());
+        GenreEntity genre = genreService.findOrCreateByName(command.genreName());
+        AlbumEntity album = null;
+        if (org.springframework.util.StringUtils.hasText(command.albumName())) {
+            String coverPath = command.coverData() != null
+                    ? fileStorageService.storeCover(command.originalFilename() + "-cover", command.coverData())
+                    : null;
+            album = albumService.findOrCreateSimple(command.albumName(), genre, command.explicit(), command.inoagent(),
+                    command.numberOnAlbum(), coverPath);
+        }
         String storagePath = fileStorageService.storeTrack(artistId, command.originalFilename(), command.dataSupplier().get());
         TrackEntity entity = new TrackEntity();
         entity.setName(command.name());
-        entity.setAuthor(artist);
+        entity.setAuthor(author);
         entity.setGenre(genre);
         entity.setAlbum(album);
-        // Note: ArtistEntity is separate from UserEntity, setting to null for now
-        entity.setArtist(null);
+        entity.setArtist(artist);
         entity.setStatus(TrackStatus.DRAFT);
         entity.setDurationSeconds(command.durationSeconds());
         entity.setFileSize(command.fileSize());
@@ -103,6 +124,11 @@ public class TrackService {
         entity.setExplicit(command.explicit());
         entity.setInoagent(command.inoagent());
         entity.setUploadedAt(java.time.Instant.now());
+        entity.setNumberOnAlbum(command.numberOnAlbum());
+        entity.setExplicit(command.explicit());
+        entity.setInoagent(command.inoagent());
+        entity.setContentType(command.contentType());
+        entity.setOriginalFilename(command.originalFilename());
         TrackEntity saved = trackRepository.save(entity);
         TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
         history.setTrack(saved);
@@ -119,24 +145,26 @@ public class TrackService {
     public RatingInfo rateTrack(RatingCommand command) {
         TrackEntity track = requireTrack(command.trackId());
         UserEntity user = userService.requireUser(command.userId());
-        RatingEntity rating = ratingRepository.findByTrackAndUser(track, user)
-                .orElseGet(() -> {
-                    RatingEntity entity = new RatingEntity();
-                    entity.setTrack(track);
-                    entity.setUser(user);
-                    entity.setCreatedAt(Instant.now());
-                    return entity;
-                });
+        RatingEntity rating = ratingRepository.findByTrackAndUser(track, user).orElseGet(RatingEntity::new);
+        rating.setTrack(track);
+        rating.setUser(user);
         rating.setValue(command.value());
         rating.setComment(command.comment());
-        RatingEntity saved = ratingRepository.save(rating);
-        double average = Optional.ofNullable(ratingRepository.calculateAverageForTrack(track)).orElse(0.0);
-        long count = Optional.ofNullable(ratingRepository.countByTrack(track)).orElse(0L);
-        track.setRateCount((int) count);
-        track.setRating(Math.round(average * count));
-        trackRepository.save(track);
-        auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user, Map.of());
-        return new RatingInfo(saved.getId(), track.getId(), user.getId(), saved.getValue(), saved.getComment(), saved.getCreatedAt());
+        rating.setCreatedAt(Instant.now());
+        RatingEntity persisted = ratingRepository.save(rating);
+        Double average = ratingRepository.calculateAverageForTrack(track);
+        Long count = ratingRepository.countByTrack(track);
+        if (average != null && count != null) {
+            track.setRateCount(count.intValue());
+            track.setRating(Math.round(average * count));
+            trackRepository.save(track);
+        }
+        Map<String, String> auditData = new HashMap<>();
+        auditData.put("value", String.valueOf(command.value()));
+        auditData.put("comment", command.comment());
+        auditService.record(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED, "Track", String.valueOf(track.getId()), user,
+                auditData);
+        return new RatingInfo(persisted.getId(), command.trackId(), command.userId(), command.value(), command.comment(), persisted.getCreatedAt());
     }
 
     @Transactional

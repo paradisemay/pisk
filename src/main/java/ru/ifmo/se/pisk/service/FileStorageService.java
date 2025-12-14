@@ -100,6 +100,19 @@ public class FileStorageService {
         return new FileSystemResource(file);
     }
 
+    public String storeCover(String originalFilename, byte[] data) {
+        String sanitized = sanitizeFilename(originalFilename);
+        String filename = Instant.now().toString().replace(":", "-") + "-" + UUID.randomUUID() + "-" + sanitized;
+        Path destination = root.resolve("covers").resolve(filename);
+        try {
+            Files.createDirectories(destination.getParent());
+            Files.write(destination, data, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            return root.relativize(destination).toString().replace('\\', '/');
+        } catch (IOException ex) {
+            throw new IllegalStateException("Ошибка сохранения обложки", ex);
+        }
+    }
+
     public String sanitizeFilename(String originalFilename) {
         if (!StringUtils.hasText(originalFilename)) {
             return "file";

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -42,6 +43,8 @@ import ru.ifmo.se.pisk.controller.dto.TrackStatusUpdateRequest;
 import ru.ifmo.se.pisk.controller.mapper.ApiMapper;
 import ru.ifmo.se.pisk.domain.TrackStatus;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
+import ru.ifmo.se.pisk.service.AudioMetadataService;
+import ru.ifmo.se.pisk.service.AudioMetadataService.AudioMetadata;
 import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
@@ -62,43 +65,49 @@ public class TrackController {
 
     private final TrackService trackService;
     private final FileStorageService fileStorageService;
+    private final AudioMetadataService audioMetadataService;
 
-    public TrackController(TrackService trackService, FileStorageService fileStorageService) {
+    public TrackController(TrackService trackService, FileStorageService fileStorageService,
+                           AudioMetadataService audioMetadataService) {
         this.trackService = trackService;
         this.fileStorageService = fileStorageService;
+        this.audioMetadataService = audioMetadataService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Загрузить трек", description = "Загружает аудиофайл и сохраняет метаданные трека")
     public ResponseEntity<TrackResponse> upload(@RequestParam Long artistId,
                                                 @RequestParam String name,
-                                                @RequestParam long durationSeconds,
-                                                @RequestParam(required = false) Long albumId,
-                                                @RequestParam(required = false) Long genreId,
+                                                @RequestParam String artistName,
+                                                @RequestParam String genreName,
+                                                @RequestParam(required = false) String albumName,
                                                 @RequestParam(defaultValue = "false") boolean explicit,
                                                 @RequestParam(defaultValue = "false") boolean inoagent,
-                                                @RequestParam(defaultValue = "0") int numberOnAlbum,
                                                 @Parameter(description = "Файл аудио") @RequestParam("file") MultipartFile file) {
-        fileStorageService.validateTrack(file.getOriginalFilename(), file.getContentType(), file.getSize());
-        Supplier<InputStream> supplier = () -> {
-            try {
-                return file.getInputStream();
-            } catch (IOException e) {
-                throw new IllegalStateException("Не удалось прочитать загруженный файл", e);
-            }
-        };
+        fileStorageService.validate(file.getOriginalFilename(), file.getContentType(), file.getSize());
+        byte[] content;
+        try {
+            content = file.getBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Не удалось прочитать загруженный файл", e);
+        }
+        AudioMetadata metadata = audioMetadataService.extract(content, file.getOriginalFilename(), file.getContentType());
+        int trackNumber = metadata.trackNumber() != null ? metadata.trackNumber() : 1;
         TrackUploadCommand command = new TrackUploadCommand(
                 name,
-                durationSeconds,
-                albumId,
-                genreId,
+                artistName,
+                genreName,
+                albumName,
+                metadata.durationSeconds(),
                 explicit,
                 inoagent,
-                numberOnAlbum,
+                trackNumber,
                 file.getContentType(),
-                file.getSize(),
+                content.length,
                 file.getOriginalFilename(),
-                supplier
+                () -> new ByteArrayInputStream(content),
+                metadata.coverData(),
+                metadata.coverContentType()
         );
         var info = trackService.uploadTrack(artistId, command);
         return ResponseEntity.ok(ApiMapper.toTrackResponse(info));
@@ -197,40 +206,33 @@ public class TrackController {
         Resource resource = fileStorageService.load(info.filepath());
         byte[] data = readAllBytes(resource);
         MediaType mediaType = resolveMediaType(resource, info);
+        try {
+            byte[] data = resource.getInputStream().readAllBytes();
+            long contentLength = data.length;
 
-        List<HttpRange> ranges = headers.getRange();
-        if (ranges == null || ranges.isEmpty()) {
-            ByteArrayResource body = new ByteArrayResource(data);
-            return ResponseEntity.ok()
+            List<HttpRange> ranges = headers.getRange();
+            if (ranges == null || ranges.isEmpty()) {
+                return ResponseEntity.ok()
+                        .cacheControl(CacheControl.noCache())
+                        .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                        .contentType(mediaType)
+                        .contentLength(contentLength)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
+                        .body(new ByteArrayResource(data));
+            }
+
+            HttpRange range = ranges.get(0);
+            long start = range.getRangeStart(contentLength);
+            long end = range.getRangeEnd(contentLength);
+            byte[] slice = Arrays.copyOfRange(data, (int) start, (int) end + 1);
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                     .cacheControl(CacheControl.noCache())
                     .header(HttpHeaders.ACCEPT_RANGES, "bytes")
                     .contentType(mediaType)
-                    .contentLength(data.length)
+                    .contentLength(slice.length)
+                    .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + contentLength)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                    .body(body);
-        }
-
-        HttpRange range = ranges.get(0);
-        long contentLength = data.length;
-        long start = range.getRangeStart(contentLength);
-        long end = range.getRangeEnd(contentLength);
-        if (end >= contentLength) {
-            end = contentLength - 1;
-        }
-        byte[] slice = Arrays.copyOfRange(data, (int) start, (int) (end + 1));
-        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                .cacheControl(CacheControl.noCache())
-                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                .contentType(mediaType)
-                .contentLength(slice.length)
-                .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + contentLength)
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                .body(new ByteArrayResource(slice));
-    }
-
-    private byte[] readAllBytes(Resource resource) {
-        try (InputStream is = resource.getInputStream()) {
-            return is.readAllBytes();
+                    .body(new ByteArrayResource(slice));
         } catch (IOException e) {
             throw new IllegalStateException("Не удалось прочитать файл", e);
         }

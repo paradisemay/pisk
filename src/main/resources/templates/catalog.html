@@ -57,6 +57,7 @@
             </div>
             <div class="card-meta" th:text="${track.genreTitle}">Genre</div>
             <div class="card-meta emphasis" th:text="${#numbers.formatDecimal(track.averageRating, 1, 1)}">0.0</div>
+            <div class="card-meta" th:text="${track.formattedDuration}">03:45</div>
             <div class="tags">
                 <span class="tag" th:if="${track.explicit}" th:text="#{track.metadata.explicit}"></span>
                 <span class="tag" th:if="${track.inoagent}" th:text="#{track.metadata.inoagent}"></span>
