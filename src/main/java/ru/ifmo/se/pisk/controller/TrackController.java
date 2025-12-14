@@ -11,6 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.CacheControl;
@@ -39,10 +40,17 @@ import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
+import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
+import ru.ifmo.se.pisk.controller.util.PageRequestFactory;
 
 @RestController
 @RequestMapping("/api/v1/tracks")
 public class TrackController {
+
+    /**
+     * Поля сортировки, доступные через query-параметры sort/direction.
+     */
+    private static final Set<String> SORTABLE_FIELDS = Set.of("uploadedAt", "rating", "rateCount", "playCount", "name");
 
     private final TrackService trackService;
     private final FileStorageService fileStorageService;
@@ -105,13 +113,17 @@ public class TrackController {
     @GetMapping
     public Page<TrackResponse> findTracks(@RequestParam(required = false) Boolean explicit,
                                           @RequestParam(required = false) Boolean inoagent,
-                                          @RequestParam(required = false) String title,
+                                          @RequestParam(required = false, name = "query") String search,
                                           @RequestParam(required = false) Set<Long> genreIds,
-                                          Pageable pageable) {
-        if (title != null || (genreIds != null && !genreIds.isEmpty())) {
-            return trackService.searchTracks(title, genreIds, pageable).map(ApiMapper::toTrackResponse);
-        }
-        return trackService.findTracks(explicit, inoagent, pageable).map(ApiMapper::toTrackResponse);
+                                          @RequestParam(required = false) Long authorId,
+                                          @RequestParam(required = false) TrackStatus status,
+                                          @RequestParam(defaultValue = "uploadedAt") String sort,
+                                          @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+                                          @RequestParam(defaultValue = "0") Integer page,
+                                          @RequestParam(required = false) Integer size) {
+        TrackSearchCriteria criteria = new TrackSearchCriteria(search, genreIds, authorId, status, explicit, inoagent);
+        Pageable pageable = PageRequestFactory.build(page, size, sort, direction, SORTABLE_FIELDS);
+        return trackService.searchTracks(criteria, pageable).map(ApiMapper::toTrackResponse);
     }
 
     @GetMapping("/{trackId}")
@@ -178,4 +190,5 @@ public class TrackController {
         }
         return ContentDisposition.attachment().filename(filename).build().toString();
     }
+
 }
