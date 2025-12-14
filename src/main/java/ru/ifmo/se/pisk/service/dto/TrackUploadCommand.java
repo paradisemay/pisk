@@ -5,15 +5,18 @@ import java.io.InputStream;
 
 public record TrackUploadCommand(
         String name,
+        String artistName,
+        String genreName,
+        String albumName,
         long durationSeconds,
-        Long albumId,
-        Long genreId,
         boolean explicit,
         boolean inoagent,
         int numberOnAlbum,
         String contentType,
         long fileSize,
         String originalFilename,
-        Supplier<InputStream> dataSupplier
+        Supplier<InputStream> dataSupplier,
+        byte[] coverData,
+        String coverContentType
 ) {
 }

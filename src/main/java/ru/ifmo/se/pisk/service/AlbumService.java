@@ -28,6 +28,34 @@ public class AlbumService {
     }
 
     @Transactional
+    public AlbumEntity findOrCreateSimple(String title, GenreEntity genre, boolean explicit, boolean inoagent,
+                                          int trackNumber, String coverPath) {
+        if (!org.springframework.util.StringUtils.hasText(title)) {
+            throw new IllegalArgumentException("Название альбома обязательно");
+        }
+        AlbumEntity existing = albumRepository.findByNameIgnoreCase(title.trim()).orElse(null);
+        if (existing != null) {
+            if (existing.getCoverUrl() == null && coverPath != null) {
+                existing.setCoverUrl(coverPath);
+                albumRepository.save(existing);
+            }
+            return existing;
+        }
+
+        AlbumEntity entity = new AlbumEntity();
+        entity.setName(title.trim());
+        entity.setDescription("Добавлен автоматически при загрузке трека");
+        entity.setGenre(genre);
+        entity.setTrackNumber(Math.max(trackNumber, 1));
+        entity.setExplicit(explicit);
+        entity.setInoagent(inoagent);
+        entity.setCoverUrl(coverPath);
+        entity.setAverageRating(0);
+        entity.setPublicationDate(entity.getUploadDate());
+        return albumRepository.save(entity);
+    }
+
+    @Transactional
     public AlbumInfo createAlbum(Long ownerId, String title, String description, LocalDate releaseDate, Long genreId,
                                  Long labelId, int trackNumber, boolean explicit, boolean inoagent, String coverUrl) {
         userService.requireUser(ownerId);
