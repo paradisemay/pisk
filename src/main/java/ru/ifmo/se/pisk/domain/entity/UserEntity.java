@@ -62,9 +62,6 @@ public class UserEntity {
     @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
     private Set<TrackEntity> tracks = new HashSet<>();
 
-    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
-    private Set<AlbumEntity> albums = new HashSet<>();
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<RatingEntity> ratings = new HashSet<>();
 
@@ -179,14 +176,6 @@ public class UserEntity {
 
     public void setTracks(Set<TrackEntity> tracks) {
         this.tracks = tracks;
-    }
-
-    public Set<AlbumEntity> getAlbums() {
-        return albums;
-    }
-
-    public void setAlbums(Set<AlbumEntity> albums) {
-        this.albums = albums;
     }
 
     public Set<RatingEntity> getRatings() {
