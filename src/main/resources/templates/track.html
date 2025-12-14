@@ -19,7 +19,7 @@
         <div class="meta-grid">
             <div>
                 <p class="muted" th:text="#{track.duration}"></p>
-                <strong th:text="${track.durationSeconds} + ' c'">120</strong>
+                <strong th:text="${track.formattedDuration}">02:00</strong>
             </div>
             <div>
                 <p class="muted" th:text="#{track.metadata.genre}"></p>
