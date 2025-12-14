@@ -25,6 +25,8 @@ import ru.ifmo.se.pisk.repository.TrackRepository;
 import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
+import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
+import ru.ifmo.se.pisk.repository.specification.TrackSpecifications;
 
 @Service
 public class TrackService {
@@ -213,28 +215,13 @@ public class TrackService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TrackInfo> findTracks(Boolean explicit, Boolean inoagent, Pageable pageable) {
-        Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
-        if (explicit != null) {
-            spec = spec.and((root, query, builder) -> builder.equal(root.get("explicit"), explicit));
-        }
-        if (inoagent != null) {
-            spec = spec.and((root, query, builder) -> builder.equal(root.get("inoagent"), inoagent));
-        }
-        return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<TrackInfo> searchTracks(String title, Set<Long> genreIds, Pageable pageable) {
-        Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
-        if (title != null && !title.isBlank()) {
-            spec = spec.and((root, query, builder) -> builder.like(builder.lower(root.get("name")), "%" + title.toLowerCase() + "%"));
-        }
-        if (genreIds != null && !genreIds.isEmpty()) {
-            spec = spec.and((root, query, builder) -> {
-                return root.get("genre").get("id").in(genreIds);
-            });
-        }
+    public Page<TrackInfo> searchTracks(TrackSearchCriteria criteria, Pageable pageable) {
+        Specification<TrackEntity> spec = Specification.where(TrackSpecifications.fullTextSearch(criteria.query()))
+                .and(TrackSpecifications.hasGenres(criteria.genreIds()))
+                .and(TrackSpecifications.hasAuthor(criteria.authorId()))
+                .and(TrackSpecifications.hasStatus(criteria.status()))
+                .and(TrackSpecifications.isExplicit(criteria.explicit()))
+                .and(TrackSpecifications.isInoagent(criteria.inoagent()));
         return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
     }
 }
