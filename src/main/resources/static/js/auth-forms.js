@@ -6,10 +6,28 @@
         if (!input) {
             return;
         }
+
+        const showLabel = button.dataset.showLabel || 'Показать';
+        const hideLabel = button.dataset.hideLabel || 'Скрыть';
+        const eyeOpenIcon = button.querySelector('[data-eye-open]');
+        const eyeClosedIcon = button.querySelector('[data-eye-closed]');
+
+        const setVisibility = (visible) => {
+            input.setAttribute('type', visible ? 'text' : 'password');
+            button.setAttribute('aria-label', visible ? hideLabel : showLabel);
+            button.dataset.visible = visible ? 'true' : 'false';
+
+            if (eyeOpenIcon && eyeClosedIcon) {
+                eyeOpenIcon.classList.toggle('hidden', !visible);
+                eyeClosedIcon.classList.toggle('hidden', visible);
+            }
+        };
+
+        setVisibility(false);
+
         button.addEventListener('click', () => {
-            const isHidden = input.getAttribute('type') === 'password';
-            input.setAttribute('type', isHidden ? 'text' : 'password');
-            button.textContent = isHidden ? button.dataset.hideLabel || 'Скрыть' : button.dataset.showLabel || 'Показать';
+            const isCurrentlyHidden = input.getAttribute('type') === 'password';
+            setVisibility(isCurrentlyHidden);
         });
     });
 })();
