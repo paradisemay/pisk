@@ -1,5 +1,8 @@
 package ru.ifmo.se.pisk.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +34,7 @@ import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 
 @RestController
+@Tag(name = "Tracks", description = "Управление треками и их статусами")
 @RequestMapping("/api/v1/tracks")
 public class TrackController {
 
@@ -43,6 +47,7 @@ public class TrackController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Загрузить трек", description = "Загружает аудиофайл и сохраняет метаданные трека")
     public ResponseEntity<TrackResponse> upload(@RequestParam Long artistId,
                                                 @RequestParam String name,
                                                 @RequestParam long durationSeconds,
@@ -51,7 +56,7 @@ public class TrackController {
                                                 @RequestParam(defaultValue = "false") boolean explicit,
                                                 @RequestParam(defaultValue = "false") boolean inoagent,
                                                 @RequestParam(defaultValue = "0") int numberOnAlbum,
-                                                @RequestParam("file") MultipartFile file) {
+                                                @Parameter(description = "Файл аудио") @RequestParam("file") MultipartFile file) {
         Supplier<InputStream> supplier = () -> {
             try {
                 return file.getInputStream();
@@ -77,39 +82,42 @@ public class TrackController {
     }
 
     @PatchMapping("/{trackId}/status")
+    @Operation(summary = "Изменить статус", description = "Обновляет статус трека модератором")
     public TrackResponse updateStatus(@PathVariable Long trackId, @Valid @RequestBody TrackStatusUpdateRequest request) {
         return ApiMapper.toTrackResponse(trackService.changeStatus(trackId, request.status(), request.moderatorId()));
     }
 
     @PostMapping("/{trackId}/ratings")
+    @Operation(summary = "Поставить оценку", description = "Сохраняет оценку и комментарий пользователя")
     public RatingResponse rateTrack(@PathVariable Long trackId, @Valid @RequestBody CreateRatingRequest request) {
         RatingCommand command = new RatingCommand(trackId, request.userId(), request.value(), request.comment());
         return ApiMapper.toRatingResponse(trackService.rateTrack(command));
     }
 
     @PostMapping("/{trackId}/plays")
+    @Operation(summary = "Зарегистрировать прослушивание", description = "Увеличивает счётчик прослушиваний")
     public TrackResponse registerPlay(@PathVariable Long trackId) {
         return ApiMapper.toTrackResponse(trackService.incrementPlayCount(trackId));
     }
 
     @GetMapping
+    @Operation(summary = "Список треков", description = "Возвращает треки с фильтрами и пагинацией")
     public Page<TrackResponse> findTracks(@RequestParam(required = false) Boolean explicit,
                                           @RequestParam(required = false) Boolean inoagent,
                                           @RequestParam(required = false) String title,
                                           @RequestParam(required = false) Set<Long> genreIds,
                                           Pageable pageable) {
-        if (title != null || (genreIds != null && !genreIds.isEmpty())) {
-            return trackService.searchTracks(title, genreIds, pageable).map(ApiMapper::toTrackResponse);
-        }
-        return trackService.findTracks(explicit, inoagent, pageable).map(ApiMapper::toTrackResponse);
+        return trackService.findTracks(explicit, inoagent, title, genreIds, pageable).map(ApiMapper::toTrackResponse);
     }
 
     @GetMapping("/{trackId}")
+    @Operation(summary = "Получить трек", description = "Возвращает карточку трека по идентификатору")
     public TrackResponse getTrack(@PathVariable Long trackId) {
         return ApiMapper.toTrackResponse(trackService.getTrackInfo(trackId));
     }
 
     @GetMapping(value = "/{trackId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Скачать файл", description = "Возвращает бинарные данные аудиофайла")
     public ResponseEntity<Resource> download(@PathVariable Long trackId) {
         var info = trackService.getTrackInfo(trackId);
         Resource resource = fileStorageService.load(info.filepath());

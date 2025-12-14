@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{catalog.title}">Catalog</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<header class="site-header">
+    <div class="brand" th:text="#{app.title}">Pisk</div>
+    <nav class="nav">
+        <a th:href="@{/catalog}" th:text="#{nav.catalog}"></a>
+        <a th:href="@{/upload}" th:text="#{nav.upload}"></a>
+    </nav>
+    <div class="lang-switch">
+        <a th:href="${langLinks['ru']}" th:text="#{nav.lang.ru}"></a>
+        <span>/</span>
+        <a th:href="${langLinks['en']}" th:text="#{nav.lang.en}"></a>
+    </div>
+</header>
+<main class="container">
+    <section class="filters">
+        <h2 th:text="#{catalog.filters.title}">Filters</h2>
+        <form method="get" th:action="@{/catalog}" class="filter-form">
+            <input type="text" name="title" th:value="${titleQuery}" th:placeholder="#{catalog.search.placeholder}">
+            <label>
+                <input type="checkbox" name="explicit" value="true" th:checked="${explicitFilter}"/>
+                <span th:text="#{catalog.filter.explicit}">Explicit</span>
+            </label>
+            <label>
+                <input type="checkbox" name="inoagent" value="true" th:checked="${inoagentFilter}"/>
+                <span th:text="#{catalog.filter.inoagent}">Foreign</span>
+            </label>
+            <label th:text="#{catalog.filter.genres}">Genres</label>
+            <select name="genreId" multiple>
+                <option th:each="genre : ${genres}" th:value="${genre.id}" th:text="${genre.title}" th:selected="${genreFilter != null and genreFilter.contains(genre.id)}"></option>
+            </select>
+            <button type="submit" th:text="#{catalog.filter.apply}">Apply</button>
+        </form>
+    </section>
+
+    <section class="grid" th:if="${!tracks.isEmpty()}">
+        <article class="card" th:each="track : ${tracks}">
+            <div class="card-title">
+                <a th:href="@{/tracks/{id}(id=${track.id})}" th:text="${track.name}">Track</a>
+            </div>
+            <div class="card-meta">
+                <span th:text="#{catalog.track.by}">by</span>
+                <a th:href="@{/authors/{id}(id=${track.authorId})}" th:text="${track.authorName}">Author</a>
+            </div>
+            <div class="card-meta" th:text="${track.genreTitle}">Genre</div>
+            <div class="card-meta" th:text="${#numbers.formatDecimal(track.averageRating, 1, 1)}">0.0</div>
+            <div class="tags">
+                <span class="tag" th:if="${track.explicit}" th:text="#{track.metadata.explicit}"></span>
+                <span class="tag" th:if="${track.inoagent}" th:text="#{track.metadata.inoagent}"></span>
+            </div>
+        </article>
+    </section>
+    <div class="empty" th:if="${tracks.isEmpty()}" th:text="#{catalog.no-results}">No tracks</div>
+
+    <div class="pagination" th:if="${tracks.totalPages > 1}">
+        <a th:if="${tracks.hasPrevious()}"
+           th:href="@{/catalog(page=${tracks.number-1},size=${tracks.size},title=${titleQuery},explicit=${explicitFilter},inoagent=${inoagentFilter},genreId=${genreFilter})}"
+           th:text="#{catalog.pagination.prev}"></a>
+        <span th:text="${tracks.number + 1} + ' / ' + ${tracks.totalPages}"></span>
+        <a th:if="${tracks.hasNext()}"
+           th:href="@{/catalog(page=${tracks.number+1},size=${tracks.size},title=${titleQuery},explicit=${explicitFilter},inoagent=${inoagentFilter},genreId=${genreFilter})}"
+           th:text="#{catalog.pagination.next}"></a>
+    </div>
+</main>
+</body>
+</html>

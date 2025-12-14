@@ -214,6 +214,11 @@ public class TrackService {
 
     @Transactional(readOnly = true)
     public Page<TrackInfo> findTracks(Boolean explicit, Boolean inoagent, Pageable pageable) {
+        return findTracks(explicit, inoagent, null, null, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TrackInfo> findTracks(Boolean explicit, Boolean inoagent, String title, Set<Long> genreIds, Pageable pageable) {
         Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
         if (explicit != null) {
             spec = spec.and((root, query, builder) -> builder.equal(root.get("explicit"), explicit));
@@ -221,20 +226,18 @@ public class TrackService {
         if (inoagent != null) {
             spec = spec.and((root, query, builder) -> builder.equal(root.get("inoagent"), inoagent));
         }
-        return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<TrackInfo> searchTracks(String title, Set<Long> genreIds, Pageable pageable) {
-        Specification<TrackEntity> spec = Specification.where((root, query, builder) -> builder.conjunction());
         if (title != null && !title.isBlank()) {
             spec = spec.and((root, query, builder) -> builder.like(builder.lower(root.get("name")), "%" + title.toLowerCase() + "%"));
         }
         if (genreIds != null && !genreIds.isEmpty()) {
-            spec = spec.and((root, query, builder) -> {
-                return root.get("genre").get("id").in(genreIds);
-            });
+            spec = spec.and((root, query, builder) -> root.get("genre").get("id").in(genreIds));
         }
         return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TrackInfo> findByAuthor(Long authorId, Pageable pageable) {
+        UserEntity author = userService.requireUser(authorId);
+        return trackRepository.findByAuthor(author, pageable).map(DomainMapper::toTrackInfo);
     }
 }
