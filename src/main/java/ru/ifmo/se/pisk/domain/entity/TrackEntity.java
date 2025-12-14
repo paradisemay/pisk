@@ -72,6 +72,12 @@ public class TrackEntity {
     @Column(name = "filepath", nullable = false, length = 255)
     private String storagePath;
 
+    @Column(name = "content_type", length = 255)
+    private String contentType;
+
+    @Column(name = "original_filename", length = 255)
+    private String originalFilename;
+
     @Column(name = "number_on_album")
     private int numberOnAlbum;
 
@@ -206,6 +212,22 @@ public class TrackEntity {
 
     public void setStoragePath(String storagePath) {
         this.storagePath = storagePath;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getOriginalFilename() {
+        return originalFilename;
+    }
+
+    public void setOriginalFilename(String originalFilename) {
+        this.originalFilename = originalFilename;
     }
 
     public long getFileSize() {

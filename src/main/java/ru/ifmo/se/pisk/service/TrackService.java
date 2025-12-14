@@ -83,9 +83,10 @@ public class TrackService {
             throw new IllegalArgumentException("Номер трека превышает размер альбома");
         }
         GenreEntity genre = genreService.requireGenre(command.genreId());
+        String sanitizedName = fileStorageService.sanitizeFilename(command.originalFilename());
         String storagePath;
         try (InputStream inputStream = command.dataSupplier().get()) {
-            storagePath = fileStorageService.storeTrack(artistId, command.originalFilename(), inputStream);
+            storagePath = fileStorageService.storeTrack(artistId, sanitizedName, inputStream);
         } catch (Exception ex) {
             throw new IllegalStateException("Не удалось сохранить файл трека", ex);
         }
@@ -97,6 +98,8 @@ public class TrackService {
         entity.setDurationSeconds(command.durationSeconds());
         entity.setStoragePath(storagePath);
         entity.setFileSize(command.fileSize());
+        entity.setContentType(command.contentType());
+        entity.setOriginalFilename(sanitizedName);
         entity.setUploadedAt(Instant.now());
         entity.setNumberOnAlbum(command.numberOnAlbum());
         entity.setExplicit(command.explicit());
