@@ -35,8 +35,8 @@ public class UserService {
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("Email уже используется");
         }
-        if (rawPassword == null || rawPassword.length() < 6) {
-            throw new IllegalArgumentException("Пароль должен содержать не менее 6 символов");
+        if (rawPassword == null || rawPassword.length() < 8) {
+            throw new IllegalArgumentException("Пароль должен содержать не менее 8 символов");
         }
         UserEntity entity = new UserEntity();
         entity.setUsername(username);
@@ -67,5 +67,17 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<UserProfile> findProfile(Long id) {
         return userRepository.findById(id).map(DomainMapper::toUserProfile);
+    }
+
+    @Transactional
+    public void updatePassword(Long userId, String newPassword) {
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("Пароль должен содержать не менее 8 символов");
+        }
+        UserEntity entity = requireUser(userId);
+        String newSalt = passwordEncoder.generateSalt();
+        entity.setPasswordSalt(newSalt);
+        entity.setPasswordHash(passwordEncoder.encodeWithSalt(newPassword, newSalt));
+        entity.setUpdatedAt(Instant.now());
     }
 }

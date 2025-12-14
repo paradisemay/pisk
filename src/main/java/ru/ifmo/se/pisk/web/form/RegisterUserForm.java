@@ -20,6 +20,10 @@ public class RegisterUserForm {
     @Size(min = 8, max = 128)
     private String password;
 
+    @NotBlank
+    @Size(min = 8, max = 128)
+    private String confirmPassword;
+
     @NotNull
     private UserRole role = UserRole.USER;
 
@@ -45,6 +49,14 @@ public class RegisterUserForm {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 
     public UserRole getRole() {

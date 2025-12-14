@@ -218,6 +218,20 @@ h1 { margin: 8px 0 6px; }
     font-size: 1rem;
 }
 
+.password-field {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.password-field input { flex: 1; }
+
+.ghost.tiny {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
 .filter-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 
 .filter-form label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); }

@@ -65,7 +65,7 @@ class UserServiceTest {
     void rejectsShortPassword() {
         assertThatThrownBy(() -> userService.registerUser("user", "email@example.com", "123", UserRole.USER))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("не менее 6");
+                .hasMessageContaining("не менее 8");
 
         verifyNoInteractions(auditService);
     }
