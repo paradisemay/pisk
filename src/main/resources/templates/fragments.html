@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${title}">Pisk</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<header th:fragment="nav">
+    <nav class="top-nav" aria-label="Main navigation">
+        <a class="logo" th:href="@{/}">
+            <span aria-label="logo">🎧</span> <span th:text="#{app.title}"></span>
+        </a>
+        <div class="nav-links">
+            <a th:href="@{/catalog}" th:text="#{nav.catalog}" aria-label="Catalog link"></a>
+            <a th:href="@{/upload}" th:text="#{nav.upload}" aria-label="Upload link"></a>
+            <a th:href="@{/admin}" th:text="#{nav.admin}" aria-label="Admin link"></a>
+        </div>
+        <div class="lang-switch" aria-label="Language switcher">
+            <a th:href="@{${#httpServletRequest.requestURI}(lang='ru') }" th:text="#{nav.lang.ru}"></a>
+            <span>|</span>
+            <a th:href="@{${#httpServletRequest.requestURI}(lang='en') }" th:text="#{nav.lang.en}"></a>
+        </div>
+    </nav>
+</header>
+</body>
+</html>

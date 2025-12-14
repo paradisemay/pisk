@@ -1,5 +1,7 @@
 package ru.ifmo.se.pisk.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +13,7 @@ import ru.ifmo.se.pisk.controller.mapper.ApiMapper;
 import ru.ifmo.se.pisk.service.AlbumService;
 
 @RestController
+@Tag(name = "Albums", description = "Управление альбомами")
 @RequestMapping("/api/v1/albums")
 public class AlbumController {
 
@@ -21,6 +24,7 @@ public class AlbumController {
     }
 
     @PostMapping
+    @Operation(summary = "Создать альбом", description = "Создаёт альбом и возвращает его карточку")
     public AlbumResponse create(@Valid @RequestBody CreateAlbumRequest request) {
         return ApiMapper.toAlbumResponse(
                 albumService.createAlbum(
