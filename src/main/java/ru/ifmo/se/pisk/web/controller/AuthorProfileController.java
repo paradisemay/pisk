@@ -47,7 +47,6 @@ public class AuthorProfileController {
                     info.authorId(),
                     author.getUsername(),
                     info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-",
-                    info.coverPath() != null ? "/api/v1/tracks/" + info.id() + "/cover" : null,
                     info.explicit(),
                     info.inoagent(),
                     info.averageRating(),

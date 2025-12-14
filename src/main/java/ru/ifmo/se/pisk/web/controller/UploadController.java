@@ -60,13 +60,6 @@ public class UploadController {
                 throw new IllegalStateException("Не удалось прочитать файл", e);
             }
         };
-        Supplier<InputStream> coverSupplier = form.getCover() != null && !form.getCover().isEmpty() ? () -> {
-            try {
-                return form.getCover().getInputStream();
-            } catch (IOException e) {
-                throw new IllegalStateException("Не удалось прочитать файл обложки", e);
-            }
-        } : null;
         TrackUploadCommand command = new TrackUploadCommand(
                 form.getName(),
                 form.getDurationSeconds(),
@@ -78,11 +71,7 @@ public class UploadController {
                 form.getFile().getContentType(),
                 form.getFile().getSize(),
                 form.getFile().getOriginalFilename(),
-                dataSupplier,
-                form.getCover() != null ? form.getCover().getSize() : null,
-                form.getCover() != null ? form.getCover().getContentType() : null,
-                form.getCover() != null ? form.getCover().getOriginalFilename() : null,
-                coverSupplier
+                dataSupplier
         );
         var info = trackService.uploadTrack(form.getArtistId(), command);
         redirectAttributes.addFlashAttribute("uploadSuccess", true);

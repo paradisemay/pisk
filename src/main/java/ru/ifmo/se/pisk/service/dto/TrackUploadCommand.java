@@ -14,10 +14,6 @@ public record TrackUploadCommand(
         String contentType,
         long fileSize,
         String originalFilename,
-        Supplier<InputStream> dataSupplier,
-        Long coverSize,
-        String coverContentType,
-        String coverOriginalFilename,
-        Supplier<InputStream> coverSupplier
+        Supplier<InputStream> dataSupplier
 ) {
 }

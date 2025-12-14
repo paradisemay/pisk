@@ -10,7 +10,6 @@ public record TrackResponse(
         Long artistId,
         Long genreId,
         String filepath,
-        String coverPath,
         int numberOnAlbum,
         boolean explicit,
         boolean inoagent,

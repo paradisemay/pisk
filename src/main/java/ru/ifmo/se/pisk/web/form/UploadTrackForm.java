@@ -34,8 +34,6 @@ public class UploadTrackForm {
     @NotNull
     private MultipartFile file;
 
-    private MultipartFile cover;
-
     public Long getArtistId() {
         return artistId;
     }
@@ -106,13 +104,5 @@ public class UploadTrackForm {
 
     public void setFile(MultipartFile file) {
         this.file = file;
-    }
-
-    public MultipartFile getCover() {
-        return cover;
-    }
-
-    public void setCover(MultipartFile cover) {
-        this.cover = cover;
     }
 }

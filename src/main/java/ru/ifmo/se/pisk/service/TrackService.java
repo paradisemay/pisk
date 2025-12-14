@@ -97,23 +97,8 @@ public class TrackService {
         entity.setDurationSeconds(command.durationSeconds());
         entity.setFileSize(command.fileSize());
         entity.setStoragePath(storagePath);
-        entity.setContentType(command.contentType());
-        entity.setOriginalFilename(command.originalFilename());
         entity.setUploadedAt(java.time.Instant.now());
         TrackEntity saved = trackRepository.save(entity);
-
-        Optional<String> extractedCover = fileStorageService.extractEmbeddedCover(fileStorageService.resolve(storagePath))
-                .flatMap(data -> fileStorageService.storeCover(saved.getId(), data));
-
-        if (extractedCover.isEmpty() && command.coverSupplier() != null) {
-            fileStorageService.validateCover(command.coverOriginalFilename(), command.coverContentType(), command.coverSize());
-            extractedCover = fileStorageService.storeCover(saved.getId(), command.coverOriginalFilename(), command.coverContentType(), command.coverSupplier().get());
-        }
-
-        extractedCover.ifPresent(saved::setCoverPath);
-        if (extractedCover.isPresent()) {
-            trackRepository.save(saved);
-        }
         return DomainMapper.toTrackInfo(saved);
     }
 

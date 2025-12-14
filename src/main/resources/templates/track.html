@@ -6,9 +6,6 @@
 <main class="page">
     <section class="card detail">
         <div class="detail-header">
-            <div class="cover-large" th:if="${track.coverUrl}">
-                <img th:src="${track.coverUrl}" alt="Cover">
-            </div>
             <div>
                 <p class="eyebrow" th:text="#{track.metadata.genre} + ' · ' + ${track.genreTitle}">Жанр</p>
                 <h1 th:text="${track.name}">Track title</h1>

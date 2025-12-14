@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourceRegion;
@@ -78,8 +76,7 @@ public class TrackController {
                                                 @RequestParam(defaultValue = "false") boolean explicit,
                                                 @RequestParam(defaultValue = "false") boolean inoagent,
                                                 @RequestParam(defaultValue = "0") int numberOnAlbum,
-                                                @Parameter(description = "Файл аудио") @RequestParam("file") MultipartFile file,
-                                                @Parameter(description = "Обложка (опционально)") @RequestParam(value = "cover", required = false) MultipartFile cover) {
+                                                @Parameter(description = "Файл аудио") @RequestParam("file") MultipartFile file) {
         fileStorageService.validate(file.getOriginalFilename(), file.getContentType(), file.getSize());
         Supplier<InputStream> supplier = () -> {
             try {
@@ -88,13 +85,6 @@ public class TrackController {
                 throw new IllegalStateException("Не удалось прочитать загруженный файл", e);
             }
         };
-        Supplier<InputStream> coverSupplier = cover != null && !cover.isEmpty() ? () -> {
-            try {
-                return cover.getInputStream();
-            } catch (IOException e) {
-                throw new IllegalStateException("Не удалось прочитать файл обложки", e);
-            }
-        } : null;
         TrackUploadCommand command = new TrackUploadCommand(
                 name,
                 durationSeconds,
@@ -106,30 +96,10 @@ public class TrackController {
                 file.getContentType(),
                 file.getSize(),
                 file.getOriginalFilename(),
-                supplier,
-                cover != null ? cover.getSize() : null,
-                cover != null ? cover.getContentType() : null,
-                cover != null ? cover.getOriginalFilename() : null,
-                coverSupplier
+                supplier
         );
         var info = trackService.uploadTrack(artistId, command);
         return ResponseEntity.ok(ApiMapper.toTrackResponse(info));
-    }
-
-    @GetMapping("/{trackId}/cover")
-    public ResponseEntity<Resource> cover(@PathVariable Long trackId) {
-        TrackEntity track = trackService.requireTrack(trackId);
-        if (track.getCoverPath() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        Resource resource = fileStorageService.load(track.getCoverPath());
-        MediaType mediaType = MediaTypeFactory.getMediaType(track.getCoverPath()).orElse(MediaType.IMAGE_JPEG);
-        String filename = Paths.get(track.getCoverPath()).getFileName().toString();
-        return ResponseEntity.ok()
-                .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePublic())
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(filename).build().toString())
-                .contentType(mediaType)
-                .body(resource);
     }
 
     @GetMapping("/{trackId}/stream")

@@ -78,9 +78,6 @@ public class TrackEntity {
     @Column(name = "original_filename", length = 255)
     private String originalFilename;
 
-    @Column(name = "cover_path", length = 255)
-    private String coverPath;
-
     @Column(name = "number_on_album")
     private int numberOnAlbum;
 
@@ -231,14 +228,6 @@ public class TrackEntity {
 
     public void setOriginalFilename(String originalFilename) {
         this.originalFilename = originalFilename;
-    }
-
-    public String getCoverPath() {
-        return coverPath;
-    }
-
-    public void setCoverPath(String coverPath) {
-        this.coverPath = coverPath;
     }
 
     public long getFileSize() {
