@@ -1,5 +1,8 @@
 package ru.ifmo.se.pisk.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.InputStream;
 import java.io.IOException;
@@ -44,6 +47,7 @@ import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
 import ru.ifmo.se.pisk.controller.util.PageRequestFactory;
 
 @RestController
+@Tag(name = "Tracks", description = "Управление треками и их статусами")
 @RequestMapping("/api/v1/tracks")
 public class TrackController {
 
@@ -61,6 +65,7 @@ public class TrackController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Загрузить трек", description = "Загружает аудиофайл и сохраняет метаданные трека")
     public ResponseEntity<TrackResponse> upload(@RequestParam Long artistId,
                                                 @RequestParam String name,
                                                 @RequestParam long durationSeconds,
@@ -69,7 +74,7 @@ public class TrackController {
                                                 @RequestParam(defaultValue = "false") boolean explicit,
                                                 @RequestParam(defaultValue = "false") boolean inoagent,
                                                 @RequestParam(defaultValue = "0") int numberOnAlbum,
-                                                @RequestParam("file") MultipartFile file) {
+                                                @Parameter(description = "Файл аудио") @RequestParam("file") MultipartFile file) {
         Supplier<InputStream> supplier = () -> {
             try {
                 return file.getInputStream();
@@ -95,22 +100,26 @@ public class TrackController {
     }
 
     @PatchMapping("/{trackId}/status")
+    @Operation(summary = "Изменить статус", description = "Обновляет статус трека модератором")
     public TrackResponse updateStatus(@PathVariable Long trackId, @Valid @RequestBody TrackStatusUpdateRequest request) {
         return ApiMapper.toTrackResponse(trackService.changeStatus(trackId, request.status(), request.moderatorId()));
     }
 
     @PostMapping("/{trackId}/ratings")
+    @Operation(summary = "Поставить оценку", description = "Сохраняет оценку и комментарий пользователя")
     public RatingResponse rateTrack(@PathVariable Long trackId, @Valid @RequestBody CreateRatingRequest request) {
         RatingCommand command = new RatingCommand(trackId, request.userId(), request.value(), request.comment());
         return ApiMapper.toRatingResponse(trackService.rateTrack(command));
     }
 
     @PostMapping("/{trackId}/plays")
+    @Operation(summary = "Зарегистрировать прослушивание", description = "Увеличивает счётчик прослушиваний")
     public TrackResponse registerPlay(@PathVariable Long trackId) {
         return ApiMapper.toTrackResponse(trackService.incrementPlayCount(trackId));
     }
 
     @GetMapping
+    @Operation(summary = "Список треков", description = "Возвращает треки с фильтрами и пагинацией")
     public Page<TrackResponse> findTracks(@RequestParam(required = false) Boolean explicit,
                                           @RequestParam(required = false) Boolean inoagent,
                                           @RequestParam(required = false, name = "query") String search,
@@ -127,12 +136,14 @@ public class TrackController {
     }
 
     @GetMapping("/{trackId}")
+    @Operation(summary = "Получить трек", description = "Возвращает карточку трека по идентификатору")
     public TrackResponse getTrack(@PathVariable Long trackId) {
         return ApiMapper.toTrackResponse(trackService.getTrackInfo(trackId));
     }
 
-    @GetMapping("/{trackId}/file")
-    public ResponseEntity<ResourceRegion> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
+    @GetMapping(value = "/{trackId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @Operation(summary = "Скачать файл", description = "Возвращает бинарные данные аудиофайла")
+    public ResponseEntity<Resource> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
         var info = trackService.getTrackInfo(trackId);
         Resource resource = fileStorageService.load(info.filepath());
         MediaType mediaType = resolveMediaType(resource, info);

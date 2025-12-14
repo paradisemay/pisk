@@ -1,5 +1,7 @@
 package ru.ifmo.se.pisk.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import ru.ifmo.se.pisk.service.ComplaintService;
 import ru.ifmo.se.pisk.service.dto.ComplaintDecisionCommand;
 
 @RestController
+@Tag(name = "Complaints", description = "Жалобы на контент")
 @RequestMapping("/api/v1/complaints")
 public class ComplaintController {
 
@@ -27,17 +30,20 @@ public class ComplaintController {
     }
 
     @PostMapping
+    @Operation(summary = "Оставить жалобу", description = "Создаёт жалобу на трек")
     public ComplaintResponse create(@Valid @RequestBody CreateComplaintRequest request) {
         return ApiMapper.toComplaintResponse(complaintService.createComplaint(request.trackId(), request.complainantId(), request.reason()));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Решить жалобу", description = "Обновляет статус жалобы и комментарий модератора")
     public ComplaintResponse resolve(@PathVariable Long id, @Valid @RequestBody ResolveComplaintRequest request) {
         ComplaintDecisionCommand command = new ComplaintDecisionCommand(id, request.moderatorId(), request.status(), request.note());
         return ApiMapper.toComplaintResponse(complaintService.decideComplaint(command));
     }
 
     @GetMapping("/open")
+    @Operation(summary = "Открытые жалобы", description = "Возвращает список открытых жалоб")
     public List<ComplaintResponse> listOpen() {
         return complaintService.listOpenComplaints().stream().map(ApiMapper::toComplaintResponse).toList();
     }

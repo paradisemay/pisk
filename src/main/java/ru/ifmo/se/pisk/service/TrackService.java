@@ -227,4 +227,10 @@ public class TrackService {
                 .and(TrackSpecifications.isInoagent(criteria.inoagent()));
         return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
     }
+
+    @Transactional(readOnly = true)
+    public Page<TrackInfo> findByAuthor(Long authorId, Pageable pageable) {
+        UserEntity author = userService.requireUser(authorId);
+        return trackRepository.findByAuthor(author, pageable).map(DomainMapper::toTrackInfo);
+    }
 }
