@@ -1,8 +1,10 @@
 package ru.ifmo.se.pisk.service;
 
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AuditAction;
@@ -13,6 +15,7 @@ import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.UserRepository;
 import ru.ifmo.se.pisk.security.Sha384PasswordEncoder;
+import ru.ifmo.se.pisk.service.FileStorageService;
 
 @Service
 public class UserService {
@@ -20,11 +23,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final Sha384PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final FileStorageService fileStorageService;
 
-    public UserService(UserRepository userRepository, Sha384PasswordEncoder passwordEncoder, AuditService auditService) {
+    public UserService(UserRepository userRepository,
+                       Sha384PasswordEncoder passwordEncoder,
+                       AuditService auditService,
+                       FileStorageService fileStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -79,5 +87,22 @@ public class UserService {
         entity.setPasswordSalt(newSalt);
         entity.setPasswordHash(passwordEncoder.encodeWithSalt(newPassword, newSalt));
         entity.setUpdatedAt(Instant.now());
+    }
+
+    @Transactional
+    public String updateAvatar(Long userId,
+                               String originalFilename,
+                               String contentType,
+                               long fileSize,
+                               Supplier<InputStream> dataSupplier) {
+        if (contentType == null) {
+            throw new IllegalArgumentException("Не удалось определить тип файла");
+        }
+        fileStorageService.validateAvatar(originalFilename, contentType, fileSize);
+        UserEntity entity = requireUser(userId);
+        String storagePath = fileStorageService.storeAvatar(userId, originalFilename, dataSupplier.get());
+        entity.setAvatarPath(storagePath);
+        entity.setUpdatedAt(Instant.now());
+        return storagePath;
     }
 }

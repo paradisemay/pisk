@@ -7,6 +7,7 @@ public record UserProfile(
         Long id,
         String username,
         String email,
+        String avatarPath,
         UserRole role,
         UserStatus status,
         Instant createdAt,

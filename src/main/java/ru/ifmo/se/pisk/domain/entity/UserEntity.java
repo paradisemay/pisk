@@ -36,6 +36,9 @@ public class UserEntity {
     @Column(name = "password_salt", nullable = false, length = 64)
     private String passwordSalt;
 
+    @Column(name = "avatar_path", length = 255)
+    private String avatarPath;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private UserRole role = UserRole.USER;
@@ -112,6 +115,14 @@ public class UserEntity {
 
     public void setPasswordSalt(String passwordSalt) {
         this.passwordSalt = passwordSalt;
+    }
+
+    public String getAvatarPath() {
+        return avatarPath;
+    }
+
+    public void setAvatarPath(String avatarPath) {
+        this.avatarPath = avatarPath;
     }
 
     public UserRole getRole() {

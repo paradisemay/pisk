@@ -30,6 +30,7 @@ public final class DomainMapper {
                 entity.getId(),
                 entity.getUsername(),
                 entity.getEmail(),
+                entity.getAvatarPath(),
                 entity.getRole(),
                 entity.getStatus(),
                 entity.getCreatedAt(),

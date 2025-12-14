@@ -19,12 +19,14 @@ import ru.ifmo.se.pisk.domain.UserStatus;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.repository.UserRepository;
 import ru.ifmo.se.pisk.security.Sha384PasswordEncoder;
+import ru.ifmo.se.pisk.service.FileStorageService;
 
 class UserServiceTest {
 
     private UserRepository userRepository;
     private AuditService auditService;
     private TestPasswordEncoder passwordEncoder;
+    private FileStorageService fileStorageService;
     private UserService userService;
 
     @BeforeEach
@@ -32,7 +34,8 @@ class UserServiceTest {
         userRepository = mock(UserRepository.class);
         auditService = mock(AuditService.class);
         passwordEncoder = new TestPasswordEncoder("pepper", "fixedSalt");
-        userService = new UserService(userRepository, passwordEncoder, auditService);
+        fileStorageService = mock(FileStorageService.class);
+        userService = new UserService(userRepository, passwordEncoder, auditService, fileStorageService);
     }
 
     @Test

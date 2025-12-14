@@ -27,6 +27,7 @@ public final class ApiMapper {
                 profile.id(),
                 profile.username(),
                 profile.email(),
+                profile.avatarPath(),
                 profile.role(),
                 profile.status(),
                 profile.createdAt(),

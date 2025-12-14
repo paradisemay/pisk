@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Public static resources
                         .requestMatchers(
-                                "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
+                                "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico", "/storage/**"
                         ).permitAll()
 
                         // Error page and default UI CSS must be public

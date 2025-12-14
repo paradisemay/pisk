@@ -4,14 +4,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.nio.file.Path;
-import java.util.List;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -77,7 +79,7 @@ public class TrackController {
                                                 @RequestParam(defaultValue = "false") boolean inoagent,
                                                 @RequestParam(defaultValue = "0") int numberOnAlbum,
                                                 @Parameter(description = "Файл аудио") @RequestParam("file") MultipartFile file) {
-        fileStorageService.validate(file.getOriginalFilename(), file.getContentType(), file.getSize());
+        fileStorageService.validateTrack(file.getOriginalFilename(), file.getContentType(), file.getSize());
         Supplier<InputStream> supplier = () -> {
             try {
                 return file.getInputStream();
@@ -190,35 +192,48 @@ public class TrackController {
 
     @GetMapping(value = "/{trackId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @Operation(summary = "Скачать файл", description = "Возвращает бинарные данные аудиофайла")
-    public ResponseEntity<Resource> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<?> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
         var info = trackService.getTrackInfo(trackId);
         Resource resource = fileStorageService.load(info.filepath());
+        byte[] data = readAllBytes(resource);
         MediaType mediaType = resolveMediaType(resource, info);
-        long contentLength = info.filesize();
 
         List<HttpRange> ranges = headers.getRange();
         if (ranges == null || ranges.isEmpty()) {
-            ResourceRegion region = new ResourceRegion(resource, 0, contentLength);
+            ByteArrayResource body = new ByteArrayResource(data);
             return ResponseEntity.ok()
                     .cacheControl(CacheControl.noCache())
                     .header(HttpHeaders.ACCEPT_RANGES, "bytes")
                     .contentType(mediaType)
-                    .contentLength(contentLength)
+                    .contentLength(data.length)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                    .body(region.getResource());
+                    .body(body);
         }
 
         HttpRange range = ranges.get(0);
-        ResourceRegion region = createRegion(resource, contentLength, range);
-        long start = region.getPosition();
-        long end = start + region.getCount() - 1;
+        long contentLength = data.length;
+        long start = range.getRangeStart(contentLength);
+        long end = range.getRangeEnd(contentLength);
+        if (end >= contentLength) {
+            end = contentLength - 1;
+        }
+        byte[] slice = Arrays.copyOfRange(data, (int) start, (int) (end + 1));
         return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                 .cacheControl(CacheControl.noCache())
                 .header(HttpHeaders.ACCEPT_RANGES, "bytes")
                 .contentType(mediaType)
-                .contentLength(region.getCount())
+                .contentLength(slice.length)
+                .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + contentLength)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                .body(region.getResource());
+                .body(new ByteArrayResource(slice));
+    }
+
+    private byte[] readAllBytes(Resource resource) {
+        try (InputStream is = resource.getInputStream()) {
+            return is.readAllBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Не удалось прочитать файл", e);
+        }
     }
 
     private MediaType resolveMediaType(Resource resource, ru.ifmo.se.pisk.domain.TrackInfo info) {
@@ -232,13 +247,6 @@ public class TrackController {
         return MediaTypeFactory.getMediaType(info.originalFilename())
                 .or(() -> MediaTypeFactory.getMediaType(resource))
                 .orElse(MediaType.APPLICATION_OCTET_STREAM);
-    }
-
-    private ResourceRegion createRegion(Resource resource, long contentLength, HttpRange range) {
-        long start = range.getRangeStart(contentLength);
-        long end = range.getRangeEnd(contentLength);
-        long rangeLength = end - start + 1;
-        return new ResourceRegion(resource, start, rangeLength);
     }
 
     private String contentDisposition(ru.ifmo.se.pisk.domain.TrackInfo info) {
