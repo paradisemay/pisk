@@ -1,6 +1,7 @@
 package ru.ifmo.se.pisk.web.view;
 
 import java.time.Instant;
+import ru.ifmo.se.pisk.web.util.DurationFormatter;
 
 public record TrackDetailsView(
         Long id,
@@ -17,4 +18,8 @@ public record TrackDetailsView(
         Instant uploadDate,
         String downloadUrl
 ) {
+
+    public String formattedDuration() {
+        return DurationFormatter.formatSeconds(durationSeconds);
+    }
 }
