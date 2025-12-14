@@ -25,8 +25,23 @@
             </label>
             <label>
                 <span th:text="#{register.password}">Пароль</span>
-                <input type="password" th:field="*{password}" autocomplete="new-password" required>
+                <div class="password-field">
+                    <input type="password" th:field="*{password}" autocomplete="new-password" required data-password-field>
+                    <button class="ghost tiny" type="button" data-password-toggle
+                            th:attr="data-show-label=#{auth.show-password},data-hide-label=#{auth.hide-password}"
+                            th:text="#{auth.show-password}">Показать</button>
+                </div>
                 <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+            </label>
+            <label>
+                <span th:text="#{register.password-confirm}">Повторите пароль</span>
+                <div class="password-field">
+                    <input type="password" th:field="*{confirmPassword}" autocomplete="new-password" required data-password-field>
+                    <button class="ghost tiny" type="button" data-password-toggle
+                            th:attr="data-show-label=#{auth.show-password},data-hide-label=#{auth.hide-password}"
+                            th:text="#{auth.show-password}">Показать</button>
+                </div>
+                <span class="error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></span>
             </label>
             <label>
                 <span th:text="#{register.role}">Тип аккаунта</span>
@@ -43,5 +58,6 @@
     </section>
 </main>
 <footer th:replace="fragments :: siteFooter"></footer>
+<script th:src="@{/js/auth-forms.js}"></script>
 </body>
 </html>

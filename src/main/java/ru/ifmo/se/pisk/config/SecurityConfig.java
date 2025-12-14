@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -27,7 +28,7 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         http
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .authorizeHttpRequests(authorize -> authorize
@@ -41,7 +42,8 @@ public class SecurityConfig {
 
                         // Public auth, login and docs
                         .requestMatchers(
-                                "/login", "/register", "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health"
+                                "/login", "/register", "/forgot-password", "/reset-password",
+                                "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health"
                         ).permitAll()
 
                         // Public HTML pages - GET only
@@ -65,6 +67,7 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
+                .authenticationProvider(authenticationProvider)
                 .httpBasic(Customizer.withDefaults())
                 .formLogin(form -> form
                         .loginPage("/login")

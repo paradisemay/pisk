@@ -19,17 +19,25 @@
             </label>
             <label>
                 <span th:text="#{login.password}">Пароль</span>
-                <input type="password" name="password" autocomplete="current-password" required>
+                <div class="password-field">
+                    <input type="password" name="password" autocomplete="current-password" required data-password-field>
+                    <button class="ghost tiny" type="button" data-password-toggle
+                            th:attr="data-show-label=#{auth.show-password},data-hide-label=#{auth.hide-password}"
+                            th:text="#{auth.show-password}">Показать</button>
+                </div>
             </label>
             <div class="actions">
                 <button class="pill" type="submit" th:text="#{login.submit}">Войти</button>
+                <a class="ghost" th:href="@{/forgot-password}" th:text="#{login.forgot}"></a>
                 <a class="ghost" th:href="@{/register}" th:text="#{login.to-register}"></a>
             </div>
             <p class="error" th:if="${loginError}" th:text="#{login.error}"></p>
             <p class="success" th:if="${logoutSuccess}" th:text="#{login.logout}"></p>
+            <p class="success" th:if="${passwordReset}" th:text="#{reset.success}"></p>
         </form>
     </section>
 </main>
 <footer th:replace="fragments :: siteFooter"></footer>
+<script th:src="@{/js/auth-forms.js}"></script>
 </body>
 </html>
