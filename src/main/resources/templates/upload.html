@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(#{upload.heading})"></head>
+<body>
+<header th:replace="fragments :: nav"></header>
+<main class="content">
+    <section class="card">
+        <h1 th:text="#{upload.heading}"></h1>
+        <div th:if="${#fields.hasErrors('*')}" class="alert" th:text="#{form.errors}" role="alert"></div>
+        <form th:object="${trackUploadForm}" method="post" class="form-grid" aria-label="Upload form">
+            <label>
+                <span th:text="#{nav.upload}" ></span>
+                <input aria-label="Title" type="text" th:field="*{title}" required />
+                <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+            </label>
+            <label>
+                <span th:text="#{catalog.genre}"></span>
+                <select aria-label="Genre" th:field="*{genre}" required>
+                    <option value="" th:text="'—'"></option>
+                    <option th:each="g : ${genres}" th:value="${g}" th:text="${g}"></option>
+                </select>
+                <span class="error" th:if="${#fields.hasErrors('genre')}" th:errors="*{genre}"></span>
+            </label>
+            <label>
+                <span th:text="#{catalog.tags}"></span>
+                <input aria-label="Tags" type="text" th:field="*{tags}" th:placeholder="#{upload.tags.hint}" />
+            </label>
+            <label class="wide">
+                <span th:text="#{catalog.search.placeholder}"></span>
+                <textarea aria-label="Description" th:field="*{description}"></textarea>
+                <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+            </label>
+            <label>
+                <span>Audio URL</span>
+                <input aria-label="Audio" type="url" th:field="*{audioUrl}" required />
+                <span class="error" th:if="${#fields.hasErrors('audioUrl')}" th:errors="*{audioUrl}"></span>
+            </label>
+            <label>
+                <span>Cover URL</span>
+                <input aria-label="Cover" type="url" th:field="*{coverUrl}" />
+                <span class="error" th:if="${#fields.hasErrors('coverUrl')}" th:errors="*{coverUrl}"></span>
+            </label>
+            <button class="btn" type="submit" aria-label="Submit upload" tabindex="0" autofocus th:text="#{upload.submit}"></button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

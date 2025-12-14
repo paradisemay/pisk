@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(${track.title})"></head>
+<body>
+<header th:replace="fragments :: nav"></header>
+<main class="content">
+    <article class="card track-detail">
+        <div class="media">
+            <img th:src="${track.coverUrl}" alt="Cover" class="cover large"/>
+            <div>
+                <h1 th:text="${track.title}"></h1>
+                <p class="muted" th:text="${track.description}"></p>
+                <p class="pill" th:text="#{track.rating} + ': ' + ${track.rating}"></p>
+                <p class="muted" th:text="#{track.published} + ' ' + ${#temporals.format(track.publishedAt, 'dd MMM yyyy')}"></p>
+                <p class="muted" th:text="#{track.plays} + ': ' + ${track.plays}"></p>
+                <p class="muted" th:text="#{track.tags} + ': ' + ${#strings.listJoin(track.tags, ', ')}"></p>
+                <div class="player">
+                    <audio controls aria-label="Audio player" th:src="${track.audioUrl}"></audio>
+                </div>
+            </div>
+        </div>
+        <a class="author" th:href="@{'/authors/' + ${track.author.id}}" aria-label="Author profile">
+            <span th:text="${track.author.name}"></span>
+            <small th:text="${track.author.followers + ' ' + #messages.msg('author.followers')}"></small>
+        </a>
+    </article>
+
+    <section class="card">
+        <h2 th:text="#{track.more}"></h2>
+        <div class="grid">
+            <article th:each="other : ${moreFromAuthor}" class="track-card" tabindex="0">
+                <a th:href="@{'/tracks/' + ${other.id}}" th:text="${other.title}" aria-label="Other track"></a>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>
