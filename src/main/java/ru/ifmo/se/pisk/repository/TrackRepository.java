@@ -26,8 +26,8 @@ public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSp
     Page<TrackEntity> searchByName(@Param("query") String query, Pageable pageable);
 
     @Query("select new ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate(t.author.id, "
-            + "case when sum(t.rateCount) = 0 then 0 else sum(t.rating) / sum(t.rateCount) end, "
+            + "case when sum(t.rateCount) = 0 then 0.0 else (sum(t.rating) * 1.0) / sum(t.rateCount) end, "
             + "sum(t.rateCount)) from TrackEntity t group by t.author.id order by "
-            + "case when sum(t.rateCount) = 0 then 0 else sum(t.rating) / sum(t.rateCount) end desc")
+            + "case when sum(t.rateCount) = 0 then 0.0 else (sum(t.rating) * 1.0) / sum(t.rateCount) end desc")
     List<ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate> findTopArtistsByAverageRating(Pageable pageable);
 }
