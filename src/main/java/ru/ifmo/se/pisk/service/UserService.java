@@ -3,7 +3,6 @@ package ru.ifmo.se.pisk.service;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ifmo.se.pisk.domain.AuditAction;
@@ -13,15 +12,16 @@ import ru.ifmo.se.pisk.domain.UserStatus;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.repository.UserRepository;
+import ru.ifmo.se.pisk.security.Sha384PasswordEncoder;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final Sha384PasswordEncoder passwordEncoder;
     private final AuditService auditService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuditService auditService) {
+    public UserService(UserRepository userRepository, Sha384PasswordEncoder passwordEncoder, AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
@@ -35,10 +35,15 @@ public class UserService {
         if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new IllegalArgumentException("Email уже используется");
         }
+        if (rawPassword == null || rawPassword.length() < 6) {
+            throw new IllegalArgumentException("Пароль должен содержать не менее 6 символов");
+        }
         UserEntity entity = new UserEntity();
         entity.setUsername(username);
         entity.setEmail(email);
-        entity.setPasswordHash(passwordEncoder.encode(rawPassword));
+        String salt = passwordEncoder.generateSalt();
+        entity.setPasswordSalt(salt);
+        entity.setPasswordHash(passwordEncoder.encodeWithSalt(rawPassword, salt));
         entity.setRole(role);
         entity.setStatus(UserStatus.PENDING);
         entity.setCreatedAt(Instant.now());
