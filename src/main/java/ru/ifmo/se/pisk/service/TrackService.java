@@ -3,10 +3,16 @@ package ru.ifmo.se.pisk.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.ifmo.se.pisk.domain.entity.GenreEntity;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
+import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.model.Author;
 import ru.ifmo.se.pisk.model.Track;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -122,15 +128,16 @@ public class TrackService {
         }
         if ("date".equalsIgnoreCase(sort)) {
             return Comparator.comparing(Track::getPublishedAt).reversed();
-        GenreEntity genre = genreService.requireGenre(command.genreId());
-        String sanitizedName = fileStorageService.sanitizeFilename(command.originalFilename());
-        String storagePath;
-        try (InputStream inputStream = command.dataSupplier().get()) {
-            storagePath = fileStorageService.storeTrack(artistId, sanitizedName, inputStream);
-        } catch (Exception ex) {
-            throw new IllegalStateException("Не удалось сохранить файл трека", ex);
+            GenreEntity genre = genreService.requireGenre(command.genreId());
+            String sanitizedName = fileStorageService.sanitizeFilename(command.originalFilename());
+            String storagePath;
+            try (InputStream inputStream = command.dataSupplier().get()) {
+                storagePath = fileStorageService.storeTrack(artistId, sanitizedName, inputStream);
+            } catch (Exception ex) {
+                throw new IllegalStateException("Не удалось сохранить файл трека", ex);
+            }
+            return Comparator.comparingDouble(Track::getRating).reversed();
         }
-        return Comparator.comparingDouble(Track::getRating).reversed();
     }
 
     public Optional<Track> findById(long id) {
@@ -290,7 +297,7 @@ public class TrackService {
                 track.getDuration() != null ? track.getDuration().getSeconds() : 0,
                 0, java.time.Instant.now(), track.getRating(), 1, track.getPlays(), 0);
     }
-      
+
     @Transactional(readOnly = true)
     public Page<TrackInfo> searchTracks(TrackSearchCriteria criteria, Pageable pageable) {
         Specification<TrackEntity> spec = Specification.where(TrackSpecifications.fullTextSearch(criteria.query()))
