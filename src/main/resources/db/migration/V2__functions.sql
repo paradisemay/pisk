@@ -12,14 +12,14 @@
 -- УТИЛИТЫ / ПОМОЩНИКИ
 -- ---------------------------------------------------------------
 
--- Проверка: является ли пользователь админом (users.role = 1)
+-- Проверка: является ли пользователь админом (users.role = 'ADMIN')
 CREATE OR REPLACE FUNCTION fn_is_admin(p_user_id bigint)
 RETURNS boolean
 LANGUAGE sql
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM users u
-    WHERE u.id = p_user_id AND u.role = 1
+    WHERE u.id = p_user_id AND u.role = 'ADMIN'
   );
 $$;
 
@@ -43,11 +43,11 @@ $$;
 -- Создать пользователя (hash/salt/alg вычислены в приложении)
 CREATE OR REPLACE FUNCTION fn_user_create(
   p_username       text,
-  p_password_hash  bytea,
-  p_password_salt  bytea,
+  p_password_hash  text,
+  p_password_salt  text,
   p_password_alg   text DEFAULT 'SHA-384',
   p_avatar_path    text DEFAULT NULL,
-  p_role           smallint DEFAULT 0
+  p_role           text DEFAULT 'USER'
 ) RETURNS bigint
 LANGUAGE plpgsql
 AS $$
@@ -58,7 +58,7 @@ BEGIN
   END IF;
 
   INSERT INTO users(username, password_hash, password_salt, password_alg, avatar_path, role)
-  VALUES(p_username, p_password_hash, p_password_salt, COALESCE(p_password_alg,'SHA-384'), p_avatar_path, COALESCE(p_role,0))
+  VALUES(p_username, p_password_hash, p_password_salt, COALESCE(p_password_alg,'SHA-384'), p_avatar_path, COALESCE(p_role,'USER'))
   ON CONFLICT (username) DO NOTHING
   RETURNING id INTO v_id;
 
@@ -73,8 +73,8 @@ $$;
 -- Смена пароля
 CREATE OR REPLACE FUNCTION fn_user_change_password(
   p_user_id   bigint,
-  p_new_hash  bytea,
-  p_new_salt  bytea,
+  p_new_hash  text,
+  p_new_salt  text,
   p_new_alg   text DEFAULT 'SHA-384'
 ) RETURNS void
 LANGUAGE plpgsql
@@ -111,11 +111,11 @@ $$;
 CREATE OR REPLACE FUNCTION fn_admin_set_role(
   p_requestor_id   bigint,
   p_target_user_id bigint,
-  p_new_role       smallint
+  p_new_role       text
 ) RETURNS void
 LANGUAGE plpgsql
 AS $$
-DECLARE v_old_role smallint;
+DECLARE v_old_role text;
 DECLARE v_admins integer;
 BEGIN
   PERFORM fn_require_admin(p_requestor_id);
@@ -125,8 +125,8 @@ BEGIN
     RAISE EXCEPTION 'Пользователь id=% не найден', p_target_user_id USING ERRCODE='02000';
   END IF;
 
-  IF v_old_role = 1 AND p_new_role <> 1 THEN
-    SELECT COUNT(*) INTO v_admins FROM users WHERE role = 1 AND id <> p_target_user_id;
+  IF v_old_role = 'ADMIN' AND p_new_role <> 'ADMIN' THEN
+    SELECT COUNT(*) INTO v_admins FROM users WHERE role = 'ADMIN' AND id <> p_target_user_id;
     IF v_admins = 0 THEN
       RAISE EXCEPTION 'Нельзя понижать роль единственного администратора' USING ERRCODE='42501';
     END IF;

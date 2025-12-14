@@ -3,13 +3,17 @@ CREATE TYPE roletype AS ENUM ('user','admin');
 
 CREATE TABLE users(
     id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    registration_date TIMESTAMP NOT NULL DEFAULT now(),
-    password_hash BYTEA NOT NULL,
-    password_salt BYTEA NOT NULL,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    email VARCHAR(128) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    password_salt VARCHAR(64) NOT NULL,
     password_alg VARCHAR(20) NOT NULL DEFAULT 'SHA-384',
     avatar_path VARCHAR(255),
-    role SMALLINT NOT NULL DEFAULT 0
+    role VARCHAR(16) NOT NULL DEFAULT 'USER',
+    status VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
+    last_login_at TIMESTAMP
 );
 
 CREATE TABLE label(
