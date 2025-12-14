@@ -17,16 +17,17 @@ BEGIN;
 -- sergey:  Sergey+2025
 -- diana:   Diana^2025
 -- admin:   Root!Secure#2025
-INSERT INTO users (username, password_hash, password_salt, password_alg, avatar_path, role) VALUES
-('timofey', decode('cf2727de92eeeb80bdaa6a3fc08597894882acdc976fea308dec81f2a5966134da2efc3721c544c9f25f62a34b57a5de','hex'), decode('65cfc60f08fe727d5693726f46d79e97','hex'), 'SHA-384', '/avatars/timofey.png', 0),
-('masha',   decode('5a442fd4fd014187d4151a8e9b239a99d8617ed78ca765e905915eea5b17298cfec0389a9df239d72f5c77332863932a','hex'), decode('359e446afcb74c5e1667c17a59a2e7db','hex'), 'SHA-384', '/avatars/masha.png',   0),
-('petr',    decode('1373c60dcfe26c901aa3d29645c2236e781fb70087540326339538898b43412a005d8beac5f434efaae6213a860b3c6e','hex'),  decode('3d75059ab140533addc1929967bf5668','hex'), 'SHA-384', '/avatars/petr.png',    0),
-('olga',    decode('a48190f92414aadb451febf9f4f2e776e2556dce4385d613f26501b6992385ab36ef894611e88a53ae0ca8e75e69b3c2','hex'), decode('fa8a2e7b6b72c6fc40246280cc7982c4','hex'), 'SHA-384', '/avatars/olga.png',    0),
-('ivan',    decode('b6d19d708154c379ff4f7c8ae6feb4ae3becec5edd07374ebd0cc7560ab6c01e84ab67b419613945fbf8a3cf20ecb87a','hex'), decode('87a6c9d9566cc8691a4cd7887c97910d','hex'), 'SHA-384', '/avatars/ivan.png',    0),
-('sveta',   decode('d8f140855c88e277689309df6ce85742c7dfbfeccc3d278269330931690108c5bee0b512266528436f8743172d7991ec','hex'), decode('82545d01e33be271ed7ebf6abfdebc9e','hex'), 'SHA-384', '/avatars/sveta.png',   0),
-('sergey',  decode('9bccdfb667e5132d6b326a5bbc7a148bf1b78f63624b20b5f9edd273d3903a9d526426432b6870a7eeab3b3b7db0815c','hex'), decode('7245cce8f1aa967e9a4ec84f5399eab0','hex'), 'SHA-384', '/avatars/sergey.png',  0),
-('diana',   decode('e05f55cc7852da4f81630b859c9dc3485e4f440240e3c46e14f768f7a92ef19def8373afa1727a3c352bdd7d0f2410ba','hex'), decode('0d080b68f534c9abcc214904406c3885','hex'), 'SHA-384', '/avatars/diana.png',   0),
-('admin',   decode('1b70f4d2b2d60dd3a39a3b33e2bc8858238b7dffd4daf5c6a0e5433779f7e3f6829ee4aac3676b66929c401597940d5b','hex'), decode('1bd7ba6971494c05259be303717fd35d','hex'), 'SHA-384', '/avatars/admin.png',   1)
+INSERT INTO users (username, email, password_hash, password_salt, password_alg, avatar_path, role, status, created_at, updated_at)
+VALUES
+('timofey', 'timofey@example.com', 'cf2727de92eeeb80bdaa6a3fc08597894882acdc976fea308dec81f2a5966134da2efc3721c544c9f25f62a34b57a5de', '65cfc60f08fe727d5693726f46d79e97', 'SHA-384', '/avatars/timofey.png', 'USER', 'ACTIVE', now(), now()),
+('masha',   'masha@example.com',   '5a442fd4fd014187d4151a8e9b239a99d8617ed78ca765e905915eea5b17298cfec0389a9df239d72f5c77332863932a', '359e446afcb74c5e1667c17a59a2e7db', 'SHA-384', '/avatars/masha.png',   'USER', 'ACTIVE', now(), now()),
+('petr',    'petr@example.com',    '1373c60dcfe26c901aa3d29645c2236e781fb70087540326339538898b43412a005d8beac5f434efaae6213a860b3c6e',  '3d75059ab140533addc1929967bf5668', 'SHA-384', '/avatars/petr.png',    'USER', 'ACTIVE', now(), now()),
+('olga',    'olga@example.com',    'a48190f92414aadb451febf9f4f2e776e2556dce4385d613f26501b6992385ab36ef894611e88a53ae0ca8e75e69b3c2', 'fa8a2e7b6b72c6fc40246280cc7982c4', 'SHA-384', '/avatars/olga.png',    'USER', 'ACTIVE', now(), now()),
+('ivan',    'ivan@example.com',    'b6d19d708154c379ff4f7c8ae6feb4ae3becec5edd07374ebd0cc7560ab6c01e84ab67b419613945fbf8a3cf20ecb87a', '87a6c9d9566cc8691a4cd7887c97910d', 'SHA-384', '/avatars/ivan.png',    'USER', 'ACTIVE', now(), now()),
+('sveta',   'sveta@example.com',   'd8f140855c88e277689309df6ce85742c7dfbfeccc3d278269330931690108c5bee0b512266528436f8743172d7991ec', '82545d01e33be271ed7ebf6abfdebc9e', 'SHA-384', '/avatars/sveta.png',   'USER', 'ACTIVE', now(), now()),
+('sergey',  'sergey@example.com',  '9bccdfb667e5132d6b326a5bbc7a148bf1b78f63624b20b5f9edd273d3903a9d526426432b6870a7eeab3b3b7db0815c', '7245cce8f1aa967e9a4ec84f5399eab0', 'SHA-384', '/avatars/sergey.png',  'USER', 'ACTIVE', now(), now()),
+('diana',   'diana@example.com',   'e05f55cc7852da4f81630b859c9dc3485e4f440240e3c46e14f768f7a92ef19def8373afa1727a3c352bdd7d0f2410ba', '0d080b68f534c9abcc214904406c3885', 'SHA-384', '/avatars/diana.png',   'USER', 'ACTIVE', now(), now()),
+('admin',   'admin@example.com',   '1b70f4d2b2d60dd3a39a3b33e2bc8858238b7dffd4daf5c6a0e5433779f7e3f6829ee4aac3676b66929c401597940d5b', '1bd7ba6971494c05259be303717fd35d', 'SHA-384', '/avatars/admin.png',   'ADMIN', 'ACTIVE', now(), now())
 ON CONFLICT (username) DO NOTHING;
 
 -- 2) Labels
