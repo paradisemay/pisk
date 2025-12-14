@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import ru.ifmo.se.pisk.controller.dto.AdminSettingsForm;
 import ru.ifmo.se.pisk.controller.dto.TrackUploadForm;
 import ru.ifmo.se.pisk.model.Track;
+import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 
 @Controller
@@ -18,9 +19,11 @@ import ru.ifmo.se.pisk.service.TrackService;
 public class PageController {
 
     private final TrackService trackService;
+    private final GenreService genreService;
 
-    public PageController(TrackService trackService) {
+    public PageController(TrackService trackService, GenreService genreService) {
         this.trackService = trackService;
+        this.genreService = genreService;
     }
 
     @GetMapping("/")
@@ -32,7 +35,9 @@ public class PageController {
     @GetMapping("/upload")
     public String uploadForm(Model model) {
         model.addAttribute("trackUploadForm", new TrackUploadForm());
-        model.addAttribute("genres", trackService.groupByGenre().keySet());
+        model.addAttribute("genres", genreService.listAll().stream()
+                .map(g -> g.title())
+                .toList());
         return "upload";
     }
 
@@ -41,32 +46,19 @@ public class PageController {
                          BindingResult bindingResult,
                          Model model) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("genres", trackService.groupByGenre().keySet());
+            model.addAttribute("genres", genreService.listAll().stream()
+                    .map(g -> g.title())
+                    .toList());
             return "upload";
         }
-        trackService.addTrack(
-                Track.builder()
-                        .id(System.currentTimeMillis())
-                        .title(trackUploadForm.getTitle())
-                        .description(trackUploadForm.getDescription())
-                        .genre(trackUploadForm.getGenre())
-                        .audioUrl(trackUploadForm.getAudioUrl())
-                        .coverUrl(trackUploadForm.getCoverUrl())
-                        .tags(trackUploadForm.getTags())
-                        .author(trackService.findById(1L).orElseThrow(() -> new IllegalArgumentException("Трек с ID 1 не найден")).getAuthor())
-                        .rating(5.0)
-                        .plays(0)
-                        .publishedAt(java.time.LocalDate.now())
-                        .duration(java.time.Duration.ofMinutes(3))
-                        .build()
-        );
-        return "redirect:/catalog?sort=date";
+        // Redirect to the proper upload controller that uses the repository
+        return "redirect:/newupload";
     }
 
     @GetMapping("/admin")
     public String admin(Model model) {
         model.addAttribute("settings", new AdminSettingsForm());
-        model.addAttribute("genres", trackService.groupByGenre());
+        model.addAttribute("genres", genreService.listAll());
         return "admin";
     }
 
@@ -75,11 +67,11 @@ public class PageController {
                             BindingResult bindingResult,
                             Model model) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("genres", trackService.groupByGenre());
+            model.addAttribute("genres", genreService.listAll());
             return "admin";
         }
         model.addAttribute("saved", true);
-        model.addAttribute("genres", trackService.groupByGenre());
+        model.addAttribute("genres", genreService.listAll());
         return "admin";
     }
 }
