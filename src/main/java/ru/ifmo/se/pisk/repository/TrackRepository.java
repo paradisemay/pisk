@@ -1,33 +1,9 @@
 package ru.ifmo.se.pisk.repository;
 
 import java.util.List;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
-import ru.ifmo.se.pisk.domain.TrackStatus;
-import ru.ifmo.se.pisk.domain.entity.TrackEntity;
-import ru.ifmo.se.pisk.domain.entity.UserEntity;
+import ru.ifmo.se.pisk.domain.Track;
 
-public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSpecificationExecutor<TrackEntity> {
-    Page<TrackEntity> findByStatus(TrackStatus status, Pageable pageable);
-    Page<TrackEntity> findByAuthor(UserEntity author, Pageable pageable);
-    Optional<TrackEntity> findByIdAndAuthor(Long id, UserEntity author);
-
-    Page<TrackEntity> findByGenre_Id(Long genreId, Pageable pageable);
-
-    java.util.List<TrackEntity> findByAlbum(AlbumEntity album);
-
-    @Query("select t from TrackEntity t where lower(t.name) like lower(concat('%', :query, '%'))")
-    Page<TrackEntity> searchByName(@Param("query") String query, Pageable pageable);
-
-    @Query("select new ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate(t.author.id, "
-            + "case when sum(t.rateCount) = 0 then 0 else sum(t.rating) / sum(t.rateCount) end, "
-            + "sum(t.rateCount)) from TrackEntity t group by t.author.id order by "
-            + "case when sum(t.rateCount) = 0 then 0 else sum(t.rating) / sum(t.rateCount) end desc")
-    List<ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate> findTopArtistsByAverageRating(Pageable pageable);
+public interface TrackRepository extends JpaRepository<Track, Long> {
+    List<Track> findByNameContainingIgnoreCase(String name);
 }

@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: pisk
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pisk
+    username: pisk
+    password: pisk
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+logging:
+  level:
+    root: INFO
+
+app:
+  storage-path: ./storage
+  rate-limit:
+    window-seconds: 60
+    max-requests: 100
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pisk_dev
+    username: pisk
+    password: pisk
+
+logging:
+  level:
+    ru.ifmo.se.pisk: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pisk}
+    username: ${DB_USER:pisk}
+    password: ${DB_PASSWORD:secret}
+  jpa:
+    show-sql: false
+
+app:
+  storage-path: ${STORAGE_PATH:/var/lib/pisk/storage}
+  rate-limit:
+    window-seconds: ${RATE_WINDOW:60}
+    max-requests: ${RATE_MAX:1000}
