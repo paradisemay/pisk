@@ -20,6 +20,7 @@ import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.UserService;
+import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
 import ru.ifmo.se.pisk.web.view.TrackView;
 
 @Controller
@@ -44,7 +45,8 @@ public class CatalogController {
                           @PageableDefault(size = 9, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable,
                           HttpServletRequest request,
                           Model model) {
-        Page<TrackInfo> tracks = trackService.searchTracks(explicit, inoagent, title, genreIds, pageable);  // TODO: fix
+        TrackSearchCriteria criteria = new TrackSearchCriteria(title, genreIds, null, null, explicit, inoagent);
+        Page<TrackInfo> tracks = trackService.searchTracks(criteria, pageable);
         Map<Long, String> genreNames = genreService.listAll().stream()
                 .collect(Collectors.toMap(GenreInfo::id, GenreInfo::title));
         Page<TrackView> view = tracks.map(info -> toView(info, genreNames));

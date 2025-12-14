@@ -6,13 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.ifmo.se.pisk.domain.entity.GenreEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
 import ru.ifmo.se.pisk.model.Author;
 import ru.ifmo.se.pisk.model.Track;
 
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.TrackStatus;
@@ -32,6 +29,8 @@ import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
+import ru.ifmo.se.pisk.repository.TrackRepository;
+import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
 import ru.ifmo.se.pisk.repository.specification.TrackSpecifications;
 
 @Service
@@ -39,8 +38,22 @@ public class TrackService {
 
     private final List<Track> tracks;
     private final Map<Long, TrackStatus> statuses;
+    private final TrackRepository trackRepository;
+    private final TrackStatusHistoryRepository trackStatusHistoryRepository;
+    private final UserService userService;
+    private final GenreService genreService;
+    private final AlbumService albumService;
+    private final FileStorageService fileStorageService;
+    private final AuditService auditService;
 
     public TrackService() {
+        this.trackRepository = null;
+        this.trackStatusHistoryRepository = null;
+        this.userService = null;
+        this.genreService = null;
+        this.albumService = null;
+        this.fileStorageService = null;
+        this.auditService = null;
         Author alice = Author.builder()
                 .id(1L)
                 .name("Alice Elektron")
@@ -105,6 +118,24 @@ public class TrackService {
         statuses = tracks.stream().collect(Collectors.toMap(Track::getId, t -> TrackStatus.PUBLISHED));
     }
 
+    public TrackService(TrackRepository trackRepository,
+                        TrackStatusHistoryRepository trackStatusHistoryRepository,
+                        UserService userService,
+                        GenreService genreService,
+                        AlbumService albumService,
+                        FileStorageService fileStorageService,
+                        AuditService auditService) {
+        this.trackRepository = trackRepository;
+        this.trackStatusHistoryRepository = trackStatusHistoryRepository;
+        this.userService = userService;
+        this.genreService = genreService;
+        this.albumService = albumService;
+        this.fileStorageService = fileStorageService;
+        this.auditService = auditService;
+        this.tracks = new ArrayList<>();
+        this.statuses = new java.util.HashMap<>();
+    }
+
     public Page<Track> findTracks(String search, String genre, List<String> tags, String sort, Pageable pageable) {
         List<Track> filtered = tracks.stream()
                 .filter(track -> search == null || track.getTitle().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))
@@ -128,16 +159,8 @@ public class TrackService {
         }
         if ("date".equalsIgnoreCase(sort)) {
             return Comparator.comparing(Track::getPublishedAt).reversed();
-            GenreEntity genre = genreService.requireGenre(command.genreId());
-            String sanitizedName = fileStorageService.sanitizeFilename(command.originalFilename());
-            String storagePath;
-            try (InputStream inputStream = command.dataSupplier().get()) {
-                storagePath = fileStorageService.storeTrack(artistId, sanitizedName, inputStream);
-            } catch (Exception ex) {
-                throw new IllegalStateException("Не удалось сохранить файл трека", ex);
-            }
-            return Comparator.comparingDouble(Track::getRating).reversed();
         }
+        return Comparator.comparingDouble(Track::getRating).reversed();
     }
 
     public Optional<Track> findById(long id) {
@@ -159,43 +182,13 @@ public class TrackService {
         return track;
     }
 
+    @Transactional(readOnly = true)
     public TrackEntity requireTrack(Long trackId) {
-        Track track = findById(trackId).orElseThrow(() -> new IllegalArgumentException("Track not found"));
-        TrackEntity entity = new TrackEntity();
-        entity.setAuthor(artist);
-        entity.setAlbum(album);
-        entity.setGenre(genre);
-        entity.setName(command.name());
-        entity.setDurationSeconds(command.durationSeconds());
-        entity.setStoragePath(storagePath);
-        entity.setFileSize(command.fileSize());
-        entity.setContentType(command.contentType());
-        entity.setOriginalFilename(sanitizedName);
-        entity.setUploadedAt(Instant.now());
-        entity.setNumberOnAlbum(command.numberOnAlbum());
-        entity.setExplicit(command.explicit());
-        entity.setInoagent(command.inoagent());
-        TrackEntity saved = trackRepository.save(entity);
-        album.setTrackNumber(Math.max(album.getTrackNumber(), saved.getNumberOnAlbum()));
-        if (saved.isExplicit()) {
-            album.setExplicit(true);
+        if (trackRepository == null) {
+            throw new IllegalStateException("TrackRepository не инициализирован");
         }
-        if (saved.isInoagent()) {
-            album.setInoagent(true);
-        }
-        TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
-        history.setTrack(saved);
-        history.setToStatus(saved.getStatus());
-        history.setActor(artist);
-        trackStatusHistoryRepository.save(history);
-        auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artist,
-                Map.of(
-                        "genre_id", genre.getId().toString(),
-                        "explicit", Boolean.toString(saved.isExplicit()),
-                        "inoagent", Boolean.toString(saved.isInoagent()),
-                        "number_on_album", Integer.toString(saved.getNumberOnAlbum())
-                ));
-        return DomainMapper.toTrackInfo(saved);
+        return trackRepository.findById(trackId)
+                .orElseThrow(() -> new IllegalArgumentException("Трек не найден: " + trackId));
     }
 
     @Transactional
@@ -290,16 +283,34 @@ public class TrackService {
     }
 
     private TrackInfo toInfo(Track track) {
-        return new TrackInfo(track.getId(), track.getTitle(),
+        return new TrackInfo(
+                track.getId(),
+                track.getTitle(),
                 track.getAuthor() != null ? track.getAuthor().getId() : null,
-                null, track.getAuthor() != null ? track.getAuthor().getId() : null,
-                null, track.getAudioUrl(), 0, false, false,
-                track.getDuration() != null ? track.getDuration().getSeconds() : 0,
-                0, java.time.Instant.now(), track.getRating(), 1, track.getPlays(), 0);
+                null, // albumId
+                track.getAuthor() != null ? track.getAuthor().getId() : null, // artistId
+                null, // genreId
+                track.getAudioUrl(), // filepath
+                null, // contentType
+                null, // originalFilename
+                0, // numberOnAlbum
+                false, // explicit
+                false, // inoagent
+                track.getDuration() != null ? track.getDuration().getSeconds() : 0, // durationSeconds
+                0, // filesize
+                java.time.Instant.now(), // uploadDate
+                track.getRating(), // averageRating
+                1, // rateCount
+                track.getPlays(), // likeCount
+                0 // commentCount
+        );
     }
 
     @Transactional(readOnly = true)
     public Page<TrackInfo> searchTracks(TrackSearchCriteria criteria, Pageable pageable) {
+        if (trackRepository == null) {
+            throw new IllegalStateException("TrackRepository не инициализирован");
+        }
         Specification<TrackEntity> spec = Specification.where(TrackSpecifications.fullTextSearch(criteria.query()))
                 .and(TrackSpecifications.hasGenres(criteria.genreIds()))
                 .and(TrackSpecifications.hasAuthor(criteria.authorId()))
@@ -311,6 +322,9 @@ public class TrackService {
 
     @Transactional(readOnly = true)
     public Page<TrackInfo> findByAuthor(Long authorId, Pageable pageable) {
+        if (trackRepository == null || userService == null) {
+            throw new IllegalStateException("Зависимости не инициализированы");
+        }
         UserEntity author = userService.requireUser(authorId);
         return trackRepository.findByAuthor(author, pageable).map(DomainMapper::toTrackInfo);
     }
