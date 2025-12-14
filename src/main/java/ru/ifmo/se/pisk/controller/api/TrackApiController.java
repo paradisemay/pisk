@@ -73,7 +73,7 @@ public class TrackApiController {
                 .coverUrl(form.getCoverUrl())
                 .tags(form.getTags())
                 .duration(Duration.ofMinutes(3))
-                .author(trackService.findById(1L).orElseThrow().getAuthor())
+                .author(trackService.findById(1L).orElseThrow(() -> new IllegalArgumentException("Трек с ID 1 не найден")).getAuthor())
                 .rating(5.0)
                 .plays(0)
                 .publishedAt(LocalDate.now())

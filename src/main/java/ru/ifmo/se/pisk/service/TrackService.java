@@ -217,7 +217,7 @@ public class TrackService {
     }
 
     public RatingInfo rateTrack(RatingCommand command) {
-        Track track = findById(command.trackId()).orElseThrow();
+        Track track = findById(command.trackId()).orElseThrow(() -> new IllegalArgumentException("Трек не найден: " + command.trackId()));
         Track updated = Track.builder()
                 .id(track.getId())
                 .title(track.getTitle())
@@ -237,7 +237,7 @@ public class TrackService {
     }
 
     public TrackInfo incrementPlayCount(Long trackId) {
-        Track track = findById(trackId).orElseThrow();
+        Track track = findById(trackId).orElseThrow(() -> new IllegalArgumentException("Трек не найден: " + trackId));
         Track updated = Track.builder()
                 .id(track.getId())
                 .title(track.getTitle())
@@ -268,7 +268,7 @@ public class TrackService {
     }
 
     public TrackInfo getTrackInfo(Long trackId) {
-        Track track = findById(trackId).orElseThrow();
+        Track track = findById(trackId).orElseThrow(() -> new IllegalArgumentException("Трек не найден: " + trackId));
         return toInfo(track);
     }
 

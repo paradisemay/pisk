@@ -51,7 +51,7 @@ public class PageController {
 
     @GetMapping("/tracks/{id}")
     public String track(@PathVariable long id, Model model) {
-        Track track = trackService.findById(id).orElseThrow();
+        Track track = trackService.findById(id).orElseThrow(() -> new IllegalArgumentException("Трек не найден: " + id));
         model.addAttribute("track", track);
         model.addAttribute("moreFromAuthor", trackService.findByAuthor(track.getAuthor().getId()));
         return "track";
@@ -92,7 +92,7 @@ public class PageController {
                         .audioUrl(trackUploadForm.getAudioUrl())
                         .coverUrl(trackUploadForm.getCoverUrl())
                         .tags(trackUploadForm.getTags())
-                        .author(trackService.findById(1L).orElseThrow().getAuthor())
+                        .author(trackService.findById(1L).orElseThrow(() -> new IllegalArgumentException("Трек с ID 1 не найден")).getAuthor())
                         .rating(5.0)
                         .plays(0)
                         .publishedAt(java.time.LocalDate.now())
