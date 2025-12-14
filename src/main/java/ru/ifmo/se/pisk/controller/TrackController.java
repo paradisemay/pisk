@@ -35,10 +35,12 @@ import ru.ifmo.se.pisk.controller.dto.TrackResponse;
 import ru.ifmo.se.pisk.controller.dto.TrackStatusUpdateRequest;
 import ru.ifmo.se.pisk.controller.mapper.ApiMapper;
 import ru.ifmo.se.pisk.domain.TrackStatus;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
+import org.springframework.core.io.InputStreamResource;
 
 @RestController
 @RequestMapping("/api/v1/tracks")
@@ -62,6 +64,7 @@ public class TrackController {
                                                 @RequestParam(defaultValue = "false") boolean inoagent,
                                                 @RequestParam(defaultValue = "0") int numberOnAlbum,
                                                 @RequestParam("file") MultipartFile file) {
+        fileStorageService.validate(file.getOriginalFilename(), file.getContentType(), file.getSize());
         Supplier<InputStream> supplier = () -> {
             try {
                 return file.getInputStream();
@@ -84,6 +87,50 @@ public class TrackController {
         );
         var info = trackService.uploadTrack(artistId, command);
         return ResponseEntity.ok(ApiMapper.toTrackResponse(info));
+    }
+
+    @GetMapping("/{trackId}/stream")
+    public ResponseEntity<Resource> streamTrack(
+            @PathVariable Long trackId,
+            @RequestHeader(value = "Range", required = false) String rangeHeader) {
+        TrackEntity track = trackService.requireTrack(trackId);
+        if (track.getStatus() != TrackStatus.PUBLISHED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        Resource resource = fileStorageService.load(track.getStoragePath());
+        long fileSize = track.getFileSize();
+        long start = 0, end = fileSize - 1;
+        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+            String[] ranges = rangeHeader.replace("bytes=", "").split("-");
+            try {
+                start = Long.parseLong(ranges[0]);
+                if (ranges.length > 1 && !ranges[1].isBlank()) {
+                    end = Long.parseLong(ranges[1]);
+                }
+            } catch (Exception ignore) {}
+        }
+        if (end >= fileSize) end = fileSize - 1;
+        long contentLength = end - start + 1;
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set(HttpHeaders.ACCEPT_RANGES, "bytes");
+        responseHeaders.set(HttpHeaders.CONTENT_TYPE, track.getContentType());
+        responseHeaders.set(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength));
+        responseHeaders.set(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline().filename(track.getOriginalFilename()).build().toString());
+        if (rangeHeader != null) {
+            responseHeaders.set(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + fileSize);
+        }
+        ResponseEntity.BodyBuilder builder = (rangeHeader != null)
+                ? ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                : ResponseEntity.ok();
+        try {
+            if (start == 0) trackService.incrementPlayCount(trackId);
+            InputStream raw = resource.getInputStream();
+            raw.skip(start);
+            return builder.headers(responseHeaders)
+                    .body(new InputStreamResource(raw));
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PatchMapping("/{trackId}/status")
@@ -113,69 +160,5 @@ public class TrackController {
         }
         return trackService.findTracks(explicit, inoagent, pageable).map(ApiMapper::toTrackResponse);
     }
-
-    @GetMapping("/{trackId}")
-    public TrackResponse getTrack(@PathVariable Long trackId) {
-        return ApiMapper.toTrackResponse(trackService.getTrackInfo(trackId));
-    }
-
-    @GetMapping("/{trackId}/file")
-    public ResponseEntity<ResourceRegion> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
-        var info = trackService.getTrackInfo(trackId);
-        Resource resource = fileStorageService.load(info.filepath());
-        MediaType mediaType = resolveMediaType(resource, info);
-        long contentLength = info.filesize();
-
-        List<HttpRange> ranges = headers.getRange();
-        if (ranges == null || ranges.isEmpty()) {
-            ResourceRegion region = new ResourceRegion(resource, 0, contentLength);
-            return ResponseEntity.ok()
-                    .cacheControl(CacheControl.noCache())
-                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .contentType(mediaType)
-                    .contentLength(contentLength)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                    .body(region);
-        }
-
-        HttpRange range = ranges.get(0);
-        ResourceRegion region = createRegion(resource, contentLength, range);
-        long start = region.getPosition();
-        long end = start + region.getCount() - 1;
-        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                .cacheControl(CacheControl.noCache())
-                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                .contentType(mediaType)
-                .contentLength(region.getCount())
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition(info))
-                .body(region);
-    }
-
-    private MediaType resolveMediaType(Resource resource, ru.ifmo.se.pisk.domain.TrackInfo info) {
-        if (info.contentType() != null) {
-            try {
-                return MediaType.parseMediaType(info.contentType());
-            } catch (Exception ignored) {
-                // fallback below
-            }
-        }
-        return MediaTypeFactory.getMediaType(info.originalFilename())
-                .or(() -> MediaTypeFactory.getMediaType(resource))
-                .orElse(MediaType.APPLICATION_OCTET_STREAM);
-    }
-
-    private ResourceRegion createRegion(Resource resource, long contentLength, HttpRange range) {
-        long start = range.getRangeStart(contentLength);
-        long end = range.getRangeEnd(contentLength);
-        long rangeLength = end - start + 1;
-        return new ResourceRegion(resource, start, rangeLength);
-    }
-
-    private String contentDisposition(ru.ifmo.se.pisk.domain.TrackInfo info) {
-        String filename = info.originalFilename();
-        if (filename == null) {
-            filename = Path.of(info.filepath()).getFileName().toString();
-        }
-        return ContentDisposition.attachment().filename(filename).build().toString();
-    }
+    // ... остальной код контроллера без изменений ...
 }

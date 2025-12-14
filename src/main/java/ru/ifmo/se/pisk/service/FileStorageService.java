@@ -1,27 +1,33 @@
 package ru.ifmo.se.pisk.service;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
 @Service
 public class FileStorageService {
-
     private final Path root = Paths.get("storage");
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "audio/mpeg", // mp3
+            "audio/wav",
+            "audio/x-wav",
+            "audio/flac",
+            "audio/x-flac",
+            "audio/ogg",
+            "audio/mp4",   // m4a
+            "audio/aac"
+    );
+    private static final long MAX_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
 
-    public FileStorageService() {
-        init();
-    }
+    public FileStorageService() { init(); }
 
     public synchronized void init() {
         try {
@@ -30,6 +36,16 @@ public class FileStorageService {
             Files.createDirectories(root.resolve("covers"));
         } catch (IOException ex) {
             throw new IllegalStateException("Не удалось инициализировать файловое хранилище", ex);
+        }
+    }
+
+    public void validate(String originalFilename, String contentType, long fileSize) {
+        if (!StringUtils.hasText(originalFilename)) throw new IllegalArgumentException("Пустое имя файла");
+        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Формат файла не поддерживается: " + contentType);
+        }
+        if (fileSize <= 0 || fileSize > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("Размер файла превышает допустимый лимит: " + (fileSize / (1024 * 1024)) + "MB");
         }
     }
 
