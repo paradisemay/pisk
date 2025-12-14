@@ -1,5 +1,6 @@
 package ru.ifmo.se.pisk.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,6 +15,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import ru.ifmo.se.pisk.security.Sha384PasswordEncoder;
 
 @Configuration
 public class SecurityConfig {
@@ -49,7 +51,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder(@Value("${security.password.pepper}") String pepper) {
+        return new Sha384PasswordEncoder(pepper);
     }
 }
