@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(#{admin.heading})"></head>
+<body>
+<header th:replace="fragments :: nav"></header>
+<main class="content">
+    <section class="card">
+        <h1 th:text="#{admin.heading}"></h1>
+        <div th:if="${saved}" class="alert success" th:text="#{admin.saved}" role="status"></div>
+        <form th:object="${settings}" method="post" class="form-grid" aria-label="Admin settings">
+            <label>
+                <span th:text="#{admin.moderation}"></span>
+                <select aria-label="Moderation" th:field="*{moderationEnabled}">
+                    <option th:value="true" th:text="'ON'"></option>
+                    <option th:value="false" th:text="'OFF'"></option>
+                </select>
+                <span class="error" th:if="${#fields.hasErrors('moderationEnabled')}" th:errors="*{moderationEnabled}"></span>
+            </label>
+            <label>
+                <span th:text="#{admin.page-size}"></span>
+                <input aria-label="Default page size" type="number" min="1" max="100" th:field="*{defaultPageSize}" />
+                <span class="error" th:if="${#fields.hasErrors('defaultPageSize')}" th:errors="*{defaultPageSize}"></span>
+            </label>
+            <div class="wide">
+                <p class="muted" th:text="${'Genres: ' + genres}"></p>
+            </div>
+            <button class="btn" type="submit" aria-label="Save admin" th:text="#{admin.submit}"></button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

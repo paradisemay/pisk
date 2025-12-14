@@ -1,28 +1,28 @@
 package ru.ifmo.se.pisk.service;
 
-import java.io.InputStream;
-import java.time.Instant;
-import java.util.Map;
-import java.util.Set;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import ru.ifmo.se.pisk.domain.AuditAction;
-import ru.ifmo.se.pisk.domain.RatingInfo;
+import ru.ifmo.se.pisk.model.Author;
+import ru.ifmo.se.pisk.model.Track;
+
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.domain.TrackStatus;
-import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
-import ru.ifmo.se.pisk.domain.entity.GenreEntity;
-import ru.ifmo.se.pisk.domain.entity.RatingEntity;
+import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
-import ru.ifmo.se.pisk.domain.entity.TrackStatusHistoryEntity;
-import ru.ifmo.se.pisk.domain.entity.UserEntity;
-import ru.ifmo.se.pisk.domain.mapper.DomainMapper;
-import ru.ifmo.se.pisk.repository.RatingRepository;
-import ru.ifmo.se.pisk.repository.TrackRepository;
-import ru.ifmo.se.pisk.repository.TrackStatusHistoryRepository;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
@@ -31,59 +31,97 @@ import ru.ifmo.se.pisk.repository.specification.TrackSpecifications;
 @Service
 public class TrackService {
 
-    private final TrackRepository trackRepository;
-    private final RatingRepository ratingRepository;
-    private final UserService userService;
-    private final AlbumService albumService;
-    private final GenreService genreService;
-    private final FileStorageService fileStorageService;
-    private final AuditService auditService;
-    private final RateLimitService rateLimitService;
-    private final TrackStatusHistoryRepository trackStatusHistoryRepository;
+    private final List<Track> tracks;
+    private final Map<Long, TrackStatus> statuses;
 
-    public TrackService(TrackRepository trackRepository,
-                        RatingRepository ratingRepository,
-                        UserService userService,
-                        AlbumService albumService,
-                        GenreService genreService,
-                        FileStorageService fileStorageService,
-                        AuditService auditService,
-                        RateLimitService rateLimitService,
-                        TrackStatusHistoryRepository trackStatusHistoryRepository) {
-        this.trackRepository = trackRepository;
-        this.ratingRepository = ratingRepository;
-        this.userService = userService;
-        this.albumService = albumService;
-        this.genreService = genreService;
-        this.fileStorageService = fileStorageService;
-        this.auditService = auditService;
-        this.rateLimitService = rateLimitService;
-        this.trackStatusHistoryRepository = trackStatusHistoryRepository;
+    public TrackService() {
+        Author alice = Author.builder()
+                .id(1L)
+                .name("Alice Elektron")
+                .bio("Любит экспериментальную электронику.")
+                .avatarUrl("/img/author1.png")
+                .registeredAt(LocalDate.now().minusMonths(5))
+                .followers(1820)
+                .build();
+        Author bob = Author.builder()
+                .id(2L)
+                .name("DJ Bob")
+                .bio("Битмейкер и саунд-дизайнер.")
+                .avatarUrl("/img/author2.png")
+                .registeredAt(LocalDate.now().minusYears(1))
+                .followers(2400)
+                .build();
+
+        tracks = new ArrayList<>(List.of(
+                Track.builder()
+                        .id(1L)
+                        .title("Northern Lights")
+                        .description("Спокойный эмбиент под северное сияние.")
+                        .audioUrl("/audio/northern-lights.mp3")
+                        .coverUrl("/img/cover1.jpg")
+                        .genre("ambient")
+                        .tags(List.of("chill", "sleep"))
+                        .rating(4.8)
+                        .plays(12500)
+                        .publishedAt(LocalDate.now().minusDays(10))
+                        .author(alice)
+                        .duration(Duration.ofMinutes(4).plusSeconds(12))
+                        .build(),
+                Track.builder()
+                        .id(2L)
+                        .title("City Pulse")
+                        .description("Уличный шум превращается в техно.")
+                        .audioUrl("/audio/city-pulse.mp3")
+                        .coverUrl("/img/cover2.jpg")
+                        .genre("techno")
+                        .tags(List.of("dance", "urban"))
+                        .rating(4.6)
+                        .plays(8700)
+                        .publishedAt(LocalDate.now().minusDays(3))
+                        .author(bob)
+                        .duration(Duration.ofMinutes(5).plusSeconds(3))
+                        .build(),
+                Track.builder()
+                        .id(3L)
+                        .title("Morning Run")
+                        .description("Энергичный трек для пробежки.")
+                        .audioUrl("/audio/morning-run.mp3")
+                        .coverUrl("/img/cover3.jpg")
+                        .genre("house")
+                        .tags(List.of("sport", "motivation"))
+                        .rating(4.2)
+                        .plays(3200)
+                        .publishedAt(LocalDate.now().minusWeeks(2))
+                        .author(alice)
+                        .duration(Duration.ofMinutes(3).plusSeconds(40))
+                        .build()
+        ));
+        statuses = tracks.stream().collect(Collectors.toMap(Track::getId, t -> TrackStatus.PUBLISHED));
     }
 
-    @Transactional
-    public TrackInfo uploadTrack(Long artistId, TrackUploadCommand command) {
-        rateLimitService.checkRateLimit("track-upload:" + artistId);
-        if (command.durationSeconds() <= 0) {
-            throw new IllegalArgumentException("Продолжительность должна быть положительной");
+    public Page<Track> findTracks(String search, String genre, List<String> tags, String sort, Pageable pageable) {
+        List<Track> filtered = tracks.stream()
+                .filter(track -> search == null || track.getTitle().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))
+                        || track.getDescription().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT)))
+                .filter(track -> genre == null || genre.isBlank() || Objects.equals(track.getGenre(), genre))
+                .filter(track -> tags == null || tags.isEmpty() || track.getTags().stream().anyMatch(tags::contains))
+                .sorted(resolveComparator(sort))
+                .toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filtered.size());
+        if (start > end) {
+            return Page.empty(pageable);
         }
-        if (command.fileSize() <= 0) {
-            throw new IllegalArgumentException("Размер файла должен быть положительным");
+        return new PageImpl<>(filtered.subList(start, end), pageable, filtered.size());
+    }
+
+    private Comparator<Track> resolveComparator(String sort) {
+        if ("plays".equalsIgnoreCase(sort)) {
+            return Comparator.comparingInt(Track::getPlays).reversed();
         }
-        if (command.genreId() == null) {
-            throw new IllegalArgumentException("Жанр обязателен");
-        }
-        if (command.albumId() == null) {
-            throw new IllegalArgumentException("Альбом обязателен");
-        }
-        if (command.numberOnAlbum() < 1) {
-            throw new IllegalArgumentException("Номер трека в альбоме должен быть положительным");
-        }
-        UserEntity artist = userService.requireUser(artistId);
-        AlbumEntity album = albumService.requireAlbum(command.albumId());
-        if (command.numberOnAlbum() > album.getTrackNumber()) {
-            throw new IllegalArgumentException("Номер трека превышает размер альбома");
-        }
+        if ("date".equalsIgnoreCase(sort)) {
+            return Comparator.comparing(Track::getPublishedAt).reversed();
         GenreEntity genre = genreService.requireGenre(command.genreId());
         String sanitizedName = fileStorageService.sanitizeFilename(command.originalFilename());
         String storagePath;
@@ -92,6 +130,30 @@ public class TrackService {
         } catch (Exception ex) {
             throw new IllegalStateException("Не удалось сохранить файл трека", ex);
         }
+        return Comparator.comparingDouble(Track::getRating).reversed();
+    }
+
+    public Optional<Track> findById(long id) {
+        return tracks.stream().filter(t -> t.getId() == id).findFirst();
+    }
+
+    public List<Track> findByAuthor(long authorId) {
+        return tracks.stream().filter(t -> t.getAuthor().getId() == authorId).toList();
+    }
+
+    public Map<String, Long> groupByGenre() {
+        return tracks.stream()
+                .collect(Collectors.groupingBy(Track::getGenre, Collectors.counting()));
+    }
+
+    public Track addTrack(Track track) {
+        tracks.add(track);
+        statuses.put(track.getId(), TrackStatus.PUBLISHED);
+        return track;
+    }
+
+    public TrackEntity requireTrack(Long trackId) {
+        Track track = findById(trackId).orElseThrow(() -> new IllegalArgumentException("Track not found"));
         TrackEntity entity = new TrackEntity();
         entity.setAuthor(artist);
         entity.setAlbum(album);
@@ -131,92 +193,104 @@ public class TrackService {
 
     @Transactional
     public TrackInfo changeStatus(Long trackId, TrackStatus status, Long moderatorId) {
-        TrackEntity entity = requireTrack(trackId);
-        UserEntity moderator = userService.requireUser(moderatorId);
-        TrackStatus previous = entity.getStatus();
-        entity.setStatus(status);
-        TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
-        history.setTrack(entity);
-        history.setFromStatus(previous);
-        history.setToStatus(status);
-        history.setActor(moderator);
-        trackStatusHistoryRepository.save(history);
-        auditService.record(AuditAction.TRACK_STATUS_CHANGED, "Track", trackId.toString(), moderator,
-                Map.of("status", status.name()));
-        return DomainMapper.toTrackInfo(entity);
+        statuses.put(trackId, status);
+        return getTrackInfo(trackId);
     }
 
-    @Transactional
+    public TrackInfo uploadTrack(Long artistId, TrackUploadCommand command) {
+        Track track = Track.builder()
+                .id(System.currentTimeMillis())
+                .title(command.name())
+                .description("Upload placeholder")
+                .genre("demo")
+                .audioUrl("/audio/" + command.originalFilename())
+                .coverUrl("/img/cover-uploaded.jpg")
+                .tags(List.of())
+                .author(tracks.getFirst().getAuthor())
+                .rating(0)
+                .plays(0)
+                .publishedAt(LocalDate.now())
+                .duration(Duration.ofSeconds(command.durationSeconds()))
+                .build();
+        addTrack(track);
+        return toInfo(track);
+    }
+
     public RatingInfo rateTrack(RatingCommand command) {
-        if (command.value() < 1 || command.value() > 5) {
-            throw new IllegalArgumentException("Оценка должна быть от 1 до 5");
-        }
-        TrackEntity track = requireTrack(command.trackId());
-        UserEntity user = userService.requireUser(command.userId());
-        RatingEntity entity = ratingRepository.findByTrackAndUser(track, user)
-                .orElseGet(() -> {
-                    RatingEntity ratingEntity = new RatingEntity();
-                    ratingEntity.setTrack(track);
-                    ratingEntity.setUser(user);
-                    return ratingEntity;
-                });
-        entity.setValue(command.value());
-        entity.setComment(command.comment());
-        RatingEntity saved = ratingRepository.save(entity);
-        recalculateTrackRating(track);
-        auditService.record(AuditAction.RATING_CREATED, "Track", track.getId().toString(), user,
-                Map.of(
-                        "value", Integer.toString(command.value()),
-                        "rate_count", Integer.toString(track.getRateCount()),
-                        "rating_cached", Long.toString(track.getRating())
-                ));
-        return DomainMapper.toRatingInfo(saved);
+        Track track = findById(command.trackId()).orElseThrow();
+        Track updated = Track.builder()
+                .id(track.getId())
+                .title(track.getTitle())
+                .description(track.getDescription())
+                .audioUrl(track.getAudioUrl())
+                .coverUrl(track.getCoverUrl())
+                .genre(track.getGenre())
+                .tags(track.getTags())
+                .rating(Math.min(5.0, track.getRating() + command.value() / 5.0))
+                .plays(track.getPlays())
+                .publishedAt(track.getPublishedAt())
+                .author(track.getAuthor())
+                .duration(track.getDuration())
+                .build();
+        tracks.replaceAll(t -> t.getId().equals(updated.getId()) ? updated : t);
+        return new RatingInfo(System.currentTimeMillis(), command.trackId(), command.userId(), command.value(), command.comment(), java.time.Instant.now());
     }
 
-    private void recalculateTrackRating(TrackEntity track) {
-        Double average = ratingRepository.calculateAverageForTrack(track);
-        Long count = ratingRepository.countByTrack(track);
-        if (average == null || count == null || count == 0) {
-            track.setRating(0);
-            track.setRateCount(0);
-            return;
-        }
-        track.setRating(Math.round(average * count));
-        track.setRateCount(count.intValue());
-        if (track.getAlbum() != null) {
-            updateAlbumRating(track.getAlbum());
-        }
-    }
-
-    private void updateAlbumRating(AlbumEntity album) {
-        var tracks = trackRepository.findByAlbum(album);
-        long totalRating = 0;
-        long totalRates = 0;
-        for (TrackEntity trackEntity : tracks) {
-            totalRating += trackEntity.getRating();
-            totalRates += trackEntity.getRateCount();
-        }
-        double average = totalRates == 0 ? 0 : ((double) totalRating) / totalRates;
-        album.setAverageRating(average);
-    }
-
-    @Transactional
     public TrackInfo incrementPlayCount(Long trackId) {
-        TrackEntity entity = requireTrack(trackId);
-        entity.setPlayCount(entity.getPlayCount() + 1);
-        return DomainMapper.toTrackInfo(entity);
+        Track track = findById(trackId).orElseThrow();
+        Track updated = Track.builder()
+                .id(track.getId())
+                .title(track.getTitle())
+                .description(track.getDescription())
+                .audioUrl(track.getAudioUrl())
+                .coverUrl(track.getCoverUrl())
+                .genre(track.getGenre())
+                .tags(track.getTags())
+                .rating(track.getRating())
+                .plays(track.getPlays() + 1)
+                .publishedAt(track.getPublishedAt())
+                .author(track.getAuthor())
+                .duration(track.getDuration())
+                .build();
+        tracks.replaceAll(t -> t.getId().equals(updated.getId()) ? updated : t);
+        return toInfo(updated);
     }
 
-    @Transactional(readOnly = true)
-    public TrackEntity requireTrack(Long trackId) {
-        return trackRepository.findById(trackId).orElseThrow(() -> new IllegalArgumentException("Трек не найден"));
+    public Page<TrackInfo> searchTracks(String title, java.util.Set<Long> genreIds, Pageable pageable) {
+        List<Track> filtered = tracks.stream()
+                .filter(t -> title == null || t.getTitle().toLowerCase(Locale.ROOT).contains(title.toLowerCase(Locale.ROOT)))
+                .toList();
+        return sliceToPage(filtered, pageable);
     }
 
-    @Transactional(readOnly = true)
+    public Page<TrackInfo> findTracks(Boolean explicit, Boolean inoagent, Pageable pageable) {
+        return sliceToPage(tracks, pageable);
+    }
+
     public TrackInfo getTrackInfo(Long trackId) {
-        return DomainMapper.toTrackInfo(requireTrack(trackId));
+        Track track = findById(trackId).orElseThrow();
+        return toInfo(track);
     }
 
+    private Page<TrackInfo> sliceToPage(List<Track> list, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), list.size());
+        if (start > end) {
+            return Page.empty(pageable);
+        }
+        List<TrackInfo> content = list.subList(start, end).stream().map(this::toInfo).toList();
+        return new PageImpl<>(content, pageable, list.size());
+    }
+
+    private TrackInfo toInfo(Track track) {
+        return new TrackInfo(track.getId(), track.getTitle(),
+                track.getAuthor() != null ? track.getAuthor().getId() : null,
+                null, track.getAuthor() != null ? track.getAuthor().getId() : null,
+                null, track.getAudioUrl(), 0, false, false,
+                track.getDuration() != null ? track.getDuration().getSeconds() : 0,
+                0, java.time.Instant.now(), track.getRating(), 1, track.getPlays(), 0);
+    }
+      
     @Transactional(readOnly = true)
     public Page<TrackInfo> searchTracks(TrackSearchCriteria criteria, Pageable pageable) {
         Specification<TrackEntity> spec = Specification.where(TrackSpecifications.fullTextSearch(criteria.query()))

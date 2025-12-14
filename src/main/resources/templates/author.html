@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(${author.name})"></head>
+<body>
+<header th:replace="fragments :: nav"></header>
+<main class="content">
+    <section class="card author-block">
+        <div>
+            <h1 th:text="${author.name}"></h1>
+            <p th:text="${author.bio}" class="muted"></p>
+            <p class="pill" th:text="${author.followers + ' ' + #messages.msg('author.followers')}"></p>
+        </div>
+    </section>
+    <section class="card">
+        <h2 th:text="#{catalog.heading}"></h2>
+        <div class="grid">
+            <article th:each="track : ${tracks}" class="track-card" tabindex="0">
+                <a th:href="@{'/tracks/' + ${track.id}}" th:text="${track.title}" aria-label="Track"></a>
+                <p class="muted" th:text="${track.description}"></p>
+            </article>
+        </div>
+    </section>
+</main>
+</body>
+</html>
