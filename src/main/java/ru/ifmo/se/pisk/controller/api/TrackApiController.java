@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/tracks")
+@RequestMapping("/api/v1/tracks")
 @Tag(name = "Tracks", description = "REST API для каталога треков")
 public class TrackApiController {
 
