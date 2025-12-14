@@ -76,7 +76,7 @@ public class SecurityConfig {
 
         @Override
         public void commence(HttpServletRequest request, HttpServletResponse response,
-                            AuthenticationException authException) throws IOException {
+                            AuthenticationException authException) throws IOException, jakarta.servlet.ServletException {
             String path = request.getRequestURI();
             // If it's an API request, return 401
             if (path.startsWith("/api/")) {
