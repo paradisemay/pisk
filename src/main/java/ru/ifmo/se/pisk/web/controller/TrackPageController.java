@@ -35,12 +35,14 @@ public class TrackPageController {
             TrackInfo info = trackService.getTrackInfo(id);
             String authorName = info.authorId() != null ? userService.requireUser(info.authorId()).getUsername() : "-";
             String genreTitle = info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-";
+            String coverUrl = info.coverPath() != null ? "/api/v1/tracks/" + info.id() + "/cover" : null;
             TrackDetailsView view = new TrackDetailsView(
                     info.id(),
                     info.name(),
                     info.authorId(),
                     authorName,
                     genreTitle,
+                    coverUrl,
                     info.explicit(),
                     info.inoagent(),
                     info.averageRating(),

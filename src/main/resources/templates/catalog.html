@@ -48,6 +48,9 @@
 
     <section class="grid" th:if="${!tracks.isEmpty()}">
         <article class="card" th:each="track : ${tracks}">
+            <div class="cover-thumb" th:if="${track.coverUrl}">
+                <img th:src="${track.coverUrl}" alt="Cover">
+            </div>
             <div class="card-title">
                 <a th:href="@{/tracks/{id}(id=${track.id})}" th:text="${track.name}">Track</a>
             </div>
