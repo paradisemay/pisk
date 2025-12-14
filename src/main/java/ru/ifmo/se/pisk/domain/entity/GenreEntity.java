@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,10 +24,10 @@ public class GenreEntity {
     @Column(length = 512)
     private String description;
 
-    @ManyToMany(mappedBy = "genres")
+    @OneToMany(mappedBy = "genre")
     private Set<TrackEntity> tracks = new HashSet<>();
 
-    @ManyToMany(mappedBy = "genres")
+    @OneToMany(mappedBy = "genre")
     private Set<AlbumEntity> albums = new HashSet<>();
 
     public Long getId() {
