@@ -59,7 +59,7 @@ public class UserEntity {
     @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
     private Set<SubscriptionEntity> subscriptionsAsArtist = new HashSet<>();
 
-    @OneToMany(mappedBy = "artist", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
     private Set<TrackEntity> tracks = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
