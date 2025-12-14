@@ -25,6 +25,8 @@ import ru.ifmo.se.pisk.domain.RatingInfo;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
+import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
+import ru.ifmo.se.pisk.repository.specification.TrackSpecifications;
 
 @Service
 public class TrackService {
@@ -120,6 +122,13 @@ public class TrackService {
         }
         if ("date".equalsIgnoreCase(sort)) {
             return Comparator.comparing(Track::getPublishedAt).reversed();
+        GenreEntity genre = genreService.requireGenre(command.genreId());
+        String sanitizedName = fileStorageService.sanitizeFilename(command.originalFilename());
+        String storagePath;
+        try (InputStream inputStream = command.dataSupplier().get()) {
+            storagePath = fileStorageService.storeTrack(artistId, sanitizedName, inputStream);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Не удалось сохранить файл трека", ex);
         }
         return Comparator.comparingDouble(Track::getRating).reversed();
     }
@@ -146,14 +155,43 @@ public class TrackService {
     public TrackEntity requireTrack(Long trackId) {
         Track track = findById(trackId).orElseThrow(() -> new IllegalArgumentException("Track not found"));
         TrackEntity entity = new TrackEntity();
-        entity.setId(track.getId());
-        entity.setName(track.getTitle());
-        entity.setDurationSeconds(track.getDuration().getSeconds());
-        entity.setStoragePath(track.getAudioUrl());
-        entity.setStatus(statuses.getOrDefault(track.getId(), TrackStatus.PUBLISHED));
-        return entity;
+        entity.setAuthor(artist);
+        entity.setAlbum(album);
+        entity.setGenre(genre);
+        entity.setName(command.name());
+        entity.setDurationSeconds(command.durationSeconds());
+        entity.setStoragePath(storagePath);
+        entity.setFileSize(command.fileSize());
+        entity.setContentType(command.contentType());
+        entity.setOriginalFilename(sanitizedName);
+        entity.setUploadedAt(Instant.now());
+        entity.setNumberOnAlbum(command.numberOnAlbum());
+        entity.setExplicit(command.explicit());
+        entity.setInoagent(command.inoagent());
+        TrackEntity saved = trackRepository.save(entity);
+        album.setTrackNumber(Math.max(album.getTrackNumber(), saved.getNumberOnAlbum()));
+        if (saved.isExplicit()) {
+            album.setExplicit(true);
+        }
+        if (saved.isInoagent()) {
+            album.setInoagent(true);
+        }
+        TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
+        history.setTrack(saved);
+        history.setToStatus(saved.getStatus());
+        history.setActor(artist);
+        trackStatusHistoryRepository.save(history);
+        auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artist,
+                Map.of(
+                        "genre_id", genre.getId().toString(),
+                        "explicit", Boolean.toString(saved.isExplicit()),
+                        "inoagent", Boolean.toString(saved.isInoagent()),
+                        "number_on_album", Integer.toString(saved.getNumberOnAlbum())
+                ));
+        return DomainMapper.toTrackInfo(saved);
     }
 
+    @Transactional
     public TrackInfo changeStatus(Long trackId, TrackStatus status, Long moderatorId) {
         statuses.put(trackId, status);
         return getTrackInfo(trackId);
@@ -251,5 +289,22 @@ public class TrackService {
                 null, track.getAudioUrl(), 0, false, false,
                 track.getDuration() != null ? track.getDuration().getSeconds() : 0,
                 0, java.time.Instant.now(), track.getRating(), 1, track.getPlays(), 0);
+    }
+      
+    @Transactional(readOnly = true)
+    public Page<TrackInfo> searchTracks(TrackSearchCriteria criteria, Pageable pageable) {
+        Specification<TrackEntity> spec = Specification.where(TrackSpecifications.fullTextSearch(criteria.query()))
+                .and(TrackSpecifications.hasGenres(criteria.genreIds()))
+                .and(TrackSpecifications.hasAuthor(criteria.authorId()))
+                .and(TrackSpecifications.hasStatus(criteria.status()))
+                .and(TrackSpecifications.isExplicit(criteria.explicit()))
+                .and(TrackSpecifications.isInoagent(criteria.inoagent()));
+        return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TrackInfo> findByAuthor(Long authorId, Pageable pageable) {
+        UserEntity author = userService.requireUser(authorId);
+        return trackRepository.findByAuthor(author, pageable).map(DomainMapper::toTrackInfo);
     }
 }

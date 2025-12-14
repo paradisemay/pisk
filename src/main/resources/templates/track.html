@@ -1,36 +1,41 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments :: head(${track.title})"></head>
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${track.name}">Track</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
 <body>
-<header th:replace="fragments :: nav"></header>
-<main class="content">
-    <article class="card track-detail">
-        <div class="media">
-            <img th:src="${track.coverUrl}" alt="Cover" class="cover large"/>
-            <div>
-                <h1 th:text="${track.title}"></h1>
-                <p class="muted" th:text="${track.description}"></p>
-                <p class="pill" th:text="#{track.rating} + ': ' + ${track.rating}"></p>
-                <p class="muted" th:text="#{track.published} + ' ' + ${#temporals.format(track.publishedAt, 'dd MMM yyyy')}"></p>
-                <p class="muted" th:text="#{track.plays} + ': ' + ${track.plays}"></p>
-                <p class="muted" th:text="#{track.tags} + ': ' + ${#strings.listJoin(track.tags, ', ')}"></p>
-                <div class="player">
-                    <audio controls aria-label="Audio player" th:src="${track.audioUrl}"></audio>
-                </div>
-            </div>
-        </div>
-        <a class="author" th:href="@{'/authors/' + ${track.author.id}}" aria-label="Author profile">
-            <span th:text="${track.author.name}"></span>
-            <small th:text="${track.author.followers + ' ' + #messages.msg('author.followers')}"></small>
-        </a>
-    </article>
-
+<header class="site-header">
+    <div class="brand" th:text="#{app.title}">Pisk</div>
+    <nav class="nav">
+        <a th:href="@{/catalog}" th:text="#{nav.catalog}"></a>
+        <a th:href="@{/upload}" th:text="#{nav.upload}"></a>
+    </nav>
+    <div class="lang-switch">
+        <a th:href="${langLinks['ru']}" th:text="#{nav.lang.ru}"></a>
+        <span>/</span>
+        <a th:href="${langLinks['en']}" th:text="#{nav.lang.en}"></a>
+    </div>
+</header>
+<main class="container">
     <section class="card">
-        <h2 th:text="#{track.more}"></h2>
-        <div class="grid">
-            <article th:each="other : ${moreFromAuthor}" class="track-card" tabindex="0">
-                <a th:href="@{'/tracks/' + ${other.id}}" th:text="${other.title}" aria-label="Other track"></a>
-            </article>
+        <h1 th:text="${track.name}">Track title</h1>
+        <p>
+            <span th:text="#{catalog.track.by}">by</span>
+            <a th:href="@{/authors/{id}(id=${track.authorId})}" th:text="${track.authorName}">Author</a>
+        </p>
+        <p><strong th:text="#{track.metadata.genre}">Genre</strong>: <span th:text="${track.genreTitle}">Genre</span></p>
+        <p><strong th:text="#{track.duration}">Duration</strong>: <span th:text="${track.durationSeconds}"></span> sec</p>
+        <p><strong th:text="#{track.rating}">Rating</strong>: <span th:text="${#numbers.formatDecimal(track.averageRating,1,1)}"></span> (<span th:text="${track.rateCount}"></span>)</p>
+        <div class="tags">
+            <span class="tag" th:if="${track.explicit}" th:text="#{track.metadata.explicit}"></span>
+            <span class="tag" th:if="${track.inoagent}" th:text="#{track.metadata.inoagent}"></span>
+        </div>
+        <audio controls th:src="${track.downloadUrl}" class="player"></audio>
+        <div class="actions">
+            <a class="button" th:href="${track.downloadUrl}" th:text="#{track.download}"></a>
+            <a class="button" th:href="@{/catalog}" th:text="#{track.back}"></a>
         </div>
     </section>
 </main>

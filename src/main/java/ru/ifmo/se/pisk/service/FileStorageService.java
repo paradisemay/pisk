@@ -55,7 +55,7 @@ public class FileStorageService {
         return new FileSystemResource(file);
     }
 
-    private String sanitizeFilename(String originalFilename) {
+    public String sanitizeFilename(String originalFilename) {
         if (!StringUtils.hasText(originalFilename)) {
             return "file";
         }
