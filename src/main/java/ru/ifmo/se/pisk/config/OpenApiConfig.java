@@ -16,7 +16,10 @@ import org.springframework.context.annotation.Configuration;
                 description = "REST API для каталога музыкальных треков",
                 contact = @Contact(name = "Pisk Platform", email = "support@example.com")
         ),
-        servers = {@Server(url = "/", description = "Основной сервер")}
+        servers = {
+                @Server(url = "/api/v1", description = "Основной сервер API v1"),
+                @Server(url = "/", description = "Базовый хост (совместимость)")
+        }
 )
 public class OpenApiConfig {
 

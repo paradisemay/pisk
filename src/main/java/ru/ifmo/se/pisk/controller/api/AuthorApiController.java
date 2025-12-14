@@ -13,7 +13,7 @@ import ru.ifmo.se.pisk.service.TrackService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/authors")
+@RequestMapping("/api/v1/authors")
 @Tag(name = "Authors", description = "Профили авторов и их треки")
 public class AuthorApiController {
 
