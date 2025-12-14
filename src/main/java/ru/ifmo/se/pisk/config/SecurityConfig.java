@@ -36,8 +36,8 @@ public class SecurityConfig {
                                 "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
                         ).permitAll()
 
-                        // Error page must be public
-                        .requestMatchers("/error").permitAll()
+                        // Error page and default UI CSS must be public
+                        .requestMatchers("/error", "/default-ui.css").permitAll()
 
                         // Public login and docs
                         .requestMatchers(
