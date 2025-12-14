@@ -63,12 +63,14 @@ public class CatalogController {
     private TrackView toView(TrackInfo info, Map<Long, String> genreNames) {
         String authorName = info.authorId() != null ? userService.requireUser(info.authorId()).getUsername() : "-";
         String genreTitle = info.genreId() != null ? genreNames.getOrDefault(info.genreId(), "-") : "-";
+        String coverUrl = info.coverPath() != null ? "/api/v1/tracks/" + info.id() + "/cover" : null;
         return new TrackView(
                 info.id(),
                 info.name(),
                 info.authorId(),
                 authorName,
                 genreTitle,
+                coverUrl,
                 info.explicit(),
                 info.inoagent(),
                 info.averageRating(),

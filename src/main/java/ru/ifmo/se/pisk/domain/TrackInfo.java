@@ -10,6 +10,7 @@ public record TrackInfo(
         Long artistId,
         Long genreId,
         String filepath,
+        String coverPath,
         String contentType,
         String originalFilename,
         int numberOnAlbum,

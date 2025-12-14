@@ -8,6 +8,7 @@ public record TrackView(
         Long authorId,
         String authorName,
         String genreTitle,
+        String coverUrl,
         boolean explicit,
         boolean inoagent,
         double averageRating,

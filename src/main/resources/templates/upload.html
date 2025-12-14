@@ -60,6 +60,12 @@
                 <input type="file" th:field="*{file}">
                 <span class="error" th:if="${#fields.hasErrors('file')}" th:errors="*{file}"></span>
             </label>
+            <label class="file-field">
+                <span th:text="#{upload.field.cover}">Cover</span>
+                <input type="file" th:field="*{cover}">
+                <span class="muted" th:text="#{upload.field.cover.optional}"></span>
+                <span class="error" th:if="${#fields.hasErrors('cover')}" th:errors="*{cover}"></span>
+            </label>
             <div class="actions">
                 <button type="submit" class="pill" th:text="#{upload.submit}">Upload</button>
             </div>

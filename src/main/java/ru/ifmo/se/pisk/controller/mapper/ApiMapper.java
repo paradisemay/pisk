@@ -65,6 +65,7 @@ public final class ApiMapper {
                 info.artistId(),
                 info.genreId(),
                 info.filepath(),
+                info.coverPath(),
                 info.numberOnAlbum(),
                 info.explicit(),
                 info.inoagent(),
