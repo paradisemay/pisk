@@ -33,6 +33,9 @@ public class UserEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Column(name = "password_salt", nullable = false, length = 64)
+    private String passwordSalt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private UserRole role = UserRole.USER;
@@ -104,6 +107,14 @@ public class UserEntity {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getPasswordSalt() {
+        return passwordSalt;
+    }
+
+    public void setPasswordSalt(String passwordSalt) {
+        this.passwordSalt = passwordSalt;
     }
 
     public UserRole getRole() {
