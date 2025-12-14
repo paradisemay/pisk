@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(#{register.title})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page narrow">
+    <section class="card">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow" th:text="#{register.title}">Регистрация</p>
+                <h1 th:text="#{register.subtitle}">Создайте аккаунт</h1>
+            </div>
+            <p class="muted" th:text="#{register.hint}"></p>
+        </div>
+        <form th:action="@{/register}" th:object="${registerForm}" method="post" class="form-grid">
+            <label>
+                <span th:text="#{register.username}">Имя пользователя</span>
+                <input type="text" th:field="*{username}" autocomplete="username" required>
+                <span class="error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+            </label>
+            <label>
+                <span th:text="#{register.email}">Email</span>
+                <input type="email" th:field="*{email}" autocomplete="email" required>
+                <span class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+            </label>
+            <label>
+                <span th:text="#{register.password}">Пароль</span>
+                <input type="password" th:field="*{password}" autocomplete="new-password" required>
+                <span class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+            </label>
+            <label>
+                <span th:text="#{register.role}">Тип аккаунта</span>
+                <select th:field="*{role}">
+                    <option th:each="role : ${roles}" th:value="${role}" th:text="${role}"></option>
+                </select>
+            </label>
+            <p class="error" th:if="${registrationError}" th:text="${registrationError}"></p>
+            <div class="actions">
+                <button class="pill" type="submit" th:text="#{register.submit}"></button>
+                <a class="ghost" th:href="@{/login}" th:text="#{register.back}"></a>
+            </div>
+        </form>
+    </section>
+</main>
+<footer th:replace="fragments :: siteFooter"></footer>
+</body>
+</html>

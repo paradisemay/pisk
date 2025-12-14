@@ -1,7 +1,6 @@
 package ru.ifmo.se.pisk.web.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.ifmo.se.pisk.domain.GenreInfo;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.service.GenreService;
@@ -22,6 +20,7 @@ import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.UserService;
 import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
 import ru.ifmo.se.pisk.web.view.TrackView;
+import ru.ifmo.se.pisk.web.util.LanguageLinks;
 
 @Controller
 @RequestMapping("/catalog")
@@ -43,8 +42,8 @@ public class CatalogController {
                           @RequestParam(required = false) Boolean inoagent,
                           @RequestParam(name = "genreId", required = false) Set<Long> genreIds,
                           @PageableDefault(size = 9, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable,
-                          HttpServletRequest request,
-                          Model model) {
+                          Model model,
+                          HttpServletRequest request) {
         TrackSearchCriteria criteria = new TrackSearchCriteria(title, genreIds, null, null, explicit, inoagent);
         Page<TrackInfo> tracks = trackService.searchTracks(criteria, pageable);
         Map<Long, String> genreNames = genreService.listAll().stream()
@@ -57,7 +56,7 @@ public class CatalogController {
         model.addAttribute("explicitFilter", explicit);
         model.addAttribute("inoagentFilter", inoagent);
         model.addAttribute("genreFilter", genreIds);
-        model.addAttribute("langLinks", languageLinks(request));
+        model.addAttribute("langLinks", LanguageLinks.build(request));
         return "catalog";
     }
 
@@ -78,11 +77,4 @@ public class CatalogController {
         );
     }
 
-    private Map<String, String> languageLinks(HttpServletRequest request) {
-        String base = ServletUriComponentsBuilder.fromRequest(request).replaceQueryParam("lang").toUriString();
-        Map<String, String> links = new HashMap<>();
-        links.put("ru", ServletUriComponentsBuilder.fromUriString(base).replaceQueryParam("lang", "ru").toUriString());
-        links.put("en", ServletUriComponentsBuilder.fromUriString(base).replaceQueryParam("lang", "en").toUriString());
-        return links;
-    }
 }

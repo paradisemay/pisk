@@ -4,8 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Supplier;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,14 +13,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.web.form.UploadTrackForm;
+import ru.ifmo.se.pisk.web.util.LanguageLinks;
 
 @Controller
-@RequestMapping("/newupload")
+@RequestMapping({"/upload", "/newupload"})
 public class UploadController {
 
     private final TrackService trackService;
@@ -39,7 +37,7 @@ public class UploadController {
             model.addAttribute("uploadForm", new UploadTrackForm());
         }
         model.addAttribute("genres", genreService.listAll());
-        model.addAttribute("langLinks", languageLinks(request));
+        model.addAttribute("langLinks", LanguageLinks.build(request));
         return "upload";
     }
 
@@ -51,7 +49,7 @@ public class UploadController {
                          HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("genres", genreService.listAll());
-            model.addAttribute("langLinks", languageLinks(request));
+            model.addAttribute("langLinks", LanguageLinks.build(request));
             return "upload";
         }
 
@@ -78,13 +76,5 @@ public class UploadController {
         var info = trackService.uploadTrack(form.getArtistId(), command);
         redirectAttributes.addFlashAttribute("uploadSuccess", true);
         return "redirect:/tracks/" + info.id();
-    }
-
-    private Map<String, String> languageLinks(HttpServletRequest request) {
-        String base = ServletUriComponentsBuilder.fromRequest(request).replaceQueryParam("lang").toUriString();
-        Map<String, String> links = new HashMap<>();
-        links.put("ru", ServletUriComponentsBuilder.fromUriString(base).replaceQueryParam("lang", "ru").toUriString());
-        links.put("en", ServletUriComponentsBuilder.fromUriString(base).replaceQueryParam("lang", "en").toUriString());
-        return links;
     }
 }

@@ -1,31 +1,30 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${author.username}">Artist</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
-</head>
-<body>
-<header class="site-header">
-    <div class="brand" th:text="#{app.title}">Pisk</div>
-    <nav class="nav">
-        <a th:href="@{/catalog}" th:text="#{nav.catalog}"></a>
-        <a th:href="@{/upload}" th:text="#{nav.upload}"></a>
-    </nav>
-    <div class="lang-switch">
-        <a th:href="${langLinks['ru']}" th:text="#{nav.lang.ru}"></a>
-        <span>/</span>
-        <a th:href="${langLinks['en']}" th:text="#{nav.lang.en}"></a>
-    </div>
-</header>
-<main class="container">
-    <section class="card">
-        <h1 th:text="#{profile.title}">Profile</h1>
-        <p><strong>ID:</strong> <span th:text="${author.id}"></span></p>
-        <p><strong>Email:</strong> <span th:text="${author.email}"></span></p>
-        <p><strong>Role:</strong> <span th:text="${author.role}"></span></p>
-        <p><strong>Status:</strong> <span th:text="${author.status}"></span></p>
+<head th:replace="fragments :: head(${author.username})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page">
+    <section class="card detail">
+        <div class="detail-header">
+            <div>
+                <p class="eyebrow" th:text="#{profile.title}">Профиль</p>
+                <h1 th:text="${author.username}">Artist</h1>
+                <p class="muted" th:text="${author.email}"></p>
+            </div>
+            <div class="pill" th:text="${author.role}"></div>
+        </div>
+        <div class="meta-grid">
+            <div>
+                <p class="muted">ID</p>
+                <strong th:text="${author.id}"></strong>
+            </div>
+            <div>
+                <p class="muted">Status</p>
+                <strong th:text="${author.status}"></strong>
+            </div>
+        </div>
     </section>
+
     <section class="grid" th:if="${!tracks.isEmpty()}">
         <article class="card" th:each="track : ${tracks}">
             <div class="card-title">
@@ -40,5 +39,6 @@
     </section>
     <div class="empty" th:if="${tracks.isEmpty()}" th:text="#{profile.no-tracks}">No tracks</div>
 </main>
+<footer th:replace="fragments :: siteFooter"></footer>
 </body>
 </html>

@@ -1,27 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="#{upload.title}">Upload</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
-</head>
-<body>
-<header class="site-header">
-    <div class="brand" th:text="#{app.title}">Pisk</div>
-    <nav class="nav">
-        <a th:href="@{/catalog}" th:text="#{nav.catalog}"></a>
-        <a th:href="@{/upload}" th:text="#{nav.upload}"></a>
-    </nav>
-    <div class="lang-switch">
-        <a th:href="${langLinks['ru']}" th:text="#{nav.lang.ru}"></a>
-        <span>/</span>
-        <a th:href="${langLinks['en']}" th:text="#{nav.lang.en}"></a>
-    </div>
-</header>
-<main class="container">
+<head th:replace="fragments :: head(#{upload.title})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page">
     <section class="card">
-        <h1 th:text="#{upload.title}">Upload</h1>
-        <p th:text="#{upload.description}">Description</p>
+        <div class="section-header">
+            <div>
+                <p class="eyebrow" th:text="#{upload.title}">Загрузка</p>
+                <h1 th:text="#{upload.description}">Загрузите трек</h1>
+            </div>
+            <div class="pill" th:if="${uploadSuccess}" th:text="#{upload.success}"></div>
+        </div>
         <form th:action="@{/upload}" th:object="${uploadForm}" method="post" enctype="multipart/form-data" class="form-grid">
             <label>
                 <span th:text="#{upload.field.artistId}">Artist ID</span>
@@ -46,7 +36,7 @@
             <label>
                 <span th:text="#{upload.field.genreId}">Genre</span>
                 <select th:field="*{genreId}">
-                    <option value="" th:text="''">--</option>
+                    <option value="" th:text="#{upload.field.genre.placeholder}"></option>
                     <option th:each="genre : ${genres}" th:value="${genre.id}" th:text="${genre.title}"></option>
                 </select>
                 <span class="error" th:if="${#fields.hasErrors('genreId')}" th:errors="*{genreId}"></span>
@@ -64,17 +54,17 @@
                 <input type="number" th:field="*{numberOnAlbum}">
                 <span class="error" th:if="${#fields.hasErrors('numberOnAlbum')}" th:errors="*{numberOnAlbum}"></span>
             </label>
-            <label>
+            <label class="file-field">
                 <span th:text="#{upload.field.file}">File</span>
                 <input type="file" th:field="*{file}">
                 <span class="error" th:if="${#fields.hasErrors('file')}" th:errors="*{file}"></span>
             </label>
             <div class="actions">
-                <button type="submit" th:text="#{upload.submit}">Upload</button>
+                <button type="submit" class="pill" th:text="#{upload.submit}">Upload</button>
             </div>
         </form>
-        <div class="alert success" th:if="${uploadSuccess}" th:text="'✔'">Uploaded</div>
     </section>
 </main>
+<footer th:replace="fragments :: siteFooter"></footer>
 </body>
 </html>

@@ -39,9 +39,9 @@ public class SecurityConfig {
                         // Error page and default UI CSS must be public
                         .requestMatchers("/error", "/default-ui.css").permitAll()
 
-                        // Public login and docs
+                        // Public auth, login and docs
                         .requestMatchers(
-                                "/login", "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health"
+                                "/login", "/register", "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health"
                         ).permitAll()
 
                         // Public HTML pages - GET only
@@ -67,6 +67,7 @@ public class SecurityConfig {
                 )
                 .httpBasic(Customizer.withDefaults())
                 .formLogin(form -> form
+                        .loginPage("/login")
                         .permitAll()
                         .defaultSuccessUrl("/catalog", true)
                 )
