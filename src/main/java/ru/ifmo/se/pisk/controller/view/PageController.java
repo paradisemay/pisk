@@ -57,17 +57,6 @@ public class PageController {
         return "track";
     }
 
-    @GetMapping("/authors/{id}")
-    public String author(@PathVariable long id, Model model) {
-        List<Track> tracks = trackService.findByAuthor(id);
-        if (tracks.isEmpty()) {
-            return "redirect:/catalog";
-        }
-        model.addAttribute("author", tracks.getFirst().getAuthor());
-        model.addAttribute("tracks", tracks);
-        return "author";
-    }
-
     @GetMapping("/upload")
     public String uploadForm(Model model) {
         model.addAttribute("trackUploadForm", new TrackUploadForm());
