@@ -1,0 +1,2 @@
+ALTER TABLE artist
+    ADD COLUMN IF NOT EXISTS label_id BIGINT REFERENCES label(id);
