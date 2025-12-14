@@ -22,7 +22,7 @@ import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.web.form.UploadTrackForm;
 
 @Controller
-@RequestMapping("/upload")
+@RequestMapping("/newupload")
 public class UploadController {
 
     private final TrackService trackService;

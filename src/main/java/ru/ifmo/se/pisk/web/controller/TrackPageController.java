@@ -31,7 +31,7 @@ public class TrackPageController {
         this.genreService = genreService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}/details")
     public String track(@PathVariable Long id, Model model, HttpServletRequest request) {
         try {
             TrackInfo info = trackService.getTrackInfo(id);
