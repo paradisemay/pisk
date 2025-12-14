@@ -11,7 +11,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -199,9 +201,10 @@ public class TrackController {
 
     @GetMapping(value = "/{trackId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @Operation(summary = "Скачать файл", description = "Возвращает бинарные данные аудиофайла")
-    public ResponseEntity<Resource> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
+    public ResponseEntity<?> download(@PathVariable Long trackId, @RequestHeader HttpHeaders headers) {
         var info = trackService.getTrackInfo(trackId);
         Resource resource = fileStorageService.load(info.filepath());
+        byte[] data = readAllBytes(resource);
         MediaType mediaType = resolveMediaType(resource, info);
         try {
             byte[] data = resource.getInputStream().readAllBytes();

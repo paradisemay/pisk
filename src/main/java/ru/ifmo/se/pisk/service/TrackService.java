@@ -1,7 +1,9 @@
 package ru.ifmo.se.pisk.service;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -116,6 +118,11 @@ public class TrackService {
         entity.setDurationSeconds(command.durationSeconds());
         entity.setFileSize(command.fileSize());
         entity.setStoragePath(storagePath);
+        entity.setContentType(command.contentType());
+        entity.setOriginalFilename(command.originalFilename());
+        entity.setNumberOnAlbum(command.numberOnAlbum());
+        entity.setExplicit(command.explicit());
+        entity.setInoagent(command.inoagent());
         entity.setUploadedAt(java.time.Instant.now());
         entity.setNumberOnAlbum(command.numberOnAlbum());
         entity.setExplicit(command.explicit());
@@ -123,6 +130,14 @@ public class TrackService {
         entity.setContentType(command.contentType());
         entity.setOriginalFilename(command.originalFilename());
         TrackEntity saved = trackRepository.save(entity);
+        TrackStatusHistoryEntity history = new TrackStatusHistoryEntity();
+        history.setTrack(saved);
+        history.setFromStatus(null);
+        history.setToStatus(TrackStatus.DRAFT);
+        history.setChangedAt(Instant.now());
+        history.setActor(artist);
+        trackStatusHistoryRepository.save(history);
+        auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artist, Map.of());
         return DomainMapper.toTrackInfo(saved);
     }
 

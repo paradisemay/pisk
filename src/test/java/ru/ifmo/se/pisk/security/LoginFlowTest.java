@@ -27,6 +27,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.ifmo.se.pisk.config.SecurityConfig;
 import ru.ifmo.se.pisk.repository.UserRepository;
+import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.UserService;
 import ru.ifmo.se.pisk.web.controller.AuthController;
 
@@ -47,6 +48,9 @@ class LoginFlowTest {
 
     @MockBean
     private AuthenticationProvider authenticationProvider;
+
+    @MockBean
+    private FileStorageService fileStorageService;
 
     @BeforeEach
     void setUp() {
