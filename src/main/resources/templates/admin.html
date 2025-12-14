@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="fragments :: head(#{admin.heading})"></head>
-<body>
-<header th:replace="fragments :: nav"></header>
-<main class="content">
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page">
     <section class="card">
-        <h1 th:text="#{admin.heading}"></h1>
-        <div th:if="${saved}" class="alert success" th:text="#{admin.saved}" role="status"></div>
+        <div class="section-header">
+            <div>
+                <p class="eyebrow" th:text="#{admin.heading}"></p>
+                <h1 th:text="#{admin.subtitle}"></h1>
+            </div>
+            <div class="pill" th:if="${saved}" th:text="#{admin.saved}"></div>
+        </div>
         <form th:object="${settings}" method="post" class="form-grid" aria-label="Admin settings">
             <label>
                 <span th:text="#{admin.moderation}"></span>
                 <select aria-label="Moderation" th:field="*{moderationEnabled}">
-                    <option th:value="true" th:text="'ON'"></option>
-                    <option th:value="false" th:text="'OFF'"></option>
+                    <option th:value="true" th:text="#{admin.on}"></option>
+                    <option th:value="false" th:text="#{admin.off}"></option>
                 </select>
                 <span class="error" th:if="${#fields.hasErrors('moderationEnabled')}" th:errors="*{moderationEnabled}"></span>
             </label>
@@ -24,9 +29,12 @@
             <div class="wide">
                 <p class="muted" th:text="${'Genres: ' + genres}"></p>
             </div>
-            <button class="btn" type="submit" aria-label="Save admin" th:text="#{admin.submit}"></button>
+            <div class="actions">
+                <button class="pill" type="submit" aria-label="Save admin" th:text="#{admin.submit}"></button>
+            </div>
         </form>
     </section>
 </main>
+<footer th:replace="fragments :: siteFooter"></footer>
 </body>
 </html>

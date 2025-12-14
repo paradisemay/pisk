@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(#{login.title})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page narrow">
+    <section class="card">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow" th:text="#{login.title}">Вход</p>
+                <h1 th:text="#{login.subtitle}">Снова здесь?</h1>
+            </div>
+            <div class="pill" th:if="${registered}" th:text="#{login.after-register}"></div>
+        </div>
+        <form method="post" th:action="@{/login}" class="form-grid">
+            <label>
+                <span th:text="#{login.username}">Имя пользователя</span>
+                <input type="text" name="username" autocomplete="username" required>
+            </label>
+            <label>
+                <span th:text="#{login.password}">Пароль</span>
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <div class="actions">
+                <button class="pill" type="submit" th:text="#{login.submit}">Войти</button>
+                <a class="ghost" th:href="@{/register}" th:text="#{login.to-register}"></a>
+            </div>
+            <p class="error" th:if="${loginError}" th:text="#{login.error}"></p>
+            <p class="success" th:if="${logoutSuccess}" th:text="#{login.logout}"></p>
+        </form>
+    </section>
+</main>
+<footer th:replace="fragments :: siteFooter"></footer>
+</body>
+</html>

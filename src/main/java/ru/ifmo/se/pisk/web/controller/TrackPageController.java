@@ -1,8 +1,6 @@
 package ru.ifmo.se.pisk.web.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,12 +8,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.UserService;
 import ru.ifmo.se.pisk.web.view.TrackDetailsView;
+import ru.ifmo.se.pisk.web.util.LanguageLinks;
 
 @Controller
 @RequestMapping("/tracks")
@@ -53,18 +51,10 @@ public class TrackPageController {
                     "/api/v1/tracks/" + info.id() + "/file"
             );
             model.addAttribute("track", view);
-            model.addAttribute("langLinks", languageLinks(request));
+            model.addAttribute("langLinks", LanguageLinks.build(request));
             return "track";
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
         }
-    }
-
-    private Map<String, String> languageLinks(HttpServletRequest request) {
-        String base = ServletUriComponentsBuilder.fromRequest(request).replaceQueryParam("lang").toUriString();
-        Map<String, String> links = new HashMap<>();
-        links.put("ru", ServletUriComponentsBuilder.fromUriString(base).replaceQueryParam("lang", "ru").toUriString());
-        links.put("en", ServletUriComponentsBuilder.fromUriString(base).replaceQueryParam("lang", "en").toUriString());
-        return links;
     }
 }
