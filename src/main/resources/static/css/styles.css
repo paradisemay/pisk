@@ -179,6 +179,29 @@ body {
     background: rgba(255,255,255,0.04);
 }
 
+.dropdown form {
+    margin: 0;
+}
+
+.dropdown-action {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: none;
+    border: none;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    transition: background 0.2s ease;
+}
+
+.dropdown-action:hover,
+.dropdown-action:focus-visible {
+    background: rgba(255,255,255,0.04);
+    outline: none;
+}
+
 .profile-grid {
     display: grid;
     gap: 24px;
