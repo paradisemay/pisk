@@ -166,6 +166,10 @@ body {
     z-index: 10;
 }
 
+[data-user-dropdown][hidden] {
+    display: none !important;
+}
+
 .dropdown a {
     display: block;
     padding: 10px 12px;

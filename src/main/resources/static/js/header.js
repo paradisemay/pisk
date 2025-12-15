@@ -12,6 +12,8 @@
 
     let hideTimeoutId;
 
+    closeMenu();
+
     function openMenu() {
         clearTimeout(hideTimeoutId);
         dropdown.hidden = false;
@@ -28,12 +30,18 @@
         hideTimeoutId = window.setTimeout(() => closeMenu(), 120);
     }
 
-    menu.addEventListener('mouseenter', openMenu);
-    menu.addEventListener('mouseleave', scheduleClose);
+    menu.addEventListener('pointerenter', openMenu);
+    menu.addEventListener('pointerleave', scheduleClose);
     menu.addEventListener('focusin', openMenu);
     menu.addEventListener('focusout', (event) => {
         if (!menu.contains(event.relatedTarget)) {
             scheduleClose();
+        }
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+        if (!menu.contains(event.target)) {
+            closeMenu();
         }
     });
 
