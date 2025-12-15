@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments :: head(#{error.500.title})"></head>
+<head th:replace="fragments :: head(${#messages.msg(errorKey + '.title')})"></head>
 <body class="page-shell">
 <header th:replace="fragments :: siteHeader(${langLinks})"></header>
 <main class="page centered">
     <div class="card soft">
-        <p class="eyebrow" th:text="#{error.code(${status})}">Ошибка 500</p>
-        <h1 th:text="#{error.500.title}">Внутренняя ошибка</h1>
-        <p class="muted" th:text="#{error.500.lead}">Произошло что-то непредвиденное. Попробуйте обновить страницу или вернитесь позже.</p>
+        <p class="eyebrow" th:text="${#messages.msg('error.code', status)}">Ошибка</p>
+        <h1 th:text="${#messages.msg(errorKey + '.title')}">Ошибка</h1>
+        <p class="muted" th:text="${#messages.msg(errorKey + '.lead')}">Что-то пошло не так.</p>
         <div class="actions">
             <a class="pill" th:href="@{/catalog}" th:text="#{error.back.catalog}"></a>
             <a class="ghost" th:href="@{/login}" th:text="#{error.back.login}"></a>

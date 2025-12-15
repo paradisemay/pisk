@@ -19,19 +19,16 @@ public class ErrorPageController implements ErrorController {
         int statusCode = resolveStatusCode(request);
         HttpStatus status = HttpStatus.resolve(statusCode);
 
+        String errorKey = resolveErrorKey(statusCode);
+
         model.addAttribute("status", statusCode);
         model.addAttribute("error", status != null ? status.getReasonPhrase() : "Error");
         model.addAttribute("path", request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI));
         model.addAttribute("langLinks", LanguageLinks.build(request));
+        model.addAttribute("errorKey", errorKey);
         response.setStatus(statusCode);
 
-        if (statusCode == HttpStatus.NOT_FOUND.value()) {
-            return "error/404";
-        }
-        if (statusCode == HttpStatus.FORBIDDEN.value()) {
-            return "error/403";
-        }
-        return "error/500";
+        return "error/error";
     }
 
     private int resolveStatusCode(HttpServletRequest request) {
@@ -40,5 +37,15 @@ public class ErrorPageController implements ErrorController {
             return code;
         }
         return HttpStatus.INTERNAL_SERVER_ERROR.value();
+    }
+
+    private String resolveErrorKey(int statusCode) {
+        if (statusCode == HttpStatus.NOT_FOUND.value()) {
+            return "error.404";
+        }
+        if (statusCode == HttpStatus.FORBIDDEN.value()) {
+            return "error.403";
+        }
+        return "error.500";
     }
 }
