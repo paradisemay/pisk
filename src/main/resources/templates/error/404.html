@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(#{error.404.title})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page centered">
+    <div class="card soft">
+        <p class="eyebrow" th:text="#{error.code(${status})}">Ошибка 404</p>
+        <h1 th:text="#{error.404.title}">Страница не найдена</h1>
+        <p class="muted" th:text="#{error.404.lead}">Мы не нашли такую страницу. Проверьте адрес или начните с каталога.</p>
+        <div class="actions">
+            <a class="pill" th:href="@{/catalog}" th:text="#{error.back.catalog}"></a>
+            <a class="ghost" th:href="@{/login}" th:text="#{error.back.login}"></a>
+        </div>
+    </div>
+</main>
+<footer th:replace="fragments :: siteFooter"></footer>
+</body>
+</html>
