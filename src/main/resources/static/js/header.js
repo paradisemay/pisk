@@ -10,33 +10,42 @@
         return;
     }
 
+    let hideTimeoutId;
+
+    closeMenu();
+
+    function openMenu() {
+        clearTimeout(hideTimeoutId);
+        dropdown.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+    }
+
     function closeMenu() {
+        clearTimeout(hideTimeoutId);
         dropdown.hidden = true;
         trigger.setAttribute('aria-expanded', 'false');
     }
 
-    function toggleMenu() {
-        const isHidden = dropdown.hidden;
-        if (isHidden) {
-            dropdown.hidden = false;
-            trigger.setAttribute('aria-expanded', 'true');
-        } else {
-            closeMenu();
-        }
+    function scheduleClose() {
+        hideTimeoutId = window.setTimeout(() => closeMenu(), 120);
     }
 
-    trigger.addEventListener('click', (event) => {
-        event.stopPropagation();
-        toggleMenu();
+    menu.addEventListener('pointerenter', openMenu);
+    menu.addEventListener('pointerleave', scheduleClose);
+    menu.addEventListener('focusin', openMenu);
+    menu.addEventListener('focusout', (event) => {
+        if (!menu.contains(event.relatedTarget)) {
+            scheduleClose();
+        }
     });
 
-    document.addEventListener('click', (event) => {
+    document.addEventListener('pointerdown', (event) => {
         if (!menu.contains(event.target)) {
             closeMenu();
         }
     });
 
-    document.addEventListener('keydown', (event) => {
+    trigger.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeMenu();
         }
