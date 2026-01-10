@@ -66,34 +66,48 @@ public class UploadController {
             throw new IllegalStateException("Необходимо войти в систему для загрузки треков");
         }
 
-        fileStorageService.validate(form.getFile().getOriginalFilename(), form.getFile().getContentType(), form.getFile().getSize());
-        byte[] fileBytes;
-        try {
-            fileBytes = form.getFile().getBytes();
-        } catch (IOException e) {
-            throw new IllegalStateException("Не удалось прочитать файл", e);
+        if (form.getFile().isEmpty()) {
+            bindingResult.rejectValue("file", "error.file", "Выберите файл");
+            model.addAttribute("genres", genreService.listAll());
+            model.addAttribute("langLinks", LanguageLinks.build(request));
+            return "upload";
         }
-        AudioMetadata metadata = audioMetadataService.extract(fileBytes, form.getFile().getOriginalFilename(), form.getFile().getContentType());
-        String title = StringUtils.hasText(form.getName()) ? form.getName() : (metadata.title() != null ? metadata.title() : form.getFile().getOriginalFilename());
-        int trackNumber = metadata.trackNumber() != null ? metadata.trackNumber() : 1;
-        TrackUploadCommand command = new TrackUploadCommand(
-                title,
-                form.getArtistName(),
-                form.getGenreName(),
-                form.getAlbumName(),
-                metadata.durationSeconds(),
-                form.isExplicit(),
-                form.isInoagent(),
-                trackNumber,
-                form.getFile().getContentType(),
-                fileBytes.length,
-                form.getFile().getOriginalFilename(),
-                () -> new ByteArrayInputStream(fileBytes),
-                metadata.coverData(),
-                metadata.coverContentType()
-        );
-        var info = trackService.uploadTrack(currentUser.id(), command);
-        redirectAttributes.addFlashAttribute("uploadSuccess", true);
-        return "redirect:/tracks/" + info.id();
+
+        try {
+            fileStorageService.validate(form.getFile().getOriginalFilename(), form.getFile().getContentType(), form.getFile().getSize());
+            byte[] fileBytes;
+            try {
+                fileBytes = form.getFile().getBytes();
+            } catch (IOException e) {
+                throw new IllegalStateException("Не удалось прочитать файл", e);
+            }
+            AudioMetadata metadata = audioMetadataService.extract(fileBytes, form.getFile().getOriginalFilename(), form.getFile().getContentType());
+            String title = StringUtils.hasText(form.getName()) ? form.getName() : (metadata.title() != null ? metadata.title() : form.getFile().getOriginalFilename());
+            int trackNumber = metadata.trackNumber() != null ? metadata.trackNumber() : 1;
+            TrackUploadCommand command = new TrackUploadCommand(
+                    title,
+                    form.getArtistName(),
+                    form.getGenreName(),
+                    form.getAlbumName(),
+                    metadata.durationSeconds(),
+                    form.isExplicit(),
+                    form.isInoagent(),
+                    trackNumber,
+                    form.getFile().getContentType(),
+                    fileBytes.length,
+                    form.getFile().getOriginalFilename(),
+                    () -> new ByteArrayInputStream(fileBytes),
+                    metadata.coverData(),
+                    metadata.coverContentType()
+            );
+            var info = trackService.uploadTrack(currentUser.id(), command);
+            redirectAttributes.addFlashAttribute("uploadSuccess", true);
+            return "redirect:/tracks/" + info.id();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            bindingResult.rejectValue("file", "error.file", e.getMessage());
+            model.addAttribute("genres", genreService.listAll());
+            model.addAttribute("langLinks", LanguageLinks.build(request));
+            return "upload";
+        }
     }
 }
