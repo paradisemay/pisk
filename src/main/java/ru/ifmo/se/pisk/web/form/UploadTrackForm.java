@@ -15,6 +15,8 @@ public class UploadTrackForm {
     @NotBlank
     private String genreName;
 
+    private String labelName;
+
     private String albumName;
 
     private boolean explicit;
@@ -46,6 +48,14 @@ public class UploadTrackForm {
 
     public void setGenreName(String genreName) {
         this.genreName = genreName;
+    }
+
+    public String getLabelName() {
+        return labelName;
+    }
+
+    public void setLabelName(String labelName) {
+        this.labelName = labelName;
     }
 
     public String getAlbumName() {

@@ -30,7 +30,7 @@ public class FileStorageService {
             "image/jpeg",
             "image/webp"
     );
-    private static final long MAX_FILE_SIZE = 30 * 1024 * 1024; // 30 MB
+    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
     private static final long MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     public FileStorageService() { init(); }

@@ -28,7 +28,7 @@ public class AlbumService {
     }
 
     @Transactional
-    public AlbumEntity findOrCreateSimple(String title, GenreEntity genre, boolean explicit, boolean inoagent,
+    public AlbumEntity findOrCreateSimple(String title, GenreEntity genre, LabelEntity label, boolean explicit, boolean inoagent,
                                           int trackNumber, String coverPath) {
         if (!org.springframework.util.StringUtils.hasText(title)) {
             throw new IllegalArgumentException("Название альбома обязательно");
@@ -46,6 +46,7 @@ public class AlbumService {
         entity.setName(title.trim());
         entity.setDescription("Добавлен автоматически при загрузке трека");
         entity.setGenre(genre);
+        entity.setLabel(label);
         entity.setTrackNumber(Math.max(trackNumber, 1));
         entity.setExplicit(explicit);
         entity.setInoagent(inoagent);

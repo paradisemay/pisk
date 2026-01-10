@@ -18,6 +18,7 @@ import ru.ifmo.se.pisk.service.AudioMetadataService;
 import ru.ifmo.se.pisk.service.AudioMetadataService.AudioMetadata;
 import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.GenreService;
+import ru.ifmo.se.pisk.service.LabelService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.web.form.UploadTrackForm;
@@ -29,13 +30,15 @@ public class UploadController {
 
     private final TrackService trackService;
     private final GenreService genreService;
+    private final LabelService labelService;
     private final AudioMetadataService audioMetadataService;
     private final FileStorageService fileStorageService;
 
-    public UploadController(TrackService trackService, GenreService genreService,
+    public UploadController(TrackService trackService, GenreService genreService, LabelService labelService,
                             AudioMetadataService audioMetadataService, FileStorageService fileStorageService) {
         this.trackService = trackService;
         this.genreService = genreService;
+        this.labelService = labelService;
         this.audioMetadataService = audioMetadataService;
         this.fileStorageService = fileStorageService;
     }
@@ -46,6 +49,7 @@ public class UploadController {
             model.addAttribute("uploadForm", new UploadTrackForm());
         }
         model.addAttribute("genres", genreService.listAll());
+        model.addAttribute("labels", labelService.listAll());
         model.addAttribute("langLinks", LanguageLinks.build(request));
         return "upload";
     }
@@ -59,6 +63,7 @@ public class UploadController {
                          @ModelAttribute("currentUser") CurrentUser currentUser) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("genres", genreService.listAll());
+            model.addAttribute("labels", labelService.listAll());
             model.addAttribute("langLinks", LanguageLinks.build(request));
             return "upload";
         }
@@ -69,6 +74,7 @@ public class UploadController {
         if (form.getFile().isEmpty()) {
             bindingResult.rejectValue("file", "error.file", "Выберите файл");
             model.addAttribute("genres", genreService.listAll());
+            model.addAttribute("labels", labelService.listAll());
             model.addAttribute("langLinks", LanguageLinks.build(request));
             return "upload";
         }
@@ -88,6 +94,7 @@ public class UploadController {
                     title,
                     form.getArtistName(),
                     form.getGenreName(),
+                    form.getLabelName(),
                     form.getAlbumName(),
                     metadata.durationSeconds(),
                     form.isExplicit(),
@@ -106,6 +113,7 @@ public class UploadController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             bindingResult.rejectValue("file", "error.file", e.getMessage());
             model.addAttribute("genres", genreService.listAll());
+            model.addAttribute("labels", labelService.listAll());
             model.addAttribute("langLinks", LanguageLinks.build(request));
             return "upload";
         }
