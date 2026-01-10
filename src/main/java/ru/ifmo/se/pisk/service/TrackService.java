@@ -100,11 +100,12 @@ public class TrackService {
     }
 
     @Transactional
-    public TrackInfo uploadTrack(Long artistId, TrackUploadCommand command) {
+    public TrackInfo uploadTrack(Long authorId, TrackUploadCommand command) {
         if (command.durationSeconds() <= 0) {
             throw new IllegalArgumentException("Длительность должна быть положительной");
         }
-        UserEntity author = userService.requireUser(artistId);
+        UserEntity author = userService.requireUser(authorId);
+
         ArtistEntity artist = artistService.findOrCreateByName(command.artistName());
         GenreEntity genre = genreService.findOrCreateByName(command.genreName());
         ru.ifmo.se.pisk.domain.entity.LabelEntity label = labelService.findOrCreateByName(command.labelName());
@@ -116,7 +117,7 @@ public class TrackService {
             album = albumService.findOrCreateSimple(command.albumName(), genre, label, command.explicit(), command.inoagent(),
                     command.numberOnAlbum(), coverPath);
         }
-        String storagePath = fileStorageService.storeTrack(artistId, command.originalFilename(), command.dataSupplier().get());
+        String storagePath = fileStorageService.storeTrack(authorId, command.originalFilename(), command.dataSupplier().get());
         TrackEntity entity = new TrackEntity();
         entity.setName(command.name());
         entity.setAuthor(author);
@@ -144,7 +145,7 @@ public class TrackService {
         history.setFromStatus(null);
         history.setToStatus(TrackStatus.DRAFT);
         history.setChangedAt(Instant.now());
-        history.setActor(artist);
+        history.setActor(author);
         trackStatusHistoryRepository.save(history);
         auditService.record(AuditAction.TRACK_UPLOADED, "Track", saved.getId().toString(), artist, Map.of());
         return DomainMapper.toTrackInfo(saved);
@@ -192,14 +193,17 @@ public class TrackService {
 
     @Transactional(readOnly = true)
     public Page<TrackInfo> searchTracks(TrackSearchCriteria criteria, Pageable pageable) {
-        Specification<TrackEntity> spec = Specification.where(TrackSpecifications.fullTextSearch(criteria.query()))
+        Specification<TrackEntity> spec = TrackSpecifications.fullTextSearch(criteria.query())
                 .and(TrackSpecifications.hasGenres(criteria.genreIds()))
                 .and(TrackSpecifications.hasAuthor(criteria.authorId()))
                 .and(TrackSpecifications.hasStatus(criteria.status()))
                 .and(TrackSpecifications.isExplicit(criteria.explicit()))
                 .and(TrackSpecifications.isInoagent(criteria.inoagent()));
-        return trackRepository.findAll(spec, pageable).map(DomainMapper::toTrackInfo);
+
+        return trackRepository.findAll(spec, pageable)
+                .map(DomainMapper::toTrackInfo);
     }
+
 
     @Transactional(readOnly = true)
     public Page<TrackInfo> findByAuthor(Long authorId, Pageable pageable) {
