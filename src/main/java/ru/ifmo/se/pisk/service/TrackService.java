@@ -60,6 +60,7 @@ public class TrackService {
     private final AuditService auditService;
     private final ArtistService artistService;
     private final RatingRepository ratingRepository;
+    private final LabelService labelService;
 
     public TrackService(TrackRepository trackRepository,
                         TrackStatusHistoryRepository trackStatusHistoryRepository,
@@ -69,7 +70,8 @@ public class TrackService {
                         FileStorageService fileStorageService,
                         AuditService auditService,
                         ArtistService artistService,
-                        RatingRepository ratingRepository) {
+                        RatingRepository ratingRepository,
+                        LabelService labelService) {
         this.trackRepository = trackRepository;
         this.trackStatusHistoryRepository = trackStatusHistoryRepository;
         this.userService = userService;
@@ -79,6 +81,7 @@ public class TrackService {
         this.auditService = auditService;
         this.artistService = artistService;
         this.ratingRepository = ratingRepository;
+        this.labelService = labelService;
     }
 
 
@@ -104,12 +107,13 @@ public class TrackService {
         UserEntity author = userService.requireUser(artistId);
         ArtistEntity artist = artistService.findOrCreateByName(command.artistName());
         GenreEntity genre = genreService.findOrCreateByName(command.genreName());
+        ru.ifmo.se.pisk.domain.entity.LabelEntity label = labelService.findOrCreateByName(command.labelName());
         AlbumEntity album = null;
         if (org.springframework.util.StringUtils.hasText(command.albumName())) {
             String coverPath = command.coverData() != null
                     ? fileStorageService.storeCover(command.originalFilename() + "-cover", command.coverData())
                     : null;
-            album = albumService.findOrCreateSimple(command.albumName(), genre, command.explicit(), command.inoagent(),
+            album = albumService.findOrCreateSimple(command.albumName(), genre, label, command.explicit(), command.inoagent(),
                     command.numberOnAlbum(), coverPath);
         }
         String storagePath = fileStorageService.storeTrack(artistId, command.originalFilename(), command.dataSupplier().get());

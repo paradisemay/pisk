@@ -41,7 +41,7 @@ public class CatalogController {
                           @RequestParam(required = false) Boolean explicit,
                           @RequestParam(required = false) Boolean inoagent,
                           @RequestParam(name = "genreId", required = false) Set<Long> genreIds,
-                          @PageableDefault(size = 9, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable,
+                          @PageableDefault(size = 8, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable,
                           Model model,
                           HttpServletRequest request) {
         TrackSearchCriteria criteria = new TrackSearchCriteria(title, genreIds, null, null, explicit, inoagent);

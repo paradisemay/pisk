@@ -50,6 +50,8 @@ class TrackServiceTest {
     private AuditService auditService;
     @Mock
     private TrackStatusHistoryRepository trackStatusHistoryRepository;
+    @Mock
+    private LabelService labelService;
 
     @InjectMocks
     private TrackService trackService;
@@ -72,7 +74,8 @@ class TrackServiceTest {
         GenreEntity genre = new GenreEntity();
         genre.setId(5L);
         when(genreService.findOrCreateByName("Rock")).thenReturn(genre);
-        when(albumService.findOrCreateSimple(eq("Album"), eq(genre), eq(false), eq(false), eq(1), any())).thenReturn(album);
+        when(labelService.findOrCreateByName("Sony")).thenReturn(new ru.ifmo.se.pisk.domain.entity.LabelEntity());
+        when(albumService.findOrCreateSimple(eq("Album"), eq(genre), any(), eq(false), eq(false), eq(1), any())).thenReturn(album);
         when(artistService.findOrCreateByName("Tester")).thenReturn(new ru.ifmo.se.pisk.domain.entity.ArtistEntity());
         when(fileStorageService.storeTrack(eq(42L), any(), any())).thenReturn("tracks/42/file.mp3");
         TrackEntity saved = new TrackEntity();
@@ -88,6 +91,7 @@ class TrackServiceTest {
                 "Test",
                 "Tester",
                 "Rock",
+                "Sony",
                 "Album",
                 120,
                 false,
@@ -112,6 +116,7 @@ class TrackServiceTest {
                 "Bad",
                 "Tester",
                 "Rock",
+                null,
                 null,
                 0,
                 false,

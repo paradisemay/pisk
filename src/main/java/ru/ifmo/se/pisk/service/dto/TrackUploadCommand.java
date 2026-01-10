@@ -7,6 +7,7 @@ public record TrackUploadCommand(
         String name,
         String artistName,
         String genreName,
+        String labelName,
         String albumName,
         long durationSeconds,
         boolean explicit,

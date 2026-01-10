@@ -32,6 +32,12 @@
                 <span class="error" th:if="${#fields.hasErrors('albumName')}" th:errors="*{albumName}"></span>
             </label>
             <label>
+                <span th:text="#{upload.field.label}">Label</span>
+                <input type="text" th:field="*{labelName}" list="label-suggestions" autocomplete="on"
+                       th:placeholder="#{upload.field.label.placeholder}">
+                <span class="error" th:if="${#fields.hasErrors('labelName')}" th:errors="*{labelName}"></span>
+            </label>
+            <label>
                 <span th:text="#{upload.field.genre}">Genre</span>
                 <input type="text" th:field="*{genreName}" list="genre-suggestions" autocomplete="on"
                        th:placeholder="#{upload.field.genre.placeholder}">
@@ -52,6 +58,9 @@
             </label>
             <datalist id="genre-suggestions">
                 <option th:each="genre : ${genres}" th:value="${genre.title}"></option>
+            </datalist>
+            <datalist id="label-suggestions">
+                <option th:each="label : ${labels}" th:value="${label.name}"></option>
             </datalist>
             <datalist id="artist-suggestions"></datalist>
             <datalist id="album-suggestions"></datalist>
