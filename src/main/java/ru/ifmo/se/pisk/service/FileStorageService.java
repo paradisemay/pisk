@@ -51,7 +51,12 @@ public class FileStorageService {
     }
 
     public void validateAvatar(String originalFilename, String contentType, long fileSize) {
-        validate(originalFilename, contentType, fileSize);
+        if (!StringUtils.hasText(originalFilename)) throw new IllegalArgumentException("Пустое имя файла");
+        if (!ALLOWED_AVATAR_CONTENT_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Формат файла не поддерживается: " + contentType);
+        }if (fileSize <= 0 || fileSize > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("Размер файла превышает допустимый лимит: " + (fileSize / (1024 * 1024)) + "MB");
+        }
     }
 
     public void validate(String originalFilename, String contentType, long fileSize) {

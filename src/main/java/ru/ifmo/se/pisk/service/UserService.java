@@ -1,5 +1,6 @@
 package ru.ifmo.se.pisk.service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.Map;
@@ -100,7 +101,13 @@ public class UserService {
         }
         fileStorageService.validateAvatar(originalFilename, contentType, fileSize);
         UserEntity entity = requireUser(userId);
-        String storagePath = fileStorageService.storeAvatar(userId, originalFilename, dataSupplier.get());
+        String storagePath;
+        try (InputStream in = dataSupplier.get()) {
+            storagePath = fileStorageService.storeAvatar(userId, originalFilename, in);
+        } catch (IOException e) {
+            throw new IllegalStateException("Не удалось сохранить аватар", e);
+        }
+
         entity.setAvatarPath(storagePath);
         entity.setUpdatedAt(Instant.now());
         return storagePath;
