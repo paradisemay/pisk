@@ -4,6 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.function.Supplier;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -13,7 +16,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import ru.ifmo.se.pisk.web.CurrentUser;
+import ru.ifmo.se.pisk.domain.entity.UserEntity;
+import ru.ifmo.se.pisk.repository.UserRepository;
 import ru.ifmo.se.pisk.service.AudioMetadataService;
 import ru.ifmo.se.pisk.service.AudioMetadataService.AudioMetadata;
 import ru.ifmo.se.pisk.service.FileStorageService;
@@ -33,14 +37,20 @@ public class UploadController {
     private final LabelService labelService;
     private final AudioMetadataService audioMetadataService;
     private final FileStorageService fileStorageService;
+    private final UserRepository userRepository;
 
-    public UploadController(TrackService trackService, GenreService genreService, LabelService labelService,
-                            AudioMetadataService audioMetadataService, FileStorageService fileStorageService) {
+    public UploadController(TrackService trackService,
+                            GenreService genreService,
+                            LabelService labelService,
+                            AudioMetadataService audioMetadataService,
+                            FileStorageService fileStorageService,
+                            UserRepository userRepository) {
         this.trackService = trackService;
         this.genreService = genreService;
         this.labelService = labelService;
         this.audioMetadataService = audioMetadataService;
         this.fileStorageService = fileStorageService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -57,39 +67,47 @@ public class UploadController {
     @PostMapping
     public String submit(@Valid @ModelAttribute("uploadForm") UploadTrackForm form,
                          BindingResult bindingResult,
+                         Authentication authentication,
                          Model model,
                          RedirectAttributes redirectAttributes,
-                         HttpServletRequest request,
-                         @ModelAttribute("currentUser") CurrentUser currentUser) {
+                         HttpServletRequest request) {
+
+        UserEntity user = requireCurrentUser(authentication);
+        System.out.println("user " + user.getUsername() + " id is " + user.getId().toString());
+
         if (bindingResult.hasErrors()) {
-            model.addAttribute("genres", genreService.listAll());
-            model.addAttribute("labels", labelService.listAll());
-            model.addAttribute("langLinks", LanguageLinks.build(request));
+            prepareModel(model, request);
             return "upload";
         }
-        if (currentUser == null) {
-            throw new IllegalStateException("Необходимо войти в систему для загрузки треков");
-        }
 
-        if (form.getFile().isEmpty()) {
+        if (form.getFile() == null || form.getFile().isEmpty()) {
             bindingResult.rejectValue("file", "error.file", "Выберите файл");
-            model.addAttribute("genres", genreService.listAll());
-            model.addAttribute("labels", labelService.listAll());
-            model.addAttribute("langLinks", LanguageLinks.build(request));
+            prepareModel(model, request);
             return "upload";
         }
 
         try {
-            fileStorageService.validate(form.getFile().getOriginalFilename(), form.getFile().getContentType(), form.getFile().getSize());
+            fileStorageService.validate(form.getFile().getOriginalFilename(),
+                    form.getFile().getContentType(),
+                    form.getFile().getSize());
+
             byte[] fileBytes;
             try {
                 fileBytes = form.getFile().getBytes();
             } catch (IOException e) {
                 throw new IllegalStateException("Не удалось прочитать файл", e);
             }
-            AudioMetadata metadata = audioMetadataService.extract(fileBytes, form.getFile().getOriginalFilename(), form.getFile().getContentType());
-            String title = StringUtils.hasText(form.getName()) ? form.getName() : (metadata.title() != null ? metadata.title() : form.getFile().getOriginalFilename());
+
+            AudioMetadata metadata = audioMetadataService.extract(fileBytes,
+                    form.getFile().getOriginalFilename(),
+                    form.getFile().getContentType());
+
+            String title = StringUtils.hasText(form.getName())
+                    ? form.getName()
+                    : (metadata.title() != null ? metadata.title() : form.getFile().getOriginalFilename());
+
             int trackNumber = metadata.trackNumber() != null ? metadata.trackNumber() : 1;
+
             TrackUploadCommand command = new TrackUploadCommand(
                     title,
                     form.getArtistName(),
@@ -107,15 +125,30 @@ public class UploadController {
                     metadata.coverData(),
                     metadata.coverContentType()
             );
-            var info = trackService.uploadTrack(currentUser.id(), command);
+
+            var info = trackService.uploadTrack(user.getId(), command);
+
             redirectAttributes.addFlashAttribute("uploadSuccess", true);
             return "redirect:/tracks/" + info.id();
+
         } catch (IllegalArgumentException | IllegalStateException e) {
             bindingResult.rejectValue("file", "error.file", e.getMessage());
-            model.addAttribute("genres", genreService.listAll());
-            model.addAttribute("labels", labelService.listAll());
-            model.addAttribute("langLinks", LanguageLinks.build(request));
+            prepareModel(model, request);
             return "upload";
         }
+    }
+
+    private void prepareModel(Model model, HttpServletRequest request) {
+        model.addAttribute("genres", genreService.listAll());
+        model.addAttribute("labels", labelService.listAll());
+        model.addAttribute("langLinks", LanguageLinks.build(request));
+    }
+
+    private UserEntity requireCurrentUser(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new IllegalStateException("Пользователь не авторизован");
+        }
+        return userRepository.findByUsernameIgnoreCase(authentication.getName())
+                .orElseThrow(() -> new IllegalStateException("Пользователь не найден"));
     }
 }
