@@ -6,8 +6,8 @@ import ru.ifmo.se.pisk.web.util.DurationFormatter;
 public record TrackDetailsView(
         Long id,
         String name,
-        Long authorId,
-        String authorName,
+        Long userId,
+        String userName,
         String genreTitle,
         boolean explicit,
         boolean inoagent,

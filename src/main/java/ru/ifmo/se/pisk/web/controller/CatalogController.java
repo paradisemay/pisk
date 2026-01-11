@@ -1,9 +1,7 @@
 package ru.ifmo.se.pisk.web.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -13,27 +11,27 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.ifmo.se.pisk.domain.GenreInfo;
-import ru.ifmo.se.pisk.domain.TrackInfo;
+import ru.ifmo.se.pisk.repository.projection.AlbumCardAggregate;
 import ru.ifmo.se.pisk.service.GenreService;
-import ru.ifmo.se.pisk.service.TrackService;
-import ru.ifmo.se.pisk.service.UserService;
-import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
-import ru.ifmo.se.pisk.web.view.TrackView;
+import ru.ifmo.se.pisk.service.AlbumService;
+import ru.ifmo.se.pisk.service.FileStorageService;
+import ru.ifmo.se.pisk.web.view.AlbumCardView;
 import ru.ifmo.se.pisk.web.util.LanguageLinks;
 
 @Controller
 @RequestMapping("/catalog")
 public class CatalogController {
 
-    private final TrackService trackService;
+    private final AlbumService albumService;
     private final GenreService genreService;
-    private final UserService userService;
+    private final FileStorageService fileStorageService;
 
-    public CatalogController(TrackService trackService, GenreService genreService, UserService userService) {
-        this.trackService = trackService;
+    public CatalogController(AlbumService albumService,
+                             GenreService genreService,
+                             FileStorageService fileStorageService) {
+        this.albumService = albumService;
         this.genreService = genreService;
-        this.userService = userService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -41,16 +39,19 @@ public class CatalogController {
                           @RequestParam(required = false) Boolean explicit,
                           @RequestParam(required = false) Boolean inoagent,
                           @RequestParam(name = "genreId", required = false) Set<Long> genreIds,
-                          @PageableDefault(size = 8, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable,
+                          @PageableDefault(size = 8, sort = "uploadDate", direction = Sort.Direction.DESC) Pageable pageable,
                           Model model,
                           HttpServletRequest request) {
-        TrackSearchCriteria criteria = new TrackSearchCriteria(title, genreIds, null, null, explicit, inoagent);
-        Page<TrackInfo> tracks = trackService.searchTracks(criteria, pageable);
-        Map<Long, String> genreNames = genreService.listAll().stream()
-                .collect(Collectors.toMap(GenreInfo::id, GenreInfo::title));
-        Page<TrackView> view = tracks.map(info -> toView(info, genreNames));
+        Page<AlbumCardAggregate> albums = albumService.searchAlbumCards(
+                title,
+                genreIds,
+                explicit,
+                inoagent,
+                pageable
+        );
+        Page<AlbumCardView> view = albums.map(this::toView);
 
-        model.addAttribute("tracks", view);
+        model.addAttribute("albums", view);
         model.addAttribute("genres", genreService.listAll());
         model.addAttribute("titleQuery", title);
         model.addAttribute("explicitFilter", explicit);
@@ -60,20 +61,26 @@ public class CatalogController {
         return "catalog";
     }
 
-    private TrackView toView(TrackInfo info, Map<Long, String> genreNames) {
-        String authorName = info.authorId() != null ? userService.requireUser(info.authorId()).getUsername() : "-";
-        String genreTitle = info.genreId() != null ? genreNames.getOrDefault(info.genreId(), "-") : "-";
-        return new TrackView(
-                info.id(),
-                info.name(),
-                info.authorId(),
-                authorName,
+    private AlbumCardView toView(AlbumCardAggregate row) {
+        String coverPublicUrl = fileStorageService.toPublicUrl(row.coverUrl());
+        String uploaderName = row.uploaderName() != null ? row.uploaderName() : "-";
+        String artistName = row.artistName() != null ? row.artistName() : "-";
+        String genreTitle = row.genreTitle() != null ? row.genreTitle() : "-";
+        return new AlbumCardView(
+                row.albumId(),
+                row.albumName(),
+                coverPublicUrl,
+                row.trackNumber(),
+                row.explicit(),
+                row.inoagent(),
+                row.averageRating(),
+                row.genreId(),
                 genreTitle,
-                info.explicit(),
-                info.inoagent(),
-                info.averageRating(),
-                info.durationSeconds(),
-                info.uploadDate()
+                row.uploaderId(),
+                uploaderName,
+                row.artistId(),
+                artistName,
+                row.uploadDate()
         );
     }
 

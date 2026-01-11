@@ -210,4 +210,13 @@ public class TrackService {
         UserEntity author = userService.requireUser(authorId);
         return trackRepository.findByAuthor(author, pageable).map(DomainMapper::toTrackInfo);
     }
+
+    @Transactional(readOnly = true)
+    public List<TrackInfo> listAlbumTracks(Long albumId) {
+        AlbumEntity album = albumService.requireAlbum(albumId);
+        return trackRepository.findByAlbum(album).stream()
+                .sorted(Comparator.comparingInt(TrackEntity::getNumberOnAlbum))
+                .map(DomainMapper::toTrackInfo)
+                .collect(Collectors.toList());
+    }
 }

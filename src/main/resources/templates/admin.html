@@ -28,7 +28,10 @@
                 <span class="error" th:if="${#fields.hasErrors('defaultPageSize')}" th:errors="*{defaultPageSize}"></span>
             </label>
             <div class="wide">
-                <p class="muted" th:text="${'Genres: ' + genres}"></p>
+                <p class="muted">Genres:</p>
+                <ul class="muted">
+                    <li th:each="g : ${genres}" th:text="${g.title}"></li>
+                </ul>
             </div>
             <div class="actions">
                 <button class="pill" type="submit" aria-label="Save admin" th:text="#{admin.submit}"></button>
