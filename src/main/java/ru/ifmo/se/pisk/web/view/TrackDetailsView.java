@@ -18,6 +18,7 @@ public record TrackDetailsView(
         long durationSeconds,
         long fileSize,
         Instant uploadDate,
+        String coverUrl,
         String downloadUrl
 ) {
 

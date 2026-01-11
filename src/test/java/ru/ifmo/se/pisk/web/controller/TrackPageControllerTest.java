@@ -62,6 +62,7 @@ public class TrackPageControllerTest {
                 null, // albumId
                 artistId,
                 genreId,
+                null,
                 "path/to/file",
                 "audio/mpeg",
                 "file.mp3",

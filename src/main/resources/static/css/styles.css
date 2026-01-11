@@ -444,6 +444,9 @@ h1 { margin: 8px 0 6px; }
 
 .detail-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
+.track-cover-container { margin-bottom: 12px; }
+.track-cover { width: 128px; height: 128px; object-fit: cover; border-radius: 8px; }
+
 .footer {
     border-top: 1px solid var(--border);
     padding: 24px 28px;
