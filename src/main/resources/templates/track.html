@@ -63,7 +63,7 @@
                     type="button"
                     class="ghost like-button"
                     th:classappend="${track.isLiked} ? 'liked' : ''"
-                    th:attr="data-track-id=${track.id}, data-csrf=${_csrf.token}">
+                    th:attr="data-track-id=${track.id}, data-csrf=${_csrf.token}, data-csrf-header=${_csrf.headerName}">
                 <span class="heart-icon">♥</span>
                 <span th:text="#{track.like}">Like</span>
             </button>
@@ -74,6 +74,7 @@
                 button.addEventListener('click', async () => {
                     const trackId = button.getAttribute('data-track-id');
                     const csrfToken = button.getAttribute('data-csrf');
+                    const csrfHeader = button.getAttribute('data-csrf-header');
                     const isLiked = button.classList.contains('liked');
                     const method = isLiked ? 'DELETE' : 'POST';
 
@@ -81,7 +82,7 @@
                         const response = await fetch(`/api/v1/tracks/${trackId}/like`, {
                             method: method,
                             headers: {
-                                'X-CSRF-TOKEN': csrfToken
+                                [csrfHeader]: csrfToken
                             }
                         });
 
