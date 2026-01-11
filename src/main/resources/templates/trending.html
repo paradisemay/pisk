@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(#{nav.trending})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page">
+    <section class="hero">
+        <div>
+            <p class="eyebrow" th:text="#{nav.trending}">В тренде</p>
+            <h1 th:text="#{trending.title}">Топ треков</h1>
+            <p class="muted" th:text="#{trending.lead}">Самые высокооцененные треки за все время.</p>
+        </div>
+    </section>
+
+    <section class="card soft">
+        <div class="section-header">
+             <h2 th:text="#{trending.title}">Top Tracks</h2>
+             <div class="filter-controls">
+                 <a th:href="@{/trending(sort='desc')}" class="pill small" th:classappend="${currentSort == null or currentSort == 'desc'} ? 'active' : 'ghost'" th:text="#{trending.sort.best}">Best</a>
+                 <a th:href="@{/trending(sort='asc')}" class="pill small" th:classappend="${currentSort == 'asc'} ? 'active' : 'ghost'" th:text="#{trending.sort.worst}">Worst</a>
+             </div>
+        </div>
+
+        <div class="empty" th:if="${tracks.isEmpty()}" th:text="#{catalog.no-results}">Нет треков</div>
+
+        <div class="track-list" th:if="${!tracks.isEmpty()}">
+            <article class="track-row" th:each="track : ${tracks}" style="display: grid; grid-template-columns: 40px 48px 1fr auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <div class="muted" style="text-align: center; font-variant-numeric: tabular-nums;" th:text="${track.rank}">1</div>
+                <div>
+                    <img th:if="${track.coverUrl != null}" th:src="${track.coverUrl}" alt="cover" style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; display: block;"/>
+                    <div th:if="${track.coverUrl == null}" style="width: 48px; height: 48px; background: #eee; border-radius: 4px;"></div>
+                </div>
+                <div style="min-width: 0;">
+                    <div class="text-truncate">
+                        <a th:href="@{/tracks/{id}(id=${track.id})}" th:text="${track.name}" style="font-weight: 600; text-decoration: none; color: inherit;">Track Name</a>
+                    </div>
+                    <div class="muted text-truncate" style="font-size: 0.9em;">
+                        <span th:text="${track.artistName}">Artist</span>
+                        <span> • </span>
+                        <span th:text="${track.albumName}">Album</span>
+                    </div>
+                </div>
+                <div class="pill small" th:text="${#numbers.formatDecimal(track.rating, 1, 1)}">5.0</div>
+            </article>
+        </div>
+
+        <div class="pagination" th:if="${tracks.totalPages > 1}" style="margin-top: 24px;">
+            <a th:if="${tracks.hasPrevious()}"
+               th:href="@{/trending(page=${tracks.number-1},size=${tracks.size},sort=${currentSort})}"
+               th:text="#{catalog.pagination.prev}"></a>
+            <span th:text="${tracks.number + 1} + ' / ' + ${tracks.totalPages}"></span>
+            <a th:if="${tracks.hasNext()}"
+               th:href="@{/trending(page=${tracks.number+1},size=${tracks.size},sort=${currentSort})}"
+               th:text="#{catalog.pagination.next}"></a>
+        </div>
+    </section>
+</main>
+<footer th:replace="fragments :: siteFooter"></footer>
+</body>
+</html>
