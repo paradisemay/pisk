@@ -9,6 +9,7 @@ public record TrackDetailsView(
         Long userId,
         String userName,
         boolean uploaderIsArtist,
+        String artistName,
         String genreTitle,
         boolean explicit,
         boolean inoagent,
