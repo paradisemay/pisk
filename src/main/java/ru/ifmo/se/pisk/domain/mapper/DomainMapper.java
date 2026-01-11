@@ -71,6 +71,7 @@ public final class DomainMapper {
                 entity.getAlbum() != null ? entity.getAlbum().getId() : null,
                 entity.getArtist() != null ? entity.getArtist().getId() : null,
                 entity.getGenre() != null ? entity.getGenre().getId() : null,
+                entity.getAlbum() != null ? entity.getAlbum().getCoverUrl() : null,
                 entity.getStoragePath(),
                 entity.getContentType(),
                 entity.getOriginalFilename(),

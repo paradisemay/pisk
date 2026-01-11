@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.service.ArtistService;
+import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.UserService;
@@ -24,12 +25,14 @@ public class TrackPageController {
     private final UserService userService;
     private final GenreService genreService;
     private final ArtistService artistService;
+    private final FileStorageService fileStorageService;
 
-    public TrackPageController(TrackService trackService, UserService userService, GenreService genreService, ArtistService artistService) {
+    public TrackPageController(TrackService trackService, UserService userService, GenreService genreService, ArtistService artistService, FileStorageService fileStorageService) {
         this.trackService = trackService;
         this.userService = userService;
         this.genreService = genreService;
         this.artistService = artistService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping("/{id}")
@@ -45,6 +48,7 @@ public class TrackPageController {
             }
             String genreTitle = info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-";
             String artistName = info.artistId() != null ? artistService.requireArtist(info.artistId()).getName() : "-";
+            String coverPublicUrl = info.coverUrl() != null ? fileStorageService.toPublicUrl(info.coverUrl()) : null;
             TrackDetailsView view = new TrackDetailsView(
                     info.id(),
                     info.name(),
@@ -60,6 +64,7 @@ public class TrackPageController {
                     info.durationSeconds(),
                     info.filesize(),
                     info.uploadDate(),
+                    coverPublicUrl,
                     "/api/v1/tracks/" + info.id() + "/file"
             );
             model.addAttribute("track", view);
