@@ -77,9 +77,29 @@ public class UploadController {
     }
 
     @GetMapping
-    public String form(Model model, HttpServletRequest request) {
+    public String form(Model model, HttpServletRequest request, Authentication authentication) {
         if (!model.containsAttribute("albumMetaForm")) {
-            model.addAttribute("albumMetaForm", new UploadAlbumMetaForm());
+            UploadAlbumMetaForm form = new UploadAlbumMetaForm();
+            if (authentication != null && authentication.getName() != null) {
+                userRepository.findByUsernameIgnoreCase(authentication.getName()).ifPresent(user -> {
+                    if (user.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST) {
+                        form.setArtistName(user.getUsername());
+                        model.addAttribute("isArtist", true);
+                    }
+                });
+            }
+            model.addAttribute("albumMetaForm", form);
+        } else {
+            // Если форма уже была в модели (например, после ошибки валидации), проверяем роль
+            if (authentication != null && authentication.getName() != null) {
+                userRepository.findByUsernameIgnoreCase(authentication.getName()).ifPresent(user -> {
+                    if (user.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST) {
+                        model.addAttribute("isArtist", true);
+                        // Force artist name back just in case
+                        ((UploadAlbumMetaForm) model.getAttribute("albumMetaForm")).setArtistName(user.getUsername());
+                    }
+                });
+            }
         }
         prepareMetaModel(model, request);
         return "upload";
@@ -94,7 +114,11 @@ public class UploadController {
                              RedirectAttributes redirectAttributes,
                              HttpServletRequest request) {
 
-        requireCurrentUser(authentication);
+        UserEntity user = requireCurrentUser(authentication);
+        if (user.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST) {
+             form.setArtistName(user.getUsername());
+             model.addAttribute("isArtist", true);
+        }
 
         if (bindingResult.hasErrors()) {
             prepareMetaModel(model, request);

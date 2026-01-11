@@ -36,7 +36,13 @@ public class TrackPageController {
     public String track(@PathVariable Long id, Model model, HttpServletRequest request) {
         try {
             TrackInfo info = trackService.getTrackInfo(id);
-            String authorName = info.authorId() != null ? userService.requireUser(info.authorId()).getUsername() : "-";
+            String authorName = "-";
+            boolean uploaderIsArtist = false;
+            if (info.authorId() != null) {
+                ru.ifmo.se.pisk.domain.entity.UserEntity author = userService.requireUser(info.authorId());
+                authorName = author.getUsername();
+                uploaderIsArtist = author.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST;
+            }
             String genreTitle = info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-";
             String artistName = info.artistId() != null ? artistService.requireArtist(info.artistId()).getName() : "-";
             TrackDetailsView view = new TrackDetailsView(
@@ -44,6 +50,7 @@ public class TrackPageController {
                     info.name(),
                     info.authorId(),
                     authorName,
+                    uploaderIsArtist,
                     artistName,
                     genreTitle,
                     info.explicit(),

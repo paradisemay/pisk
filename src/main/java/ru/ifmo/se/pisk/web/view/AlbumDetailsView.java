@@ -15,6 +15,7 @@ public record AlbumDetailsView(
         String artistName,
         Long uploaderId,
         String uploaderName,
+        boolean uploaderIsArtist,
         Instant uploadDate
 ) {
 }
