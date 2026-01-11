@@ -5,10 +5,11 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.repository.TrackRepository;
-import ru.ifmo.se.pisk.repository.projection.TrackSearchResult;
 import ru.ifmo.se.pisk.web.view.TrackCardView;
 
 @Service
@@ -23,50 +24,41 @@ public class TrendingService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TrackCardView> getTrendingTracks(Pageable pageable) {
-        // fn_search_tracks parameters: query, genreIds, artistIds, labelIds, explicit, sort, limit, offset
-        int limit = pageable.getPageSize();
-        int offset = (int) pageable.getOffset();
+    public Page<TrackCardView> getTrendingTracks(Pageable pageable, String sortDirection) {
+        // The pageable passed here might have sort info, but we need to ignore it for the DB query
+        // because the queries have hardcoded sorting.
+        // We reconstruct a Pageable with just page and size.
+        Pageable dbPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
-        List<TrackSearchResult> results = trackRepository.searchTracks(
-                null, // query
-                null, // genreIds
-                null, // artistIds
-                null, // labelIds
-                null, // explicit (null = all)
-                "rating", // sort by rating (descending)
-                limit,
-                offset
-        );
+        Page<TrackEntity> trackPage;
+        if ("asc".equalsIgnoreCase(sortDirection)) {
+            trackPage = trackRepository.findTrendingAsc(dbPageable);
+        } else {
+            trackPage = trackRepository.findTrendingDesc(dbPageable);
+        }
 
-        // We do not have a total count from the function efficiently, but for "Trending"
-        // we can assume a large number or just allow next page until empty.
-        // For standard pagination UI, usually a count is needed.
-        // Since fn_search_tracks doesn't return count, we might have to fetch a bit more or just live with it.
-        // However, PageImpl expects a total.
-        // For now, let's assume a large total for "Top" lists or maybe Count only what we have + check next?
-        // Let's pass a dummy total that ensures "Next" works if we have full page,
-        // but exact page counts might be off.
-        // Better yet: To get total count of *all* tracks is `trackRepository.count()`.
+        List<TrackCardView> views = trackPage.stream()
+                .map(t -> {
+                    // Calculate rank based on page offset + index + 1
+                    long rank = pageable.getOffset() + trackPage.getContent().indexOf(t) + 1;
 
-        long total = trackRepository.count();
+                    double avgRating = 0.0;
+                    if (t.getRateCount() > 0) {
+                        avgRating = (double) t.getRating() / t.getRateCount();
+                    }
 
-        List<TrackCardView> views = results.stream()
-                .map(r -> {
-                    // Calculate rank based on offset + index + 1
-                    int rank = offset + results.indexOf(r) + 1;
                     return new TrackCardView(
-                            r.getTrackId(),
-                            r.getTrackName(),
-                            r.getArtistName(),
-                            r.getAlbumName(),
-                            fileStorageService.toPublicUrl(r.getCoverUrl()),
-                            r.getRatingAvg() != null ? r.getRatingAvg() : 0.0,
-                            rank
+                            t.getId(),
+                            t.getName(),
+                            t.getArtist() != null ? t.getArtist().getName() : "-",
+                            t.getAlbum() != null ? t.getAlbum().getName() : "-",
+                            t.getAlbum() != null ? fileStorageService.toPublicUrl(t.getAlbum().getCoverUrl()) : null,
+                            avgRating,
+                            (int) rank
                     );
                 })
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(views, pageable, total);
+        return new PageImpl<>(views, pageable, trackPage.getTotalElements());
     }
 }

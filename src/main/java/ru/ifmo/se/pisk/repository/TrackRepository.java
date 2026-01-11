@@ -12,29 +12,24 @@ import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
 import ru.ifmo.se.pisk.domain.TrackStatus;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
-import ru.ifmo.se.pisk.repository.projection.TrackSearchResult;
 
 public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSpecificationExecutor<TrackEntity> {
 
-    @Query(value = "SELECT * FROM fn_search_tracks(" +
-            "cast(:query as text), " +
-            "cast(:genreIds as bigint[]), " +
-            "cast(:artistIds as bigint[]), " +
-            "cast(:labelIds as bigint[]), " +
-            "cast(:explicit as boolean), " +
-            "cast(:sort as text), " +
-            ":limit, " +
-            ":offset)", nativeQuery = true)
-    List<TrackSearchResult> searchTracks(
-            @Param("query") String query,
-            @Param("genreIds") Long[] genreIds,
-            @Param("artistIds") Long[] artistIds,
-            @Param("labelIds") Long[] labelIds,
-            @Param("explicit") Boolean explicit,
-            @Param("sort") String sort,
-            @Param("limit") int limit,
-            @Param("offset") int offset
-    );
+    @Query("SELECT t FROM TrackEntity t " +
+           "LEFT JOIN FETCH t.album al " +
+           "LEFT JOIN FETCH t.artist ar " +
+           "LEFT JOIN FETCH t.genre g " +
+           "ORDER BY (CASE WHEN t.rateCount > 0 THEN CAST(t.rating AS double) / t.rateCount ELSE 0.0 END) DESC, " +
+           "t.rating DESC, t.rateCount DESC")
+    Page<TrackEntity> findTrendingDesc(Pageable pageable);
+
+    @Query("SELECT t FROM TrackEntity t " +
+           "LEFT JOIN FETCH t.album al " +
+           "LEFT JOIN FETCH t.artist ar " +
+           "LEFT JOIN FETCH t.genre g " +
+           "ORDER BY (CASE WHEN t.rateCount > 0 THEN CAST(t.rating AS double) / t.rateCount ELSE 0.0 END) ASC, " +
+           "t.rating ASC, t.rateCount ASC")
+    Page<TrackEntity> findTrendingAsc(Pageable pageable);
 
     Page<TrackEntity> findByStatus(TrackStatus status, Pageable pageable);
     Page<TrackEntity> findByAuthor(UserEntity author, Pageable pageable);

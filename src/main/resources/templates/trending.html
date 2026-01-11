@@ -13,6 +13,14 @@
     </section>
 
     <section class="card soft">
+        <div class="section-header">
+             <h2 th:text="#{trending.title}">Top Tracks</h2>
+             <div class="filter-controls">
+                 <a th:href="@{/trending(sort='desc')}" class="pill small" th:classappend="${currentSort == null or currentSort == 'desc'} ? 'active' : 'ghost'" th:text="#{trending.sort.best}">Best</a>
+                 <a th:href="@{/trending(sort='asc')}" class="pill small" th:classappend="${currentSort == 'asc'} ? 'active' : 'ghost'" th:text="#{trending.sort.worst}">Worst</a>
+             </div>
+        </div>
+
         <div class="empty" th:if="${tracks.isEmpty()}" th:text="#{catalog.no-results}">Нет треков</div>
 
         <div class="track-list" th:if="${!tracks.isEmpty()}">
@@ -38,11 +46,11 @@
 
         <div class="pagination" th:if="${tracks.totalPages > 1}" style="margin-top: 24px;">
             <a th:if="${tracks.hasPrevious()}"
-               th:href="@{/trending(page=${tracks.number-1},size=${tracks.size})}"
+               th:href="@{/trending(page=${tracks.number-1},size=${tracks.size},sort=${currentSort})}"
                th:text="#{catalog.pagination.prev}"></a>
             <span th:text="${tracks.number + 1} + ' / ' + ${tracks.totalPages}"></span>
             <a th:if="${tracks.hasNext()}"
-               th:href="@{/trending(page=${tracks.number+1},size=${tracks.size})}"
+               th:href="@{/trending(page=${tracks.number+1},size=${tracks.size},sort=${currentSort})}"
                th:text="#{catalog.pagination.next}"></a>
         </div>
     </section>
