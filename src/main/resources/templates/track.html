@@ -47,6 +47,17 @@
             <span class="tag" th:if="${track.inoagent}" th:text="#{track.metadata.inoagent}"></span>
         </div>
         <audio controls th:src="${track.downloadUrl}" class="player"></audio>
+
+        <form th:action="@{/tracks/{id}/rate(id=${track.id})}" method="post" class="rating-form">
+             <div class="star-rating">
+                 <input type="radio" id="star5" name="rating" value="5" onchange="this.form.submit()" th:checked="${track.currentUserRating == 5}" /><label for="star5" title="5 stars"></label>
+                 <input type="radio" id="star4" name="rating" value="4" onchange="this.form.submit()" th:checked="${track.currentUserRating == 4}" /><label for="star4" title="4 stars"></label>
+                 <input type="radio" id="star3" name="rating" value="3" onchange="this.form.submit()" th:checked="${track.currentUserRating == 3}" /><label for="star3" title="3 stars"></label>
+                 <input type="radio" id="star2" name="rating" value="2" onchange="this.form.submit()" th:checked="${track.currentUserRating == 2}" /><label for="star2" title="2 stars"></label>
+                 <input type="radio" id="star1" name="rating" value="1" onchange="this.form.submit()" th:checked="${track.currentUserRating == 1}" /><label for="star1" title="1 star"></label>
+             </div>
+        </form>
+
         <div class="actions">
             <a class="pill" th:href="${track.downloadUrl}" th:text="#{track.download}"></a>
             <a class="ghost" th:href="@{/catalog}" th:text="#{track.back}"></a>

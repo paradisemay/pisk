@@ -91,10 +91,35 @@ public class TrackPageControllerTest {
         given(genreService.requireGenre(genreId)).willReturn(genreEntity);
         given(artistService.requireArtist(artistId)).willReturn(artistEntity);
 
+        // Mock current user lookup
+        given(userService.findByUsername(org.mockito.ArgumentMatchers.anyString()))
+                .willReturn(java.util.Optional.of(userEntity));
+
         mockMvc.perform(get("/tracks/{id}", trackId))
                 .andExpect(status().isOk())
                 .andExpect(view().name("track"))
                 .andExpect(model().attributeExists("track"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(artistName)));
+    }
+
+    @Test
+    @WithMockUser(username = "tester")
+    public void rateTrackShouldCallServiceAndRedirect() throws Exception {
+        Long trackId = 1L;
+        UserEntity user = new UserEntity();
+        user.setId(100L);
+        user.setUsername("tester");
+
+        given(userService.findByUsername("tester")).willReturn(java.util.Optional.of(user));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/tracks/{id}/rate", trackId)
+                        .param("rating", "5")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/tracks/" + trackId));
+
+        org.mockito.Mockito.verify(trackService).rateTrack(org.mockito.ArgumentMatchers.argThat(cmd ->
+            cmd.trackId().equals(trackId) && cmd.userId().equals(100L) && cmd.value() == 5
+        ));
     }
 }

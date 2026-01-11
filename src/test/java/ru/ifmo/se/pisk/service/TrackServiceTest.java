@@ -142,7 +142,7 @@ class TrackServiceTest {
         UserEntity user = new UserEntity();
         user.setId(7L);
         when(userService.requireUser(7L)).thenReturn(user);
-        when(ratingRepository.findByTrackAndUser(track, user)).thenReturn(java.util.Optional.empty());
+
         RatingEntity persisted = new RatingEntity();
         persisted.setId(1L);
         persisted.setTrack(track);
@@ -150,16 +150,16 @@ class TrackServiceTest {
         persisted.setValue(5);
         persisted.setComment("Great");
         persisted.setCreatedAt(Instant.now());
-        when(ratingRepository.save(any(RatingEntity.class))).thenReturn(persisted);
-        when(ratingRepository.calculateAverageForTrack(track)).thenReturn(5.0);
-        when(ratingRepository.countByTrack(track)).thenReturn(1L);
+
+        // Return the entity simulating it exists after the stored proc call
+        when(ratingRepository.findByTrackAndUser(track, user)).thenReturn(java.util.Optional.of(persisted));
 
         RatingCommand command = new RatingCommand(15L, 7L, 5, "Great");
         RatingInfo info = trackService.rateTrack(command);
 
         assertThat(info.value()).isEqualTo(5);
-        assertThat(track.getRateCount()).isEqualTo(1);
-        assertThat(track.getRating()).isEqualTo(5);
+
+        verify(trackRepository).rateTrack(eq(7L), eq(15L), eq(5));
         verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(user), anyMap());
     }
 }

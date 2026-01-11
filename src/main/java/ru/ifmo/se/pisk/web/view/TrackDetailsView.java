@@ -18,7 +18,8 @@ public record TrackDetailsView(
         long durationSeconds,
         long fileSize,
         Instant uploadDate,
-        String downloadUrl
+        String downloadUrl,
+        Integer currentUserRating
 ) {
 
     public String formattedDuration() {
