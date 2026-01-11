@@ -13,4 +13,8 @@ public class AdminSettingsForm {
     @Min(value = 1, message = "{validation.pageSize.min}")
     @Max(value = 100, message = "{validation.pageSize.max}")
     private Integer defaultPageSize = 10;
+
+    @Min(value = 0, message = "{validation.threshold.min}")
+    @Max(value = 5, message = "{validation.threshold.max}")
+    private Double trackDeletionThreshold;
 }
