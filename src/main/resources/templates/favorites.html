@@ -15,7 +15,7 @@
     <section class="grid" th:if="${!tracks.isEmpty()}">
         <article class="card" th:each="track : ${tracks}">
             <div th:if="${track.coverUrl != null}" style="margin-bottom: 12px;">
-                <img th:src="@{/api/v1/files/{path}(path=${track.coverUrl})}" alt="cover" style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 16px;"/>
+                <img th:src="${track.coverUrl}" alt="cover" style="width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 16px;"/>
             </div>
             <div class="card-title">
                 <a th:href="@{/tracks/{id}(id=${track.id})}" th:text="${track.name}">Track</a>

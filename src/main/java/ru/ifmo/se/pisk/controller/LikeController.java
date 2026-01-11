@@ -26,8 +26,8 @@ public class LikeController {
 
     @PostMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> likeTrack(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        ru.ifmo.se.pisk.domain.entity.UserEntity user = userService.findByUsername(userDetails.getUsername())
+    public ResponseEntity<Void> likeTrack(@PathVariable Long id, java.security.Principal principal) {
+        ru.ifmo.se.pisk.domain.entity.UserEntity user = userService.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalStateException("User not found"));
         trackService.likeTrack(id, user.getId());
         return ResponseEntity.ok().build();
@@ -35,8 +35,8 @@ public class LikeController {
 
     @DeleteMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> unlikeTrack(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
-        ru.ifmo.se.pisk.domain.entity.UserEntity user = userService.findByUsername(userDetails.getUsername())
+    public ResponseEntity<Void> unlikeTrack(@PathVariable Long id, java.security.Principal principal) {
+        ru.ifmo.se.pisk.domain.entity.UserEntity user = userService.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalStateException("User not found"));
         trackService.unlikeTrack(id, user.getId());
         return ResponseEntity.ok().build();
