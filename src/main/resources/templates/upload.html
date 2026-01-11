@@ -17,7 +17,8 @@
             <label>
                 <span th:text="#{upload.field.artist}">Artist</span>
                 <input type="text" th:field="*{artistName}" list="artist-suggestions" autocomplete="on" placeholder=""
-                       th:placeholder="#{upload.field.artist.placeholder}">
+                       th:placeholder="#{upload.field.artist.placeholder}"
+                       th:readonly="${currentUser != null && currentUser.role.name() == 'ARTIST'}">
                 <span class="error" th:if="${#fields.hasErrors('artistName')}" th:errors="*{artistName}"></span>
             </label>
             <label>

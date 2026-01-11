@@ -38,7 +38,8 @@ public class CurrentUserAdvice {
                 .map(user -> new CurrentUser(
                         user.getId(),
                         user.getUsername(),
-                        fileStorageService.toPublicUrl(user.getAvatarPath())
+                        fileStorageService.toPublicUrl(user.getAvatarPath()),
+                        user.getRole()
                 ))
                 .orElse(null);
     }

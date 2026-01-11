@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 import ru.ifmo.se.pisk.domain.TrackInfo;
+import ru.ifmo.se.pisk.domain.UserRole;
+import ru.ifmo.se.pisk.service.ArtistService;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.UserService;
@@ -22,24 +24,32 @@ public class TrackPageController {
     private final TrackService trackService;
     private final UserService userService;
     private final GenreService genreService;
+    private final ArtistService artistService;
 
-    public TrackPageController(TrackService trackService, UserService userService, GenreService genreService) {
+    public TrackPageController(TrackService trackService, UserService userService, GenreService genreService, ArtistService artistService) {
         this.trackService = trackService;
         this.userService = userService;
         this.genreService = genreService;
+        this.artistService = artistService;
     }
 
     @GetMapping("/{id}")
     public String track(@PathVariable Long id, Model model, HttpServletRequest request) {
         try {
             TrackInfo info = trackService.getTrackInfo(id);
-            String authorName = info.authorId() != null ? userService.requireUser(info.authorId()).getUsername() : "-";
+            var author = info.authorId() != null ? userService.requireUser(info.authorId()) : null;
+            String authorName = author != null ? author.getUsername() : "-";
             String genreTitle = info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-";
+            String artistName = info.artistId() != null ? artistService.requireArtist(info.artistId()).getName() : "";
+            boolean verified = author != null && author.getRole() == UserRole.ARTIST;
+
             TrackDetailsView view = new TrackDetailsView(
                     info.id(),
                     info.name(),
                     info.authorId(),
                     authorName,
+                    artistName,
+                    verified,
                     genreTitle,
                     info.explicit(),
                     info.inoagent(),

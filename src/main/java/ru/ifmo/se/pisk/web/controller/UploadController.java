@@ -54,9 +54,17 @@ public class UploadController {
     }
 
     @GetMapping
-    public String form(Model model, HttpServletRequest request) {
+    public String form(Model model, HttpServletRequest request, Authentication authentication) {
         if (!model.containsAttribute("uploadForm")) {
-            model.addAttribute("uploadForm", new UploadTrackForm());
+            UploadTrackForm form = new UploadTrackForm();
+            if (authentication != null && authentication.isAuthenticated()) {
+                userRepository.findByUsernameIgnoreCase(authentication.getName()).ifPresent(user -> {
+                    if (user.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST) {
+                        form.setArtistName(user.getUsername());
+                    }
+                });
+            }
+            model.addAttribute("uploadForm", form);
         }
         model.addAttribute("genres", genreService.listAll());
         model.addAttribute("labels", labelService.listAll());

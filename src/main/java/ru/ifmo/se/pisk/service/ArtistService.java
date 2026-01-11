@@ -37,4 +37,10 @@ public class ArtistService {
         }
         return artistRepository.searchByName(namePart.trim());
     }
+
+    @Transactional(readOnly = true)
+    public ArtistEntity requireArtist(Long id) {
+        return artistRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Артист не найден: " + id));
+    }
 }
