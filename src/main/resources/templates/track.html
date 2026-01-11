@@ -11,7 +11,7 @@
                 <h1 th:text="${track.name}">Track title</h1>
                 <p class="muted">
                     <span th:text="#{catalog.track.by}">by</span>
-                    <a th:href="@{/authors/{id}(id=${track.authorId})}" th:text="${track.authorName}">Author</a>
+                    <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
                 </p>
             </div>
             <div class="pill" th:text="#{track.rating} + ': ' + ${#numbers.formatDecimal(track.averageRating,1,1)}"></div>
