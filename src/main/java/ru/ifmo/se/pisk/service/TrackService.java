@@ -155,26 +155,32 @@ public class TrackService {
     public RatingInfo rateTrack(RatingCommand command) {
         TrackEntity track = requireTrack(command.trackId());
         UserEntity user = userService.requireUser(command.userId());
-        RatingEntity rating = ratingRepository.findByTrackAndUser(track, user).orElseGet(RatingEntity::new);
-        rating.setTrack(track);
-        rating.setUser(user);
-        rating.setValue(command.value());
-        rating.setComment(command.comment());
-        rating.setCreatedAt(Instant.now());
-        RatingEntity persisted = ratingRepository.save(rating);
-        Double average = ratingRepository.calculateAverageForTrack(track);
-        Long count = ratingRepository.countByTrack(track);
-        if (average != null && count != null) {
-            track.setRateCount(count.intValue());
-            track.setRating(Math.round(average * count));
-            trackRepository.save(track);
-        }
+
+        // Use database function to rate
+        trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
+
+        // We still fetch the rating entity to return consistent info, or just construct it.
+        // The DB function updates/inserts into user_rating table.
+        // We need to fetch it to get the ID and created_at if we want to return full RatingInfo,
+        // but primarily we need to ensure the RatingInfo returned is valid.
+        // Since the function handles the logic, we can just fetch the entity after to be sure.
+        RatingEntity rating = ratingRepository.findByTrackAndUser(track, user)
+            .orElseThrow(() -> new IllegalStateException("Rating should exist after fn_track_rate call"));
+
         Map<String, String> auditData = new HashMap<>();
         auditData.put("value", String.valueOf(command.value()));
         auditData.put("comment", command.comment());
         auditService.record(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED, "Track", String.valueOf(track.getId()), user,
                 auditData);
-        return new RatingInfo(persisted.getId(), command.trackId(), command.userId(), command.value(), command.comment(), persisted.getCreatedAt());
+        return new RatingInfo(rating.getId(), command.trackId(), command.userId(), rating.getValue(), rating.getComment(), rating.getCreatedAt());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Integer> getUserTrackRating(Long trackId, Long userId) {
+        TrackEntity track = requireTrack(trackId);
+        UserEntity user = userService.requireUser(userId);
+        return ratingRepository.findByTrackAndUser(track, user)
+                .map(RatingEntity::getValue);
     }
 
     @Transactional

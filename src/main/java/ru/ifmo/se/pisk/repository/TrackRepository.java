@@ -30,4 +30,7 @@ public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSp
             + "sum(t.rateCount)) from TrackEntity t group by t.author.id order by "
             + "case when sum(t.rateCount) = 0 then 0.0 else (sum(t.rating) * 1.0) / sum(t.rateCount) end desc")
     List<ru.ifmo.se.pisk.repository.projection.ArtistRatingAggregate> findTopArtistsByAverageRating(Pageable pageable);
+
+    @Query(value = "SELECT * FROM fn_track_rate(:userId, :trackId, CAST(:rate AS SMALLINT))", nativeQuery = true)
+    List<Object[]> rateTrack(@Param("userId") Long userId, @Param("trackId") Long trackId, @Param("rate") Integer rate);
 }

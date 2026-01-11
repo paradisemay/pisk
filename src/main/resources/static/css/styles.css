@@ -468,6 +468,38 @@ h1 { margin: 8px 0 6px; }
     .hero { grid-template-columns: 1fr; }
 }
 
+/* Star Rating */
+.star-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+    margin: 16px 0;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 32px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.1s ease;
+}
+
+.star-rating label:hover {
+    transform: scale(1.1);
+}
+
+.star-rating label::before {
+    content: '★';
+}
+
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(96,165,250,0.4);
 /* Custom Checkbox Styles */
 .checkbox-wrapper {
     display: inline-flex;

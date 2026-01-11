@@ -66,6 +66,11 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<UserEntity> findByUsername(String username) {
+        return userRepository.findByUsernameIgnoreCase(username);
+    }
+
     @Transactional
     public void updateStatus(Long userId, UserStatus status) {
         UserEntity entity = requireUser(userId);

@@ -48,6 +48,13 @@ public class TrackPageController {
             }
             String genreTitle = info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-";
             String artistName = info.artistId() != null ? artistService.requireArtist(info.artistId()).getName() : "-";
+
+            Integer currentUserRating = null;
+            ru.ifmo.se.pisk.domain.entity.UserEntity currentUser = getCurrentUser();
+            if (currentUser != null) {
+                 currentUserRating = trackService.getUserTrackRating(id, currentUser.getId()).orElse(null);
+            }
+
             String coverPublicUrl = info.coverUrl() != null ? fileStorageService.toPublicUrl(info.coverUrl()) : null;
             TrackDetailsView view = new TrackDetailsView(
                     info.id(),
@@ -64,6 +71,7 @@ public class TrackPageController {
                     info.durationSeconds(),
                     info.filesize(),
                     info.uploadDate(),
+                    currentUserRating
                     coverPublicUrl,
                     "/api/v1/tracks/" + info.id() + "/file"
             );
@@ -73,5 +81,23 @@ public class TrackPageController {
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
         }
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/{id}/rate")
+    public String rateTrack(@PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam("rating") Integer rating) {
+        ru.ifmo.se.pisk.domain.entity.UserEntity currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        trackService.rateTrack(new ru.ifmo.se.pisk.service.dto.RatingCommand(id, currentUser.getId(), rating, null));
+        return "redirect:/tracks/" + id;
+    }
+
+    private ru.ifmo.se.pisk.domain.entity.UserEntity getCurrentUser() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
+             return userService.findByUsername(auth.getName()).orElse(null);
+        }
+        return null;
     }
 }
