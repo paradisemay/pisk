@@ -9,17 +9,9 @@
             <div>
                 <p class="eyebrow" th:text="#{track.metadata.genre} + ' · ' + ${track.genreTitle}">Жанр</p>
                 <h1 th:text="${track.name}">Track title</h1>
-                <p class="muted">
-                    <span th:if="${track.uploaderIsArtist}" style="color: #6366f1;">
-                         <span th:text="#{catalog.track.by}">by</span>
-                         <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
-                         <!-- Verified Badge -->
-                         &#10003;
-                    </span>
-                    <span th:unless="${track.uploaderIsArtist}">
-                         <span th:text="#{catalog.track.by}">by</span>
-                         <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
-                    </span>
+                <p class="muted" th:unless="${track.uploaderIsArtist}">
+                     <span th:text="#{catalog.track.by}">by</span>
+                     <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
                 </p>
             </div>
             <div class="pill" th:text="#{track.rating} + ': ' + ${#numbers.formatDecimal(track.averageRating,1,1)}"></div>
@@ -27,7 +19,11 @@
         <div class="meta-grid">
             <div>
                 <p class="muted" th:text="#{album.by-artist}"></p>
-                <strong th:text="${track.artistName}"></strong>
+                <strong th:if="${track.uploaderIsArtist}" style="color: #6366f1;">
+                    <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.artistName}"></a>
+                    &#10003;
+                </strong>
+                <strong th:unless="${track.uploaderIsArtist}" th:text="${track.artistName}"></strong>
             </div>
             <div>
                 <p class="muted" th:text="#{track.duration}"></p>
