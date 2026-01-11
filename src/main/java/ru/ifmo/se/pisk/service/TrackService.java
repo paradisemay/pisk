@@ -152,6 +152,16 @@ public class TrackService {
     }
 
     @Transactional
+    public boolean addLike(Long userId, Long trackId) {
+        return trackRepository.addLike(userId, trackId);
+    }
+
+    @Transactional
+    public boolean removeLike(Long userId, Long trackId) {
+        return trackRepository.removeLike(userId, trackId);
+    }
+
+    @Transactional
     public RatingInfo rateTrack(RatingCommand command) {
         TrackEntity track = requireTrack(command.trackId());
         UserEntity user = userService.requireUser(command.userId());

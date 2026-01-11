@@ -33,4 +33,10 @@ public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSp
 
     @Query(value = "SELECT * FROM fn_track_rate(:userId, :trackId, CAST(:rate AS SMALLINT))", nativeQuery = true)
     List<Object[]> rateTrack(@Param("userId") Long userId, @Param("trackId") Long trackId, @Param("rate") Integer rate);
+
+    @Query(value = "SELECT fn_like_add(:userId, :trackId)", nativeQuery = true)
+    boolean addLike(@Param("userId") Long userId, @Param("trackId") Long trackId);
+
+    @Query(value = "SELECT fn_like_remove(:userId, :trackId)", nativeQuery = true)
+    boolean removeLike(@Param("userId") Long userId, @Param("trackId") Long trackId);
 }
