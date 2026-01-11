@@ -20,7 +20,8 @@ public record TrackDetailsView(
         Instant uploadDate,
         Integer currentUserRating,
         String coverUrl,
-        String downloadUrl
+        String downloadUrl,
+        boolean isLiked
 ) {
 
     public String formattedDuration() {

@@ -57,6 +57,8 @@ public class SecurityConfig {
 
                         // API endpoints
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/tracks/*/like").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/tracks/*/like").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/tracks/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/tracks/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/tracks/**").hasRole("ADMIN")

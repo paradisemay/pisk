@@ -58,9 +58,11 @@ public class TrackPageController {
             String artistName = info.artistId() != null ? artistService.requireArtist(info.artistId()).getName() : "-";
 
             Integer currentUserRating = null;
+            boolean isLiked = false;
             ru.ifmo.se.pisk.domain.entity.UserEntity currentUser = getCurrentUser();
             if (currentUser != null) {
                  currentUserRating = trackService.getUserTrackRating(id, currentUser.getId()).orElse(null);
+                 isLiked = trackService.isLiked(id, currentUser.getId());
             }
 
             String coverPublicUrl = info.coverUrl() != null ? fileStorageService.toPublicUrl(info.coverUrl()) : null;
@@ -81,7 +83,8 @@ public class TrackPageController {
                     info.uploadDate(),
                     currentUserRating,
                     coverPublicUrl,
-                    "/api/v1/tracks/" + info.id() + "/file"
+                    "/api/v1/tracks/" + info.id() + "/file",
+                    isLiked
             );
             model.addAttribute("track", view);
             model.addAttribute("langLinks", LanguageLinks.build(request));
