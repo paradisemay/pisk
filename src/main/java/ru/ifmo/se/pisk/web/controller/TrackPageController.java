@@ -71,7 +71,7 @@ public class TrackPageController {
                     info.durationSeconds(),
                     info.filesize(),
                     info.uploadDate(),
-                    currentUserRating
+                    currentUserRating,
                     coverPublicUrl,
                     "/api/v1/tracks/" + info.id() + "/file"
             );
