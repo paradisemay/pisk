@@ -12,8 +12,30 @@ import ru.ifmo.se.pisk.domain.entity.AlbumEntity;
 import ru.ifmo.se.pisk.domain.TrackStatus;
 import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
+import ru.ifmo.se.pisk.repository.projection.TrackSearchResult;
 
 public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSpecificationExecutor<TrackEntity> {
+
+    @Query(value = "SELECT * FROM fn_search_tracks(" +
+            "cast(:query as text), " +
+            "cast(:genreIds as bigint[]), " +
+            "cast(:artistIds as bigint[]), " +
+            "cast(:labelIds as bigint[]), " +
+            "cast(:explicit as boolean), " +
+            "cast(:sort as text), " +
+            ":limit, " +
+            ":offset)", nativeQuery = true)
+    List<TrackSearchResult> searchTracks(
+            @Param("query") String query,
+            @Param("genreIds") Long[] genreIds,
+            @Param("artistIds") Long[] artistIds,
+            @Param("labelIds") Long[] labelIds,
+            @Param("explicit") Boolean explicit,
+            @Param("sort") String sort,
+            @Param("limit") int limit,
+            @Param("offset") int offset
+    );
+
     Page<TrackEntity> findByStatus(TrackStatus status, Pageable pageable);
     Page<TrackEntity> findByAuthor(UserEntity author, Pageable pageable);
     Optional<TrackEntity> findByIdAndAuthor(Long id, UserEntity author);
