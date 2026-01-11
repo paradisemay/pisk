@@ -9,12 +9,16 @@ import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.AudioHeader;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.datatype.Artwork;
+import org.jaudiotagger.tag.images.Artwork;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
 public class AudioMetadataService {
+
+    private static final Logger log = LoggerFactory.getLogger(AudioMetadataService.class);
 
     public AudioMetadata extract(byte[] data, String originalFilename, String contentType) {
         try {
@@ -36,6 +40,7 @@ public class AudioMetadataService {
                 Files.deleteIfExists(tempFile);
             }
         } catch (Exception e) {
+            log.error("Failed to extract metadata from file: {}", originalFilename, e);
             throw new IllegalStateException("Не удалось прочитать метаданные аудиофайла", e);
         }
     }
