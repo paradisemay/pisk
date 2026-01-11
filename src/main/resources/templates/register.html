@@ -67,7 +67,7 @@
             <label>
                 <span th:text="#{register.role}">Тип аккаунта</span>
                 <select th:field="*{role}">
-                    <option th:each="role : ${roles}" th:value="${role}" th:text="${role}"></option>
+                    <option th:each="role : ${roles}" th:value="${role}" th:text="#{__${'role.' + role}__}"></option>
                 </select>
             </label>
             <p class="error" th:if="${registrationError}" th:text="${registrationError}"></p>

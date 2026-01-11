@@ -56,9 +56,13 @@ public class AlbumPageController {
             // artist/uploader берём с первого трека (обычно #1)
             TrackInfo first = tracks.isEmpty() ? null : tracks.get(0);
 
-            String uploaderName = first != null && first.authorId() != null
-                    ? userService.requireUser(first.authorId()).getUsername()
-                    : "-";
+            String uploaderName = "-";
+            boolean uploaderIsArtist = false;
+            if (first != null && first.authorId() != null) {
+                ru.ifmo.se.pisk.domain.entity.UserEntity uploader = userService.requireUser(first.authorId());
+                uploaderName = uploader.getUsername();
+                uploaderIsArtist = uploader.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST;
+            }
 
             String genreTitle = album.getGenre() != null
                     ? album.getGenre().getName()
@@ -83,6 +87,7 @@ public class AlbumPageController {
                     resolvedArtistName,
                     first != null ? first.authorId() : null,
                     uploaderName,
+                    uploaderIsArtist,
                     album.getUploadDate()
             );
 

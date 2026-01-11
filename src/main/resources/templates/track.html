@@ -10,8 +10,16 @@
                 <p class="eyebrow" th:text="#{track.metadata.genre} + ' · ' + ${track.genreTitle}">Жанр</p>
                 <h1 th:text="${track.name}">Track title</h1>
                 <p class="muted">
-                    <span th:text="#{catalog.track.by}">by</span>
-                    <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
+                    <span th:if="${track.uploaderIsArtist}" style="color: #6366f1;">
+                         <span th:text="#{catalog.track.by}">by</span>
+                         <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
+                         <!-- Verified Badge -->
+                         &#10003;
+                    </span>
+                    <span th:unless="${track.uploaderIsArtist}">
+                         <span th:text="#{catalog.track.by}">by</span>
+                         <a th:href="@{/authors/{id}(id=${track.userId})}" th:text="${track.userName}">User</a>
+                    </span>
                 </p>
             </div>
             <div class="pill" th:text="#{track.rating} + ': ' + ${#numbers.formatDecimal(track.averageRating,1,1)}"></div>
