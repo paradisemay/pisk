@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head(${album.name})"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page">
+    <section class="card detail">
+        <div class="detail-header">
+            <div>
+                <p class="eyebrow" th:text="#{track.metadata.genre} + ' · ' + ${album.genreTitle}">Жанр</p>
+                <h1 th:text="${album.name}">Album title</h1>
+                <p class="muted">
+                    <span th:text="#{album.by-artist} + ': '">Исполнитель:</span>
+                    <span th:text="${album.artistName}">Artist</span>
+                </p>
+                <p class="muted">
+                    <span th:text="#{album.uploaded-by} + ': '">Выложил:</span>
+                    <a th:if="${album.uploaderId != null}" th:href="@{/authors/{id}(id=${album.uploaderId})}" th:text="${album.uploaderName}">User</a>
+                    <span th:if="${album.uploaderId == null}" th:text="${album.uploaderName}">-</span>
+                </p>
+            </div>
+            <div class="pill" th:text="#{track.rating} + ': ' + ${#numbers.formatDecimal(album.averageRating,1,1)}">0.0</div>
+        </div>
+
+        <div th:if="${album.coverPublicUrl != null}" style="margin: 16px 0;">
+            <img th:src="${album.coverPublicUrl}" alt="cover" style="width: 100%; max-width: 420px; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 16px;"/>
+        </div>
+
+        <div class="meta-grid">
+            <div>
+                <p class="muted" th:text="#{album.track-count}">Треков</p>
+                <strong th:text="${album.trackCount}">0</strong>
+            </div>
+            <div>
+                <p class="muted" th:text="#{track.metadata.genre}">Жанр</p>
+                <strong th:text="${album.genreTitle}">-</strong>
+            </div>
+        </div>
+
+        <div class="tags">
+            <span class="tag" th:if="${album.explicit}" th:text="#{track.metadata.explicit}"></span>
+            <span class="tag" th:if="${album.inoagent}" th:text="#{track.metadata.inoagent}"></span>
+        </div>
+
+        <p class="muted" th:if="${album.description != null and !album.description.isBlank()}" th:text="${album.description}"></p>
+
+        <hr style="opacity: .15; margin: 18px 0;"/>
+
+        <h2 style="margin-top: 0;" th:text="#{album.tracks}">Треки</h2>
+        <div class="empty" th:if="${tracks.isEmpty()}" th:text="#{album.no-tracks}">Нет треков</div>
+
+        <section class="grid" th:if="${!tracks.isEmpty()}" style="grid-template-columns: 1fr;">
+            <article class="card soft" th:each="t : ${tracks}">
+                <div style="display:flex; justify-content:space-between; gap: 12px; align-items: baseline;">
+                    <div>
+                        <span class="muted" th:text="${t.numberOnAlbum} + '.'">1.</span>
+                        <a th:href="@{/tracks/{id}(id=${t.id})}" th:text="${t.name}">Track</a>
+                    </div>
+                    <div class="muted" th:text="${t.formattedDuration}">03:45</div>
+                </div>
+                <div style="display:flex; gap: 12px; align-items:center; margin-top: 8px;">
+                    <div class="muted" th:text="#{track.rating} + ': ' + ${#numbers.formatDecimal(t.averageRating,1,1)}">0.0</div>
+                    <div class="tags">
+                        <span class="tag" th:if="${t.explicit}" th:text="#{track.metadata.explicit}"></span>
+                        <span class="tag" th:if="${t.inoagent}" th:text="#{track.metadata.inoagent}"></span>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div class="actions">
+            <a class="ghost" th:href="@{/catalog}" th:text="#{track.back}">Назад в каталог</a>
+        </div>
+    </section>
+</main>
+<footer th:replace="fragments :: siteFooter"></footer>
+</body>
+</html>
