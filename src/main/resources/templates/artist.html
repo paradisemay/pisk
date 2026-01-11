@@ -7,7 +7,7 @@
     <section class="card detail">
         <div class="detail-header">
             <div>
-                <p class="eyebrow" th:text="#{profile.title}">Профиль</p>
+                <p class="eyebrow" th:text="#{'profile.role.' + ${author.role}}">Профиль</p>
                 <h1 th:text="${author.username}">Artist</h1>
                 <p class="muted" th:text="${author.email}"></p>
             </div>
@@ -15,12 +15,20 @@
         </div>
         <div class="meta-grid">
             <div>
-                <p class="muted">ID</p>
+                <p class="muted" th:text="#{label.id}">ID</p>
                 <strong th:text="${author.id}"></strong>
             </div>
             <div>
-                <p class="muted">Status</p>
-                <strong th:text="${author.status}"></strong>
+                <p class="muted" th:text="#{label.status}">Status</p>
+                <strong th:text="#{'status.' + ${author.status}}"></strong>
+            </div>
+            <div>
+                <p class="muted" th:text="#{label.registered}">Registered</p>
+                <strong th:text="${#temporals.format(author.createdAt, 'dd.MM.yyyy')}"></strong>
+            </div>
+            <div>
+                <p class="muted" th:text="#{label.total_tracks}">Total Tracks</p>
+                <strong th:text="${tracks.totalElements}"></strong>
             </div>
         </div>
     </section>
