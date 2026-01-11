@@ -21,27 +21,35 @@
             <h2 th:text="#{catalog.filters.title}">Фильтры</h2>
             <a class="ghost" th:href="@{/catalog}" th:text="#{catalog.reset}"></a>
         </div>
-        <form method="get" th:action="@{/catalog}" class="filter-form">
-            <label>
-                <span th:text="#{catalog.search.placeholder}"></span>
-                <input type="text" name="title" th:value="${titleQuery}" th:placeholder="#{catalog.search.placeholder}">
-            </label>
-            <label class="inline">
-                <input type="checkbox" name="explicit" value="true" th:checked="${explicitFilter}"/>
-                <span th:text="#{catalog.filter.explicit}">Explicit</span>
-            </label>
-            <label class="inline">
-                <input type="checkbox" name="inoagent" value="true" th:checked="${inoagentFilter}"/>
-                <span th:text="#{catalog.filter.inoagent}">Foreign</span>
-            </label>
-            <label>
-                <span th:text="#{catalog.filter.genres}">Genres</span>
-                <select name="genreId" multiple>
-                    <option th:each="genre : ${genres}" th:value="${genre.id}" th:text="${genre.title}" th:selected="${genreFilter != null and genreFilter.contains(genre.id)}"></option>
-                </select>
-            </label>
-            <div class="actions">
-                <button type="submit" class="pill" th:text="#{catalog.filter.apply}">Apply</button>
+        <form method="get" th:action="@{/catalog}" class="filter-grouping">
+            <div class="filter-top-row">
+                <label class="search-field">
+                    <span class="sr-only" th:text="#{catalog.search.placeholder}"></span>
+                    <input type="text" name="title" th:value="${titleQuery}" th:placeholder="#{catalog.search.placeholder}">
+                </label>
+            </div>
+            <div class="filter-bottom-row">
+                <div class="checkbox-group">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" name="explicit" value="true" th:checked="${explicitFilter}"/>
+                        <span class="checkbox-custom"></span>
+                        <span th:text="#{catalog.filter.explicit}">Explicit</span>
+                    </label>
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" name="inoagent" value="true" th:checked="${inoagentFilter}"/>
+                        <span class="checkbox-custom"></span>
+                        <span th:text="#{catalog.filter.inoagent}">Foreign</span>
+                    </label>
+                </div>
+                <div class="filter-controls">
+                    <label style="min-width: 200px; margin: 0;">
+                        <span class="sr-only" th:text="#{catalog.filter.genres}">Genres</span>
+                        <select name="genreId" multiple>
+                            <option th:each="genre : ${genres}" th:value="${genre.id}" th:text="${genre.title}" th:selected="${genreFilter != null and genreFilter.contains(genre.id)}"></option>
+                        </select>
+                    </label>
+                    <button type="submit" class="pill" th:text="#{catalog.filter.apply}">Apply</button>
+                </div>
             </div>
         </form>
     </section>
