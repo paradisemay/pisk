@@ -39,6 +39,9 @@ public class CommentEntity {
     @Column(name = "complaint_count")
     private int complaintCount;
 
+    @Column(name = "track_time")
+    private Integer trackTime;
+
     public Long getId() {
         return id;
     }
@@ -93,5 +96,13 @@ public class CommentEntity {
 
     public void setComplaintCount(int complaintCount) {
         this.complaintCount = complaintCount;
+    }
+
+    public Integer getTrackTime() {
+        return trackTime;
+    }
+
+    public void setTrackTime(Integer trackTime) {
+        this.trackTime = trackTime;
     }
 }
