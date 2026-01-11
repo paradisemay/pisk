@@ -46,12 +46,14 @@ public class AuthorProfileController {
                     info.name(),
                     info.authorId(),
                     author.getUsername(),
+                    "-",
                     info.genreId() != null ? genreService.requireGenre(info.genreId()).getName() : "-",
                     info.explicit(),
                     info.inoagent(),
                     info.averageRating(),
                     info.durationSeconds(),
-                    info.uploadDate()
+                    info.uploadDate(),
+                    null
             ));
             model.addAttribute("author", author);
             model.addAttribute("tracks", view);

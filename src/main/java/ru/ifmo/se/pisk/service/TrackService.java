@@ -61,6 +61,7 @@ public class TrackService {
     private final ArtistService artistService;
     private final RatingRepository ratingRepository;
     private final LabelService labelService;
+    private final ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository;
 
     public TrackService(TrackRepository trackRepository,
                         TrackStatusHistoryRepository trackStatusHistoryRepository,
@@ -71,7 +72,8 @@ public class TrackService {
                         AuditService auditService,
                         ArtistService artistService,
                         RatingRepository ratingRepository,
-                        LabelService labelService) {
+                        LabelService labelService,
+                        ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository) {
         this.trackRepository = trackRepository;
         this.trackStatusHistoryRepository = trackStatusHistoryRepository;
         this.userService = userService;
@@ -82,6 +84,7 @@ public class TrackService {
         this.artistService = artistService;
         this.ratingRepository = ratingRepository;
         this.labelService = labelService;
+        this.trackLikeRepository = trackLikeRepository;
     }
 
 
@@ -224,5 +227,53 @@ public class TrackService {
                 .sorted(Comparator.comparingInt(TrackEntity::getNumberOnAlbum))
                 .map(DomainMapper::toTrackInfo)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void likeTrack(Long trackId, Long userId) {
+        // Validation (optional, as DB function checks FKs, but good for application logic/exceptions)
+        requireTrack(trackId);
+        userService.requireUser(userId);
+        trackLikeRepository.likeTrack(userId, trackId);
+    }
+
+    @Transactional
+    public void unlikeTrack(Long trackId, Long userId) {
+        requireTrack(trackId);
+        userService.requireUser(userId);
+        trackLikeRepository.unlikeTrack(userId, trackId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isLiked(Long trackId, Long userId) {
+        TrackEntity track = requireTrack(trackId);
+        UserEntity user = userService.requireUser(userId);
+        return trackLikeRepository.findByTrackAndUser(track, user).isPresent();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ru.ifmo.se.pisk.web.view.TrackView> getLikedTracksView(Long userId, Pageable pageable) {
+        UserEntity user = userService.requireUser(userId);
+        return trackLikeRepository.findByUser(user, pageable)
+                .map(like -> {
+                    TrackEntity t = like.getTrack();
+                    String coverPublicUrl = t.getAlbum() != null && t.getAlbum().getCoverUrl() != null
+                         ? fileStorageService.toPublicUrl(t.getAlbum().getCoverUrl())
+                         : null;
+                    return new ru.ifmo.se.pisk.web.view.TrackView(
+                            t.getId(),
+                            t.getName(),
+                            t.getAuthor().getId(),
+                            t.getAuthor().getUsername(),
+                            t.getArtist().getName(),
+                            t.getGenre().getName(),
+                            t.isExplicit(),
+                            t.isInoagent(),
+                            t.getRateCount() > 0 ? (double) t.getRating() / t.getRateCount() : 0.0,
+                            t.getDurationSeconds(),
+                            t.getUploadedAt(),
+                            coverPublicUrl
+                    );
+                });
     }
 }

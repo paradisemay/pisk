@@ -59,8 +59,58 @@
 
         <div class="actions">
             <a class="pill" th:href="${track.downloadUrl}" th:text="#{track.download}"></a>
+            <button th:if="${currentUser != null}"
+                    type="button"
+                    class="ghost like-button"
+                    th:classappend="${track.isLiked} ? 'liked' : ''"
+                    th:attr="data-track-id=${track.id}, data-csrf=${_csrf.token}">
+                <span class="heart-icon">♥</span>
+                <span th:text="#{track.like}">Like</span>
+            </button>
             <a class="ghost" th:href="@{/catalog}" th:text="#{track.back}"></a>
         </div>
+        <script>
+            document.querySelectorAll('.like-button').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const trackId = button.getAttribute('data-track-id');
+                    const csrfToken = button.getAttribute('data-csrf');
+                    const isLiked = button.classList.contains('liked');
+                    const method = isLiked ? 'DELETE' : 'POST';
+
+                    try {
+                        const response = await fetch(`/api/v1/tracks/${trackId}/like`, {
+                            method: method,
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken
+                            }
+                        });
+
+                        if (response.ok) {
+                            button.classList.toggle('liked');
+                            // Optional: Update text if you want "Like"/"Unlike" text change
+                        } else {
+                            console.error('Failed to toggle like');
+                        }
+                    } catch (error) {
+                        console.error('Error toggling like', error);
+                    }
+                });
+            });
+        </script>
+        <style>
+            .like-button .heart-icon {
+                font-size: 1.2rem;
+                margin-right: 0.5rem;
+                transition: color 0.2s;
+            }
+            .like-button.liked {
+                color: #6366f1;
+                border-color: #6366f1;
+            }
+            .like-button.liked .heart-icon {
+                color: #6366f1;
+            }
+        </style>
     </section>
 </main>
 <footer th:replace="fragments :: siteFooter"></footer>
