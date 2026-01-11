@@ -10,6 +10,11 @@
                 <p class="eyebrow" th:text="#{track.metadata.genre} + ' · ' + ${track.genreTitle}">Жанр</p>
                 <h1 th:text="${track.name}">Track title</h1>
                 <p class="muted">
+                    <span th:if="${track.artistId != null}">
+                        <span th:text="#{track.metadata.artist}">Artist</span>:
+                        <a th:href="@{/artists/{id}(id=${track.artistId})}" th:text="${track.artistName}">Artist</a>
+                        <br>
+                    </span>
                     <span th:text="#{catalog.track.by}">by</span>
                     <a th:href="@{/authors/{id}(id=${track.authorId})}" th:text="${track.authorName}">Author</a>
                 </p>

@@ -8,6 +8,8 @@ public record TrackDetailsView(
         String name,
         Long authorId,
         String authorName,
+        Long artistId,
+        String artistName,
         String genreTitle,
         boolean explicit,
         boolean inoagent,

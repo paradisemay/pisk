@@ -37,4 +37,9 @@ public class ArtistService {
         }
         return artistRepository.searchByName(namePart.trim());
     }
+
+    public ArtistEntity findById(Long id) {
+        return artistRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Artist with id " + id + " not found"));
+    }
 }
