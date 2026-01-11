@@ -11,7 +11,8 @@ public record AlbumTrackView(
         double averageRating,
         boolean explicit,
         boolean inoagent,
-        Instant uploadDate
+        Instant uploadDate,
+        String downloadUrl
 ) {
 
     public String formattedDuration() {

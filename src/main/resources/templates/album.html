@@ -69,6 +69,13 @@
                         <span class="tag" th:if="${t.inoagent}" th:text="#{track.metadata.inoagent}"></span>
                     </div>
                 </div>
+                <!-- Плеер для конкретного трека -->
+                <div style="margin-top: 10px;">
+                    <audio controls preload="metadata" class="player"
+                           th:if="${t.downloadUrl != null}"
+                           th:src="${t.downloadUrl}">
+                    </audio>
+                </div>
             </article>
         </section>
 
@@ -78,5 +85,14 @@
     </section>
 </main>
 <footer th:replace="fragments :: siteFooter"></footer>
+<script>
+    document.addEventListener('play', function (e) {
+        if (e.target && e.target.tagName === 'AUDIO') {
+            document.querySelectorAll('audio').forEach(function (a) {
+                if (a !== e.target) a.pause();
+            });
+        }
+    }, true);
+</script>
 </body>
 </html>
