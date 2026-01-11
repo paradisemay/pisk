@@ -11,6 +11,7 @@ import ru.ifmo.se.pisk.domain.entity.ArtistEntity;
 import ru.ifmo.se.pisk.domain.entity.GenreEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
 import ru.ifmo.se.pisk.service.ArtistService;
+import ru.ifmo.se.pisk.service.CommentService;
 import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
@@ -42,6 +43,9 @@ public class TrackPageControllerTest {
 
     @MockBean
     private FileStorageService fileStorageService;
+
+    @MockBean
+    private CommentService commentService;
 
     @Test
     @WithMockUser

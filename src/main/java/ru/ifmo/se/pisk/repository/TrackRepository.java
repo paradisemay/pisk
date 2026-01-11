@@ -14,6 +14,23 @@ import ru.ifmo.se.pisk.domain.entity.TrackEntity;
 import ru.ifmo.se.pisk.domain.entity.UserEntity;
 
 public interface TrackRepository extends JpaRepository<TrackEntity, Long>, JpaSpecificationExecutor<TrackEntity> {
+
+    @Query("SELECT t FROM TrackEntity t " +
+           "LEFT JOIN FETCH t.album al " +
+           "LEFT JOIN FETCH t.artist ar " +
+           "LEFT JOIN FETCH t.genre g " +
+           "ORDER BY (CASE WHEN t.rateCount > 0 THEN CAST(t.rating AS double) / t.rateCount ELSE 0.0 END) DESC, " +
+           "t.rating DESC, t.rateCount DESC")
+    Page<TrackEntity> findTrendingDesc(Pageable pageable);
+
+    @Query("SELECT t FROM TrackEntity t " +
+           "LEFT JOIN FETCH t.album al " +
+           "LEFT JOIN FETCH t.artist ar " +
+           "LEFT JOIN FETCH t.genre g " +
+           "ORDER BY (CASE WHEN t.rateCount > 0 THEN CAST(t.rating AS double) / t.rateCount ELSE 0.0 END) ASC, " +
+           "t.rating ASC, t.rateCount ASC")
+    Page<TrackEntity> findTrendingAsc(Pageable pageable);
+
     Page<TrackEntity> findByStatus(TrackStatus status, Pageable pageable);
     Page<TrackEntity> findByAuthor(UserEntity author, Pageable pageable);
     Optional<TrackEntity> findByIdAndAuthor(Long id, UserEntity author);

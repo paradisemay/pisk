@@ -45,7 +45,22 @@
             <span class="tag" th:if="${track.explicit}" th:text="#{track.metadata.explicit}"></span>
             <span class="tag" th:if="${track.inoagent}" th:text="#{track.metadata.inoagent}"></span>
         </div>
-        <audio controls th:src="${track.downloadUrl}" class="player"></audio>
+        <audio controls th:src="${track.downloadUrl}" class="player" id="audioPlayer"></audio>
+
+        <!-- Dynamic Comment Section (Initially Hidden) -->
+        <div id="dynamicCommentSection" class="card" style="margin-top: 1rem; display: none; border-left: 4px solid #6366f1;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img id="dynAvatar" src="" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                <div>
+                    <strong id="dynAuthor" style="display: block; font-size: 0.9em;"></strong>
+                    <span id="dynBody"></span>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <button class="btn" onclick="openCommentModal()">Оставить комментарий</button>
+        </div>
 
         <form th:action="@{/tracks/{id}/rate(id=${track.id})}" method="post" class="rating-form">
              <div class="star-rating">
@@ -112,8 +127,130 @@
                 color: #6366f1;
             }
         </style>
+
+        <!-- All Comments Section -->
+        <div class="comments-list" style="margin-top: 2rem;">
+            <h2>Комментарии</h2>
+            <div th:each="comment : ${comments}" class="comment-item" style="border-bottom: 1px solid #eee; padding: 1rem 0; display: flex; gap: 1rem;">
+                <div class="comment-avatar">
+                     <img th:src="${comment.authorAvatarUrl != null ? comment.authorAvatarUrl : '/img/default-avatar.png'}"
+                          alt="avatar"
+                          style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover;"/>
+                </div>
+                <div class="comment-content" style="flex: 1;">
+                    <div class="comment-header" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <div>
+                            <strong th:text="${comment.authorName}">User</strong>
+                            <span class="muted" style="margin-left: 0.5rem;" th:text="${comment.formattedTrackTime}">01:20</span>
+                        </div>
+                        <small class="muted" th:text="${comment.createdAt}">Date</small>
+                    </div>
+                    <p th:text="${comment.body}" style="margin: 0;">Comment body</p>
+                </div>
+            </div>
+            <p th:if="${#lists.isEmpty(comments)}" class="muted">Комментариев пока нет.</p>
+        </div>
     </section>
+
+    <!-- Comment Modal -->
+    <dialog id="commentModal">
+        <h3>Новый комментарий</h3>
+        <p>Время: <span id="modalTimeDisplay">00:00</span></p>
+        <form th:action="@{/tracks/{id}/comments(id=${track.id})}" method="post">
+            <input type="hidden" name="trackTime" id="modalTrackTime">
+            <div class="form-group">
+                <textarea name="body" rows="4" required placeholder="Ваш комментарий..." style="width: 100%; margin-bottom: 1rem;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="ghost" onclick="closeCommentModal()">Отмена</button>
+                <button type="submit" class="btn">Отправить</button>
+            </div>
+        </form>
+    </dialog>
+
 </main>
 <footer th:replace="fragments :: siteFooter"></footer>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const commentsData = /*[[${comments}]]*/ [];
+    /*]]>*/
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    const dynamicSection = document.getElementById('dynamicCommentSection');
+    const dynAvatar = document.getElementById('dynAvatar');
+    const dynAuthor = document.getElementById('dynAuthor');
+    const dynBody = document.getElementById('dynBody');
+    const modal = document.getElementById('commentModal');
+    const modalTimeDisplay = document.getElementById('modalTimeDisplay');
+    const modalTrackTime = document.getElementById('modalTrackTime');
+
+    let currentComment = null;
+
+    function openCommentModal() {
+        audioPlayer.pause();
+        const time = Math.floor(audioPlayer.currentTime);
+        modalTrackTime.value = time;
+        modalTimeDisplay.textContent = formatTime(time);
+        modal.showModal();
+    }
+
+    function closeCommentModal() {
+        modal.close();
+    }
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+    }
+
+    // Logic for displaying comments
+    // Rule: Show comment for 5 seconds starting at its trackTime.
+    // If overlapping: First one wins until it expires, then next one shows if valid.
+
+    // Sort comments by trackTime just in case
+    commentsData.sort((a, b) => (a.trackTime || 0) - (b.trackTime || 0));
+
+    audioPlayer.addEventListener('timeupdate', () => {
+        const t = audioPlayer.currentTime;
+
+        // Check if current comment should be hidden
+        if (currentComment) {
+            const startTime = currentComment.trackTime || 0;
+            const endTime = startTime + 5;
+
+            if (t > endTime || t < startTime) {
+                // Expired or seeked away
+                currentComment = null;
+                dynamicSection.style.display = 'none';
+            }
+        }
+
+        // If no comment is showing, look for one
+        if (!currentComment) {
+            // Find a candidate that is active NOW (startTime <= t < startTime + 5)
+            // Since comments are sorted by startTime, we pick the first one that matches.
+            // This implicitly satisfies "First one shows first".
+            const candidate = commentsData.find(c => {
+                const startTime = c.trackTime || 0;
+                const endTime = startTime + 5;
+                return t >= startTime && t < endTime;
+            });
+
+            if (candidate) {
+                currentComment = candidate;
+                showComment(candidate);
+            }
+        }
+    });
+
+    function showComment(comment) {
+        dynAuthor.textContent = comment.authorName;
+        dynBody.textContent = comment.body;
+        dynAvatar.src = comment.authorAvatarUrl || '/img/default-avatar.png';
+        dynamicSection.style.display = 'block';
+    }
+</script>
 </body>
 </html>

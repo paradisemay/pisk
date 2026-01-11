@@ -10,12 +10,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
 import ru.ifmo.se.pisk.domain.TrackInfo;
 import ru.ifmo.se.pisk.service.ArtistService;
+import ru.ifmo.se.pisk.service.CommentService;
 import ru.ifmo.se.pisk.service.FileStorageService;
 import ru.ifmo.se.pisk.service.GenreService;
 import ru.ifmo.se.pisk.service.TrackService;
 import ru.ifmo.se.pisk.service.UserService;
+import ru.ifmo.se.pisk.web.view.CommentView;
 import ru.ifmo.se.pisk.web.view.TrackDetailsView;
 import ru.ifmo.se.pisk.web.util.LanguageLinks;
+
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Controller
 @RequestMapping("/tracks")
@@ -26,13 +32,15 @@ public class TrackPageController {
     private final GenreService genreService;
     private final ArtistService artistService;
     private final FileStorageService fileStorageService;
+    private final CommentService commentService;
 
-    public TrackPageController(TrackService trackService, UserService userService, GenreService genreService, ArtistService artistService, FileStorageService fileStorageService) {
+    public TrackPageController(TrackService trackService, UserService userService, GenreService genreService, ArtistService artistService, FileStorageService fileStorageService, CommentService commentService) {
         this.trackService = trackService;
         this.userService = userService;
         this.genreService = genreService;
         this.artistService = artistService;
         this.fileStorageService = fileStorageService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/{id}")
@@ -80,6 +88,22 @@ public class TrackPageController {
             );
             model.addAttribute("track", view);
             model.addAttribute("langLinks", LanguageLinks.build(request));
+
+            List<CommentView> comments = commentService.getCommentsForTrack(id).stream()
+                .map(c -> new CommentView(
+                    c.getId(),
+                    c.getAuthor().getUsername(),
+                    c.getAuthor().getAvatarPath(), // Note: Assuming this is the path/url or needs processing.
+                    c.getBody(),
+                    c.getTrackTime(),
+                    formatDuration(c.getTrackTime() != null ? c.getTrackTime() : 0),
+                    DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+                        .withZone(ZoneId.systemDefault())
+                        .format(c.getCreatedAt())
+                ))
+                .toList();
+            model.addAttribute("comments", comments);
+
             return "track";
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
@@ -94,6 +118,22 @@ public class TrackPageController {
         }
         trackService.rateTrack(new ru.ifmo.se.pisk.service.dto.RatingCommand(id, currentUser.getId(), rating, null));
         return "redirect:/tracks/" + id;
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/{id}/comments")
+    public String addComment(@PathVariable Long id,
+                             @org.springframework.web.bind.annotation.RequestParam("body") String body,
+                             @org.springframework.web.bind.annotation.RequestParam("trackTime") Integer trackTime) {
+        ru.ifmo.se.pisk.domain.entity.UserEntity currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        commentService.addComment(id, currentUser.getId(), body, trackTime);
+        return "redirect:/tracks/" + id;
+    }
+
+    private String formatDuration(int seconds) {
+        return String.format("%02d:%02d", seconds / 60, seconds % 60);
     }
 
     private ru.ifmo.se.pisk.domain.entity.UserEntity getCurrentUser() {
