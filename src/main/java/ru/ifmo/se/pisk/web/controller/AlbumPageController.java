@@ -101,7 +101,8 @@ public class AlbumPageController {
                             t.averageRating(),
                             t.explicit(),
                             t.inoagent(),
-                            t.uploadDate()
+                            t.uploadDate(),
+                            "/api/v1/tracks/" + t.id() + "/file"
                     ))
                     .toList();
 
