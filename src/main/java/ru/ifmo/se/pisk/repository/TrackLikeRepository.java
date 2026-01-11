@@ -15,9 +15,9 @@ public interface TrackLikeRepository extends JpaRepository<TrackLikeEntity, Long
 
     Page<TrackLikeEntity> findByUser(UserEntity user, Pageable pageable);
 
-    @org.springframework.data.jpa.repository.Query(value = "SELECT fn_like_add(:userId, :trackId)", nativeQuery = true)
-    boolean likeTrack(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("trackId") Long trackId);
+    @org.springframework.data.jpa.repository.Query(value = "SELECT cast(fn_like_add(:userId, :trackId) as boolean)", nativeQuery = true)
+    Boolean likeTrack(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("trackId") Long trackId);
 
-    @org.springframework.data.jpa.repository.Query(value = "SELECT fn_like_remove(:userId, :trackId)", nativeQuery = true)
-    boolean unlikeTrack(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("trackId") Long trackId);
+    @org.springframework.data.jpa.repository.Query(value = "SELECT cast(fn_like_remove(:userId, :trackId) as boolean)", nativeQuery = true)
+    Boolean unlikeTrack(@org.springframework.data.repository.query.Param("userId") Long userId, @org.springframework.data.repository.query.Param("trackId") Long trackId);
 }
