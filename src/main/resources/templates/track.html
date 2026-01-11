@@ -18,6 +18,10 @@
         </div>
         <div class="meta-grid">
             <div>
+                <p class="muted" th:text="#{album.by-artist}"></p>
+                <strong th:text="${track.artistName}"></strong>
+            </div>
+            <div>
                 <p class="muted" th:text="#{track.duration}"></p>
                 <strong th:text="${track.formattedDuration}">02:00</strong>
             </div>
