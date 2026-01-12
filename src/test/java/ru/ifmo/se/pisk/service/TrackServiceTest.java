@@ -155,9 +155,9 @@ class TrackServiceTest {
         when(ratingRepository.findByTrackAndUser(track, user)).thenReturn(java.util.Optional.of(persisted));
 
         RatingCommand command = new RatingCommand(15L, 7L, 5, "Great");
-        RatingInfo info = trackService.rateTrack(command);
+        ru.ifmo.se.pisk.service.dto.RateResult result = trackService.rateTrack(command);
 
-        assertThat(info.value()).isEqualTo(5);
+        assertThat(result.ratingInfo().value()).isEqualTo(5);
 
         verify(trackRepository).rateTrack(eq(7L), eq(15L), eq(5));
         verify(auditService).record(eq(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED), eq("Track"), eq("15"), eq(user), anyMap());

@@ -18,4 +18,7 @@ public class SystemSettingsEntity {
 
     @Column(name = "deletion_threshold", nullable = false, precision = 3, scale = 2)
     private BigDecimal deletionThreshold;
+
+    @Column(name = "deletion_vote_threshold", nullable = false)
+    private Integer deletionVoteThreshold;
 }

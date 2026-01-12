@@ -135,4 +135,21 @@ public class FileStorageService {
         }
         return "/storage/" + relativePath.replace('\\', '/');
     }
+
+    public void delete(String relativePath) {
+        if (relativePath == null || relativePath.isBlank()) return;
+        try {
+            String path = relativePath;
+            if (path.startsWith("/storage/")) {
+                path = path.substring("/storage/".length());
+            }
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            Path file = root.resolve(path);
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            // Log warning
+        }
+    }
 }

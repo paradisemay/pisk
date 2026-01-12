@@ -23,6 +23,9 @@ public interface AlbumRepository extends JpaRepository<AlbumEntity, Long> {
     @Query("select a from AlbumEntity a where lower(a.name) like lower(concat('%', :namePart, '%'))")
     List<AlbumEntity> searchByName(@Param("namePart") String namePart);
 
+    @Query("select count(t) from TrackEntity t where t.album.id = :albumId")
+    int countTracksInAlbum(@Param("albumId") Long albumId);
+
     @Query("""
             select new ru.ifmo.se.pisk.repository.projection.AlbumCardAggregate(
                 a.id,

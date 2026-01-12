@@ -38,6 +38,7 @@ import ru.ifmo.se.pisk.domain.entity.ArtistEntity;
 import ru.ifmo.se.pisk.domain.entity.GenreEntity;
 import ru.ifmo.se.pisk.domain.entity.RatingEntity;
 import ru.ifmo.se.pisk.service.dto.RatingCommand;
+import ru.ifmo.se.pisk.service.dto.RateResult;
 import ru.ifmo.se.pisk.service.dto.TrackUploadCommand;
 import ru.ifmo.se.pisk.service.dto.TrackSearchCriteria;
 import ru.ifmo.se.pisk.service.AuditService;
@@ -162,9 +163,10 @@ public class TrackService {
     }
 
     @Transactional
-    public RatingInfo rateTrack(RatingCommand command) {
+    public RateResult rateTrack(RatingCommand command) {
         TrackEntity track = requireTrack(command.trackId());
         UserEntity user = userService.requireUser(command.userId());
+        Long albumId = track.getAlbum() != null ? track.getAlbum().getId() : null;
 
         // Use database function to rate
         List<Object[]> results = trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
@@ -173,32 +175,39 @@ public class TrackService {
         if (!results.isEmpty()) {
             Object[] row = results.get(0);
             // row content from fn_track_rate: track_id, rate_count, rating_sum, rating_avg
-            // rate_count is Integer, rating_sum is BigInt, rating_avg is Numeric (BigDecimal)
-            if (row.length >= 4 && row[3] != null) {
+            if (row.length >= 4 && row[3] != null && row[1] != null) {
+                Integer rateCount = ((Number) row[1]).intValue();
                 java.math.BigDecimal avgRating = (java.math.BigDecimal) row[3];
                 java.math.BigDecimal threshold = systemSettingsService.getDeletionThreshold();
+                Integer voteThreshold = systemSettingsService.getDeletionVoteThreshold();
 
-                if (avgRating.compareTo(threshold) < 0) {
-                     // Need to find author ID for deletion.
-                     // The track entity "track" variable (fetched at start of method) still has author info.
-                     // Even if L1 cache is stale on ratings, the author ID is immutable/unlikely to change concurrently.
+                if (rateCount >= voteThreshold && avgRating.compareTo(threshold) < 0) {
                      trackRepository.callTrackDelete(command.trackId(), track.getAuthor().getId());
+                     if (albumId != null) {
+                         albumService.deleteIfEmpty(albumId);
+                     }
+                     // Track deleted
+                     return new RateResult(
+                         new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now()),
+                         true
+                     );
                 }
             }
         }
 
-        // We still fetch the rating entity to return consistent info, or just construct it.
-        // If track was deleted, this might fail if CASCADE deleted rating?
-        // fn_track_delete manually deletes user_rating.
-        // So if deleted, findByTrackAndUser will be empty.
+        // We still fetch the rating entity to return consistent info
         Optional<RatingEntity> ratingOpt = ratingRepository.findByTrackAndUser(track, user);
         if (ratingOpt.isEmpty()) {
-            // Track was deleted, or rating failed.
-            // If track deleted, we return a dummy info or exception.
             entityManager.clear();
             if (!trackRepository.existsById(command.trackId())) {
-                 // Track deleted
-                 return new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now());
+                 // Track deleted - should have been caught above, but safety check
+                 if (albumId != null) {
+                     albumService.deleteIfEmpty(albumId);
+                 }
+                 return new RateResult(
+                     new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now()),
+                     true
+                 );
             }
             throw new IllegalStateException("Rating should exist after fn_track_rate call");
         }
@@ -209,7 +218,8 @@ public class TrackService {
         auditData.put("comment", command.comment());
         auditService.record(ru.ifmo.se.pisk.domain.AuditAction.RATING_CREATED, "Track", String.valueOf(track.getId()), user,
                 auditData);
-        return new RatingInfo(rating.getId(), command.trackId(), command.userId(), rating.getValue(), rating.getComment(), rating.getCreatedAt());
+        RatingInfo info = new RatingInfo(rating.getId(), command.trackId(), command.userId(), rating.getValue(), rating.getComment(), rating.getCreatedAt());
+        return new RateResult(info, false);
     }
 
     @Transactional(readOnly = true)

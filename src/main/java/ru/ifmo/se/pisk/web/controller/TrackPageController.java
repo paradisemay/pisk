@@ -110,13 +110,22 @@ public class TrackPageController {
         }
     }
 
+    @GetMapping("/deleted")
+    public String trackDeleted(Model model, HttpServletRequest request) {
+        model.addAttribute("langLinks", LanguageLinks.build(request));
+        return "track_deleted";
+    }
+
     @org.springframework.web.bind.annotation.PostMapping("/{id}/rate")
     public String rateTrack(@PathVariable Long id, @org.springframework.web.bind.annotation.RequestParam("rating") Integer rating) {
         ru.ifmo.se.pisk.domain.entity.UserEntity currentUser = getCurrentUser();
         if (currentUser == null) {
             return "redirect:/login";
         }
-        trackService.rateTrack(new ru.ifmo.se.pisk.service.dto.RatingCommand(id, currentUser.getId(), rating, null));
+        var result = trackService.rateTrack(new ru.ifmo.se.pisk.service.dto.RatingCommand(id, currentUser.getId(), rating, null));
+        if (result.trackDeleted()) {
+            return "redirect:/tracks/deleted";
+        }
         return "redirect:/tracks/" + id;
     }
 

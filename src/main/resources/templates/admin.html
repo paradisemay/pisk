@@ -32,6 +32,11 @@
                 <input aria-label="Deletion threshold" type="number" step="0.1" min="1.0" max="5.0" th:field="*{deletionThreshold}" />
                 <span class="error" th:if="${#fields.hasErrors('deletionThreshold')}" th:errors="*{deletionThreshold}"></span>
             </label>
+            <label>
+                <span>Min Votes for Deletion</span>
+                <input aria-label="Deletion vote threshold" type="number" min="1" th:field="*{deletionVoteThreshold}" />
+                <span class="error" th:if="${#fields.hasErrors('deletionVoteThreshold')}" th:errors="*{deletionVoteThreshold}"></span>
+            </label>
             <div class="wide">
                 <p class="muted">Genres:</p>
                 <ul class="muted">
