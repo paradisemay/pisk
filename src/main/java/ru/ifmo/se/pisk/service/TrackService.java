@@ -163,21 +163,23 @@ public class TrackService {
         UserEntity user = userService.requireUser(command.userId());
 
         // Use database function to rate
-        trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
+        List<Object[]> results = trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
 
-        // Refresh track to check new rating
-        TrackEntity updatedTrack = trackRepository.findById(command.trackId()).orElse(null);
-        if (updatedTrack != null && updatedTrack.getRateCount() > 0) {
-            // NOTE: updatedTrack.getRating() returns the SUM of all ratings (BigInt from DB), not the average.
-            // The SQL schema confirms rating is BIGINT and holds the sum.
-            double avg = (double) updatedTrack.getRating() / updatedTrack.getRateCount();
-            java.math.BigDecimal threshold = systemSettingsService.getDeletionThreshold();
-            if (avg < threshold.doubleValue()) {
-                // Delete track if average is below threshold.
-                // We use the track author's ID as the requestor, because fn_track_delete allows
-                // the author (or admin) to delete the track. This avoids hardcoding an admin username.
-                trackRepository.callTrackDelete(command.trackId(), updatedTrack.getAuthor().getId());
-                // The track is now deleted along with its ratings.
+        // Analyze result to check for deletion
+        if (!results.isEmpty()) {
+            Object[] row = results.get(0);
+            // row content from fn_track_rate: track_id, rate_count, rating_sum, rating_avg
+            // rate_count is Integer, rating_sum is BigInt, rating_avg is Numeric (BigDecimal)
+            if (row.length >= 4 && row[3] != null) {
+                java.math.BigDecimal avgRating = (java.math.BigDecimal) row[3];
+                java.math.BigDecimal threshold = systemSettingsService.getDeletionThreshold();
+
+                if (avgRating.compareTo(threshold) < 0) {
+                     // Need to find author ID for deletion.
+                     // The track entity "track" variable (fetched at start of method) still has author info.
+                     // Even if L1 cache is stale on ratings, the author ID is immutable/unlikely to change concurrently.
+                     trackRepository.callTrackDelete(command.trackId(), track.getAuthor().getId());
+                }
             }
         }
 
