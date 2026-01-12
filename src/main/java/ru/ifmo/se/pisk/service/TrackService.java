@@ -62,6 +62,7 @@ public class TrackService {
     private final RatingRepository ratingRepository;
     private final LabelService labelService;
     private final ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository;
+    private final SystemSettingsService systemSettingsService;
 
     public TrackService(TrackRepository trackRepository,
                         TrackStatusHistoryRepository trackStatusHistoryRepository,
@@ -73,7 +74,8 @@ public class TrackService {
                         ArtistService artistService,
                         RatingRepository ratingRepository,
                         LabelService labelService,
-                        ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository) {
+                        ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository,
+                        SystemSettingsService systemSettingsService) {
         this.trackRepository = trackRepository;
         this.trackStatusHistoryRepository = trackStatusHistoryRepository;
         this.userService = userService;
@@ -85,6 +87,7 @@ public class TrackService {
         this.ratingRepository = ratingRepository;
         this.labelService = labelService;
         this.trackLikeRepository = trackLikeRepository;
+        this.systemSettingsService = systemSettingsService;
     }
 
 
@@ -162,13 +165,37 @@ public class TrackService {
         // Use database function to rate
         trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
 
+        // Refresh track to check new rating
+        TrackEntity updatedTrack = trackRepository.findById(command.trackId()).orElse(null);
+        if (updatedTrack != null && updatedTrack.getRateCount() > 0) {
+            // NOTE: updatedTrack.getRating() returns the SUM of all ratings (BigInt from DB), not the average.
+            // The SQL schema confirms rating is BIGINT and holds the sum.
+            double avg = (double) updatedTrack.getRating() / updatedTrack.getRateCount();
+            java.math.BigDecimal threshold = systemSettingsService.getDeletionThreshold();
+            if (avg < threshold.doubleValue()) {
+                // Delete track if average is below threshold.
+                // We use the track author's ID as the requestor, because fn_track_delete allows
+                // the author (or admin) to delete the track. This avoids hardcoding an admin username.
+                trackRepository.callTrackDelete(command.trackId(), updatedTrack.getAuthor().getId());
+                // The track is now deleted along with its ratings.
+            }
+        }
+
         // We still fetch the rating entity to return consistent info, or just construct it.
-        // The DB function updates/inserts into user_rating table.
-        // We need to fetch it to get the ID and created_at if we want to return full RatingInfo,
-        // but primarily we need to ensure the RatingInfo returned is valid.
-        // Since the function handles the logic, we can just fetch the entity after to be sure.
-        RatingEntity rating = ratingRepository.findByTrackAndUser(track, user)
-            .orElseThrow(() -> new IllegalStateException("Rating should exist after fn_track_rate call"));
+        // If track was deleted, this might fail if CASCADE deleted rating?
+        // fn_track_delete manually deletes user_rating.
+        // So if deleted, findByTrackAndUser will be empty.
+        Optional<RatingEntity> ratingOpt = ratingRepository.findByTrackAndUser(track, user);
+        if (ratingOpt.isEmpty()) {
+            // Track was deleted, or rating failed.
+            // If track deleted, we return a dummy info or exception.
+            if (trackRepository.findById(command.trackId()).isEmpty()) {
+                 // Track deleted
+                 return new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now());
+            }
+            throw new IllegalStateException("Rating should exist after fn_track_rate call");
+        }
+        RatingEntity rating = ratingOpt.get();
 
         Map<String, String> auditData = new HashMap<>();
         auditData.put("value", String.valueOf(command.value()));
