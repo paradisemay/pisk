@@ -1,5 +1,6 @@
 package ru.ifmo.se.pisk.service;
 
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +63,8 @@ public class TrackService {
     private final RatingRepository ratingRepository;
     private final LabelService labelService;
     private final ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository;
+    private final SystemSettingsService systemSettingsService;
+    private final EntityManager entityManager;
 
     public TrackService(TrackRepository trackRepository,
                         TrackStatusHistoryRepository trackStatusHistoryRepository,
@@ -73,7 +76,9 @@ public class TrackService {
                         ArtistService artistService,
                         RatingRepository ratingRepository,
                         LabelService labelService,
-                        ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository) {
+                        ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository,
+                        SystemSettingsService systemSettingsService,
+                        EntityManager entityManager) {
         this.trackRepository = trackRepository;
         this.trackStatusHistoryRepository = trackStatusHistoryRepository;
         this.userService = userService;
@@ -85,6 +90,8 @@ public class TrackService {
         this.ratingRepository = ratingRepository;
         this.labelService = labelService;
         this.trackLikeRepository = trackLikeRepository;
+        this.systemSettingsService = systemSettingsService;
+        this.entityManager = entityManager;
     }
 
 
@@ -160,15 +167,42 @@ public class TrackService {
         UserEntity user = userService.requireUser(command.userId());
 
         // Use database function to rate
-        trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
+        List<Object[]> results = trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
+
+        // Analyze result to check for deletion
+        if (!results.isEmpty()) {
+            Object[] row = results.get(0);
+            // row content from fn_track_rate: track_id, rate_count, rating_sum, rating_avg
+            // rate_count is Integer, rating_sum is BigInt, rating_avg is Numeric (BigDecimal)
+            if (row.length >= 4 && row[3] != null) {
+                java.math.BigDecimal avgRating = (java.math.BigDecimal) row[3];
+                java.math.BigDecimal threshold = systemSettingsService.getDeletionThreshold();
+
+                if (avgRating.compareTo(threshold) < 0) {
+                     // Need to find author ID for deletion.
+                     // The track entity "track" variable (fetched at start of method) still has author info.
+                     // Even if L1 cache is stale on ratings, the author ID is immutable/unlikely to change concurrently.
+                     trackRepository.callTrackDelete(command.trackId(), track.getAuthor().getId());
+                }
+            }
+        }
 
         // We still fetch the rating entity to return consistent info, or just construct it.
-        // The DB function updates/inserts into user_rating table.
-        // We need to fetch it to get the ID and created_at if we want to return full RatingInfo,
-        // but primarily we need to ensure the RatingInfo returned is valid.
-        // Since the function handles the logic, we can just fetch the entity after to be sure.
-        RatingEntity rating = ratingRepository.findByTrackAndUser(track, user)
-            .orElseThrow(() -> new IllegalStateException("Rating should exist after fn_track_rate call"));
+        // If track was deleted, this might fail if CASCADE deleted rating?
+        // fn_track_delete manually deletes user_rating.
+        // So if deleted, findByTrackAndUser will be empty.
+        Optional<RatingEntity> ratingOpt = ratingRepository.findByTrackAndUser(track, user);
+        if (ratingOpt.isEmpty()) {
+            // Track was deleted, or rating failed.
+            // If track deleted, we return a dummy info or exception.
+            entityManager.clear();
+            if (!trackRepository.existsById(command.trackId())) {
+                 // Track deleted
+                 return new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now());
+            }
+            throw new IllegalStateException("Rating should exist after fn_track_rate call");
+        }
+        RatingEntity rating = ratingOpt.get();
 
         Map<String, String> auditData = new HashMap<>();
         auditData.put("value", String.valueOf(command.value()));
