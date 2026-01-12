@@ -21,10 +21,30 @@ public class SystemSettingsService {
         return getSettings().getDeletionThreshold();
     }
 
+    @Transactional(readOnly = true)
+    public Integer getDeletionVoteThreshold() {
+        return getSettings().getDeletionVoteThreshold();
+    }
+
     @Transactional
     public void updateDeletionThreshold(BigDecimal threshold) {
         SystemSettingsEntity settings = getSettings();
         settings.setDeletionThreshold(threshold);
+        repository.save(settings);
+    }
+
+    @Transactional
+    public void updateDeletionVoteThreshold(Integer threshold) {
+        SystemSettingsEntity settings = getSettings();
+        settings.setDeletionVoteThreshold(threshold);
+        repository.save(settings);
+    }
+
+    @Transactional
+    public void updateSettings(BigDecimal deletionThreshold, Integer deletionVoteThreshold) {
+        SystemSettingsEntity settings = getSettings();
+        settings.setDeletionThreshold(deletionThreshold);
+        settings.setDeletionVoteThreshold(deletionVoteThreshold);
         repository.save(settings);
     }
 

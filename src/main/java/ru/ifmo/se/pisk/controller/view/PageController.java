@@ -30,6 +30,7 @@ public class PageController {
     public String admin(Model model, HttpServletRequest request) {
         AdminSettingsForm form = new AdminSettingsForm();
         form.setDeletionThreshold(systemSettingsService.getDeletionThreshold().doubleValue());
+        form.setDeletionVoteThreshold(systemSettingsService.getDeletionVoteThreshold());
         model.addAttribute("settings", form);
         model.addAttribute("genres", genreService.listAll());
         model.addAttribute("langLinks", LanguageLinks.build(request));
@@ -46,7 +47,10 @@ public class PageController {
             model.addAttribute("langLinks", LanguageLinks.build(request));
             return "admin";
         }
-        systemSettingsService.updateDeletionThreshold(java.math.BigDecimal.valueOf(form.getDeletionThreshold()));
+        systemSettingsService.updateSettings(
+            java.math.BigDecimal.valueOf(form.getDeletionThreshold()),
+            form.getDeletionVoteThreshold()
+        );
         model.addAttribute("saved", true);
         model.addAttribute("genres", genreService.listAll());
         model.addAttribute("langLinks", LanguageLinks.build(request));

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: head('Трек удален')"></head>
+<body class="page-shell">
+<header th:replace="fragments :: siteHeader(${langLinks})"></header>
+<main class="page">
+    <section class="card">
+        <div class="empty-state">
+            <h1>Трек удален</h1>
+            <p>Трек был удален в связи с низким рейтингом на платформе ПИСК музыка без шума.</p>
+            <div class="actions center">
+                <a th:href="@{/catalog}" class="pill">В каталог</a>
+            </div>
+        </div>
+    </section>
+</main>
+<footer th:replace="fragments :: siteFooter"></footer>
+</body>
+</html>

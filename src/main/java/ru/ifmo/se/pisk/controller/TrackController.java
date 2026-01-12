@@ -169,7 +169,10 @@ public class TrackController {
     @Operation(summary = "Поставить оценку", description = "Сохраняет оценку и комментарий пользователя")
     public RatingResponse rateTrack(@PathVariable Long trackId, @Valid @RequestBody CreateRatingRequest request) {
         RatingCommand command = new RatingCommand(trackId, request.userId(), request.value(), request.comment());
-        return ApiMapper.toRatingResponse(trackService.rateTrack(command));
+        var result = trackService.rateTrack(command);
+        // Even if deleted, we return the rating response so client knows it was rated.
+        // Client might handle 404 on subsequent fetches if deleted.
+        return ApiMapper.toRatingResponse(result.ratingInfo());
     }
 
     @PostMapping("/{trackId}/plays")

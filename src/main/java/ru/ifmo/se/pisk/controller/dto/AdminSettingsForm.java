@@ -20,4 +20,8 @@ public class AdminSettingsForm {
     @DecimalMin(value = "1.0", message = "{validation.deletionThreshold.min}")
     @DecimalMax(value = "5.0", message = "{validation.deletionThreshold.max}")
     private Double deletionThreshold = 3.0;
+
+    @NotNull(message = "{validation.deletionVoteThreshold.required}")
+    @Min(value = 1, message = "{validation.deletionVoteThreshold.min}")
+    private Integer deletionVoteThreshold = 3;
 }
