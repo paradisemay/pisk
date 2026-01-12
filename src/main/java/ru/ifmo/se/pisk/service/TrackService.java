@@ -1,5 +1,6 @@
 package ru.ifmo.se.pisk.service;
 
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -63,6 +64,7 @@ public class TrackService {
     private final LabelService labelService;
     private final ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository;
     private final SystemSettingsService systemSettingsService;
+    private final EntityManager entityManager;
 
     public TrackService(TrackRepository trackRepository,
                         TrackStatusHistoryRepository trackStatusHistoryRepository,
@@ -75,7 +77,8 @@ public class TrackService {
                         RatingRepository ratingRepository,
                         LabelService labelService,
                         ru.ifmo.se.pisk.repository.TrackLikeRepository trackLikeRepository,
-                        SystemSettingsService systemSettingsService) {
+                        SystemSettingsService systemSettingsService,
+                        EntityManager entityManager) {
         this.trackRepository = trackRepository;
         this.trackStatusHistoryRepository = trackStatusHistoryRepository;
         this.userService = userService;
@@ -88,6 +91,7 @@ public class TrackService {
         this.labelService = labelService;
         this.trackLikeRepository = trackLikeRepository;
         this.systemSettingsService = systemSettingsService;
+        this.entityManager = entityManager;
     }
 
 
@@ -191,7 +195,8 @@ public class TrackService {
         if (ratingOpt.isEmpty()) {
             // Track was deleted, or rating failed.
             // If track deleted, we return a dummy info or exception.
-            if (trackRepository.findById(command.trackId()).isEmpty()) {
+            entityManager.clear();
+            if (!trackRepository.existsById(command.trackId())) {
                  // Track deleted
                  return new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now());
             }
