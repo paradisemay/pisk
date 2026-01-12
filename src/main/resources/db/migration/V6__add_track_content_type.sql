@@ -1,3 +1,0 @@
-ALTER TABLE track
-    ADD COLUMN IF NOT EXISTS content_type VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS original_filename VARCHAR(255);
