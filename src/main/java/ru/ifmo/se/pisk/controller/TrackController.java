@@ -170,8 +170,8 @@ public class TrackController {
     public RatingResponse rateTrack(@PathVariable Long trackId, @Valid @RequestBody CreateRatingRequest request) {
         RatingCommand command = new RatingCommand(trackId, request.userId(), request.value(), request.comment());
         var result = trackService.rateTrack(command);
-        // Even if deleted, we return the rating response so client knows it was rated.
-        // Client might handle 404 on subsequent fetches if deleted.
+
+
         return ApiMapper.toRatingResponse(result.ratingInfo());
     }
 
@@ -247,7 +247,7 @@ public class TrackController {
             try {
                 return MediaType.parseMediaType(info.contentType());
             } catch (Exception ignored) {
-                // fallback below
+
             }
         }
         return MediaTypeFactory.getMediaType(info.originalFilename())

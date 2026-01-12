@@ -1,4 +1,3 @@
--- Fix ambiguous column reference in fn_track_rate by using constraint name in ON CONFLICT
 
 DROP FUNCTION IF EXISTS fn_track_rate(bigint, bigint, smallint) CASCADE;
 
@@ -24,7 +23,6 @@ BEGIN
     RAISE EXCEPTION 'Трек id=% не найден', p_track_id USING ERRCODE='02000';
   END IF;
 
-  -- Use 'value' column and explicit constraint to avoid 'track_id' ambiguity
   INSERT INTO user_rating(user_id, track_id, value)
   VALUES (p_user_id, p_track_id, p_rate)
   ON CONFLICT ON CONSTRAINT uk_user_rating_track_user

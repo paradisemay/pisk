@@ -1,22 +1,6 @@
--- ============================================
--- TEST SEED DATA FOR YOUR MUSIC DB (PostgreSQL)
--- Requires: your DDL already applied.
--- No extensions required (hashes/salts are precomputed).
--- ============================================
 
 BEGIN;
 
--- 1) Users (8 обычных + 1 админ) — без pgcrypto: предвычисленные salt/hash
--- Пароли:
--- timofey: Tim0fey!2025
--- masha:   Masha#2025
--- petr:    Petr2025@
--- olga:    Olga%2025
--- ivan:    Ivan_2025!
--- sveta:   Sveta*2025
--- sergey:  Sergey+2025
--- diana:   Diana^2025
--- admin:   Root!Secure#2025
 INSERT INTO users (username, email, password_hash, password_salt, password_alg, avatar_path, role, status, created_at, updated_at)
 VALUES
 ('timofey', 'timofey@example.com', 'cf2727de92eeeb80bdaa6a3fc08597894882acdc976fea308dec81f2a5966134da2efc3721c544c9f25f62a34b57a5de', '65cfc60f08fe727d5693726f46d79e97', 'SHA-384', '/avatars/timofey.png', 'USER', 'ACTIVE', now(), now()),
@@ -30,7 +14,6 @@ VALUES
 ('admin',   'admin@example.com',   '1b70f4d2b2d60dd3a39a3b33e2bc8858238b7dffd4daf5c6a0e5433779f7e3f6829ee4aac3676b66929c401597940d5b', '1bd7ba6971494c05259be303717fd35d', 'SHA-384', '/avatars/admin.png',   'ADMIN', 'ACTIVE', now(), now())
 ON CONFLICT (username) DO NOTHING;
 
--- 2) Labels
 INSERT INTO label (name, description) VALUES
  ('Creation Records', 'UK independent label founded in 1983'),
  ('FRWRD MUSIC',      'Цифровой музыкальный дистрибьютор/лейбл'),
@@ -43,7 +26,6 @@ INSERT INTO label (name, description) VALUES
  ('Interscope',       'US major label')
 ON CONFLICT (name) DO NOTHING;
 
--- 3) Genres
 INSERT INTO genre (title, description, color) VALUES
  ('Shoegaze',            'Shoegaze',                        '#FF66CC'),
  ('Noise Pop',           'Noise pop',                       '#FF99CC'),
@@ -61,7 +43,6 @@ INSERT INTO genre (title, description, color) VALUES
  ('Disco',               'Disco / nu-disco',                '#FFCC99')
 ON CONFLICT (title) DO NOTHING;
 
--- 4) Artists (без уникального индекса на name — вставляем «если нет» через NOT EXISTS)
 INSERT INTO artist (name, description, avatar_path)
 SELECT 'My Bloody Valentine', 'Irish-English shoegaze band', '/artist/mbv.png'
 WHERE NOT EXISTS (SELECT 1 FROM artist WHERE name='My Bloody Valentine');
@@ -94,7 +75,6 @@ INSERT INTO artist (name, description, avatar_path)
 SELECT 'The Beatles', 'English rock band', '/artist/beatles.png'
 WHERE NOT EXISTS (SELECT 1 FROM artist WHERE name='The Beatles');
 
--- 5) Albums (10 реально существующих)
 WITH g AS (SELECT title, id FROM genre),
      l AS (SELECT name,  id FROM label)
 INSERT INTO album
@@ -180,7 +160,6 @@ VALUES
   (SELECT id FROM l WHERE name='Interscope'),
   '2012-10-22 00:00:00');
 
--- 6) Tracks (~30)
 WITH
   u  AS (SELECT id, username FROM users),
   a  AS (SELECT id, name     FROM album),
@@ -189,63 +168,51 @@ WITH
 INSERT INTO track
 (name, author_id, duration, filesize, rating, rate_count, album_id, artist_id, genre_id, filepath, number_on_album, explicit, inoagent)
 VALUES
--- Loveless (MBV)
 ('Only Shallow',    (SELECT id FROM u WHERE username='admin'),   257,  9388608, 0,0, (SELECT id FROM a WHERE name='Loveless'), (SELECT id FROM ar WHERE name='My Bloody Valentine'), (SELECT id FROM g WHERE title='Shoegaze'), '/music/mbv/loveless/only_shallow.flac', 1,  FALSE, FALSE),
 ('When You Sleep',  (SELECT id FROM u WHERE username='timofey'), 252,  9031680, 0,0, (SELECT id FROM a WHERE name='Loveless'), (SELECT id FROM ar WHERE name='My Bloody Valentine'), (SELECT id FROM g WHERE title='Shoegaze'), '/music/mbv/loveless/when_you_sleep.flac', 6,  FALSE, FALSE),
 ('Soon',            (SELECT id FROM u WHERE username='masha'),   420, 12582912, 0,0, (SELECT id FROM a WHERE name='Loveless'), (SELECT id FROM ar WHERE name='My Bloody Valentine'), (SELECT id FROM g WHERE title='Shoegaze'), '/music/mbv/loveless/soon.flac',          11, FALSE, FALSE),
 
--- QTOPIA (КУОК)
 ('ENTER QTOPIA',        (SELECT id FROM u WHERE username='admin'), 140,  7340032, 0,0, (SELECT id FROM a WHERE name='QTOPIA'), (SELECT id FROM ar WHERE name='Куок'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/quok/qtopia/enter_qtopia.flac',          1,  TRUE,  FALSE),
 ('НАС ОТКЛЮЧАЮТ',       (SELECT id FROM u WHERE username='sergey'),180,  8388608, 0,0, (SELECT id FROM a WHERE name='QTOPIA'), (SELECT id FROM ar WHERE name='Куок'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/quok/qtopia/nas_otklyuchayut.flac',      5,  TRUE,  FALSE),
 ('МЫ СОЗДАЛИ МОНСТРА',  (SELECT id FROM u WHERE username='diana'), 195,  9437184, 0,0, (SELECT id FROM a WHERE name='QTOPIA'), (SELECT id FROM ar WHERE name='Куок'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/quok/qtopia/my_sozdali_monstra.flac',   12,  TRUE,  FALSE),
 
--- OK Computer (Radiohead)
 ('Paranoid Android', (SELECT id FROM u WHERE username='admin'), 383, 12582912, 0,0, (SELECT id FROM a WHERE name='OK Computer'), (SELECT id FROM ar WHERE name='Radiohead'), (SELECT id FROM g WHERE title='Alternative Rock'), '/music/radiohead/okc/paranoid_android.flac', 2, FALSE, FALSE),
 ('Karma Police',     (SELECT id FROM u WHERE username='olga'),  261,  9437184, 0,0, (SELECT id FROM a WHERE name='OK Computer'), (SELECT id FROM ar WHERE name='Radiohead'), (SELECT id FROM g WHERE title='Alternative Rock'), '/music/radiohead/okc/karma_police.flac',     6, FALSE, FALSE),
 ('No Surprises',     (SELECT id FROM u WHERE username='petr'),  228,  8388608, 0,0, (SELECT id FROM a WHERE name='OK Computer'), (SELECT id FROM ar WHERE name='Radiohead'), (SELECT id FROM g WHERE title='Alternative Rock'), '/music/radiohead/okc/no_surprises.flac',    10, FALSE, FALSE),
 
--- Random Access Memories (Daft Punk)
 ('Get Lucky',        (SELECT id FROM u WHERE username='ivan'),  369, 11534336, 0,0, (SELECT id FROM a WHERE name='Random Access Memories'), (SELECT id FROM ar WHERE name='Daft Punk'), (SELECT id FROM g WHERE title='Electronic'), '/music/daftpunk/ram/get_lucky.flac',   8,  FALSE, FALSE),
 ('Instant Crush',    (SELECT id FROM u WHERE username='sveta'), 337, 11010048, 0,0, (SELECT id FROM a WHERE name='Random Access Memories'), (SELECT id FROM ar WHERE name='Daft Punk'), (SELECT id FROM g WHERE title='Electronic'), '/music/daftpunk/ram/instant_crush.flac', 5,  FALSE, FALSE),
 ('Contact',          (SELECT id FROM u WHERE username='admin'), 379, 12058624, 0,0, (SELECT id FROM a WHERE name='Random Access Memories'), (SELECT id FROM ar WHERE name='Daft Punk'), (SELECT id FROM g WHERE title='Electronic'), '/music/daftpunk/ram/contact.flac',       13, FALSE, FALSE),
 
--- Discovery (Daft Punk)
 ('One More Time',    (SELECT id FROM u WHERE username='timofey'),320, 10485760, 0,0, (SELECT id FROM a WHERE name='Discovery'), (SELECT id FROM ar WHERE name='Daft Punk'), (SELECT id FROM g WHERE title='Electronic'), '/music/daftpunk/discovery/one_more_time.flac', 1, FALSE, FALSE),
 ('Digital Love',     (SELECT id FROM u WHERE username='masha'),  300,  9961472, 0,0, (SELECT id FROM a WHERE name='Discovery'), (SELECT id FROM ar WHERE name='Daft Punk'), (SELECT id FROM g WHERE title='Electronic'), '/music/daftpunk/discovery/digital_love.flac',  3, FALSE, FALSE),
 ('Harder, Better, Faster, Stronger',
                      (SELECT id FROM u WHERE username='sergey'), 224,  7864320, 0,0, (SELECT id FROM a WHERE name='Discovery'), (SELECT id FROM ar WHERE name='Daft Punk'), (SELECT id FROM g WHERE title='Electronic'), '/music/daftpunk/discovery/hbfs.flac',          4, FALSE, FALSE),
 
--- Nevermind (Nirvana)
 ('Smells Like Teen Spirit', (SELECT id FROM u WHERE username='admin'),301, 11010048, 0,0, (SELECT id FROM a WHERE name='Nevermind'), (SELECT id FROM ar WHERE name='Nirvana'), (SELECT id FROM g WHERE title='Grunge'), '/music/nirvana/nevermind/slts.flac', 1, FALSE, FALSE),
 ('Come As You Are',         (SELECT id FROM u WHERE username='petr'), 219,  8912896, 0,0, (SELECT id FROM a WHERE name='Nevermind'), (SELECT id FROM ar WHERE name='Nirvana'), (SELECT id FROM g WHERE title='Grunge'), '/music/nirvana/nevermind/come_as_you_are.flac', 3, FALSE, FALSE),
 ('Lithium',                 (SELECT id FROM u WHERE username='olga'), 257,  9437184, 0,0, (SELECT id FROM a WHERE name='Nevermind'), (SELECT id FROM ar WHERE name='Nirvana'), (SELECT id FROM g WHERE title='Grunge'), '/music/nirvana/nevermind/lithium.flac',         5, FALSE, FALSE),
 
--- The Dark Side of the Moon (Pink Floyd)
 ('Time',        (SELECT id FROM u WHERE username='ivan'),  413, 13172736, 0,0, (SELECT id FROM a WHERE name='The Dark Side of the Moon'), (SELECT id FROM ar WHERE name='Pink Floyd'), (SELECT id FROM g WHERE title='Progressive Rock'), '/music/pinkfloyd/dsotm/time.flac',        4, FALSE, FALSE),
 ('Money',       (SELECT id FROM u WHERE username='sveta'), 382, 12582912, 0,0, (SELECT id FROM a WHERE name='The Dark Side of the Moon'), (SELECT id FROM ar WHERE name='Pink Floyd'), (SELECT id FROM g WHERE title='Progressive Rock'), '/music/pinkfloyd/dsotm/money.flac',       6, FALSE, FALSE),
 ('Us and Them', (SELECT id FROM u WHERE username='sergey'),462, 13631488, 0,0, (SELECT id FROM a WHERE name='The Dark Side of the Moon'), (SELECT id FROM ar WHERE name='Pink Floyd'), (SELECT id FROM g WHERE title='Progressive Rock'), '/music/pinkfloyd/dsotm/us_and_them.flac', 7, FALSE, FALSE),
 
--- Abbey Road (The Beatles)
 ('Come Together',     (SELECT id FROM u WHERE username='admin'), 259, 10092544, 0,0, (SELECT id FROM a WHERE name='Abbey Road'), (SELECT id FROM ar WHERE name='The Beatles'), (SELECT id FROM g WHERE title='Rock'), '/music/beatles/abbey_road/come_together.flac', 1, FALSE, FALSE),
 ('Something',         (SELECT id FROM u WHERE username='masha'), 182,  7340032, 0,0, (SELECT id FROM a WHERE name='Abbey Road'), (SELECT id FROM ar WHERE name='The Beatles'), (SELECT id FROM g WHERE title='Rock'), '/music/beatles/abbey_road/something.flac',      2, FALSE, FALSE),
 ('Here Comes the Sun',(SELECT id FROM u WHERE username='diana'), 185,  7602176, 0,0, (SELECT id FROM a WHERE name='Abbey Road'), (SELECT id FROM ar WHERE name='The Beatles'), (SELECT id FROM g WHERE title='Rock'), '/music/beatles/abbey_road/here_comes_the_sun.flac', 7, FALSE, FALSE),
 
--- To Pimp a Butterfly (Kendrick Lamar)
 ('King Kunta',             (SELECT id FROM u WHERE username='admin'),   234,  8388608, 0,0, (SELECT id FROM a WHERE name='To Pimp a Butterfly'), (SELECT id FROM ar WHERE name='Kendrick Lamar'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/kendrick/tpab/king_kunta.flac',           3,  TRUE, FALSE),
 ('Alright',                (SELECT id FROM u WHERE username='timofey'), 219,  7864320, 0,0, (SELECT id FROM a WHERE name='To Pimp a Butterfly'), (SELECT id FROM ar WHERE name='Kendrick Lamar'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/kendrick/tpab/alright.flac',               7,  TRUE, FALSE),
 ('The Blacker the Berry',  (SELECT id FROM u WHERE username='petr'),    315,  9961472, 0,0, (SELECT id FROM a WHERE name='To Pimp a Butterfly'), (SELECT id FROM ar WHERE name='Kendrick Lamar'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/kendrick/tpab/the_blacker_the_berry.flac', 13, TRUE, FALSE),
 
--- good kid, m.A.A.d city (Kendrick Lamar)
 ('Swimming Pools (Drank)', (SELECT id FROM u WHERE username='olga'),   234,  8388608, 0,0, (SELECT id FROM a WHERE name='good kid, m.A.A.d city'), (SELECT id FROM ar WHERE name='Kendrick Lamar'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/kendrick/gkmc/swimming_pools.flac', 7,  TRUE, FALSE),
 ('Bitch, Don''t Kill My Vibe',(SELECT id FROM u WHERE username='ivan'),321, 11010048, 0,0, (SELECT id FROM a WHERE name='good kid, m.A.A.d city'), (SELECT id FROM ar WHERE name='Kendrick Lamar'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/kendrick/gkmc/bdkmv.flac',          2,  TRUE, FALSE),
 ('m.A.A.d city',            (SELECT id FROM u WHERE username='sveta'), 345, 11534336, 0,0, (SELECT id FROM a WHERE name='good kid, m.A.A.d city'), (SELECT id FROM ar WHERE name='Kendrick Lamar'), (SELECT id FROM g WHERE title='Hip Hop'), '/music/kendrick/gkmc/maad_city.flac',      11, TRUE, FALSE);
 
--- 7) artist_track (1:1)
 INSERT INTO artist_track (artist_id, track_id)
 SELECT t.artist_id, t.id FROM track t
 ON CONFLICT DO NOTHING;
 
--- 8) track_genre — вторичные жанры
 INSERT INTO track_genre (track_id, genre_id)
 SELECT t.id, (SELECT id FROM genre WHERE title='Dream Pop')
 FROM track t JOIN album al ON al.id = t.album_id
@@ -264,7 +231,6 @@ FROM track t JOIN album al ON al.id = t.album_id
 WHERE al.name='Discovery'
 ON CONFLICT DO NOTHING;
 
--- 9) Likes — каждому пользователю свой случайный трек
 INSERT INTO liked (user_id, track_id, created_at)
 SELECT u.id, t.id, now() - (random()*'90 days'::interval)
 FROM users u
@@ -272,7 +238,6 @@ CROSS JOIN LATERAL (SELECT id FROM track ORDER BY random() LIMIT 1) AS t
 WHERE u.username IN ('timofey','masha','petr','olga','ivan','sveta','sergey','diana','admin')
 ON CONFLICT DO NOTHING;
 
--- Плюс фиксированный набор лайков
 INSERT INTO liked (user_id, track_id) VALUES
  ((SELECT id FROM users WHERE username='timofey'), (SELECT id FROM track WHERE name='Only Shallow')),
  ((SELECT id FROM users WHERE username='masha'),   (SELECT id FROM track WHERE name='Karma Police')),
@@ -296,7 +261,6 @@ INSERT INTO liked (user_id, track_id) VALUES
  ((SELECT id FROM users WHERE username='masha'),   (SELECT id FROM track WHERE name='Digital Love'))
 ON CONFLICT DO NOTHING;
 
--- 10) Ratings (1..5)
 INSERT INTO user_rating (user_id, track_id, rate) VALUES
  ((SELECT id FROM users WHERE username='timofey'), (SELECT id FROM track WHERE name='Only Shallow'), 5),
  ((SELECT id FROM users WHERE username='masha'),   (SELECT id FROM track WHERE name='Only Shallow'), 4),
@@ -313,7 +277,6 @@ INSERT INTO user_rating (user_id, track_id, rate) VALUES
  ((SELECT id FROM users WHERE username='diana'),   (SELECT id FROM track WHERE name='НАС ОТКЛЮЧАЮТ'), 5)
 ON CONFLICT DO NOTHING;
 
--- 11) Comments (~24)
 INSERT INTO comments (user_id, track_id, body, track_time) VALUES
  ((SELECT id FROM users WHERE username='timofey'), (SELECT id FROM track WHERE name='Only Shallow'), 'Шикарный звук и фактура гитар. Любовь. ❤️', 45),
  ((SELECT id FROM users WHERE username='masha'),   (SELECT id FROM track WHERE name='When You Sleep'), 'Стеки вокалов улетают в сон. ✨', 120),
@@ -348,7 +311,6 @@ INSERT INTO comments (user_id, track_id, body, track_time) VALUES
  ((SELECT id FROM users WHERE username='olga'),    (SELECT id FROM track WHERE name='m.A.A.d city'), 'Кинематографичный сторителлинг. 🎬', 140)
 ON CONFLICT DO NOTHING;
 
--- 12) Пересчёт rate_count/rating из user_rating
 UPDATE track t
 SET rate_count = sub.cnt,
     rating     = sub.sum_rate

@@ -37,12 +37,12 @@ public class AuditEntity {
     @Column(name = "entity_id", nullable = false, length = 64)
     private String entityId;
 
-    // актор-артист (nullable)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "artist_id")
     private ArtistEntity artist;
 
-    // актор-пользователь (nullable)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;

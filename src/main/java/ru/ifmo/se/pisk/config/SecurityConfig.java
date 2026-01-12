@@ -32,30 +32,30 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public static resources
+
                         .requestMatchers(
                                 "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico", "/storage/**"
                         ).permitAll()
 
-                        // Error page and default UI CSS must be public
+
                         .requestMatchers("/error", "/default-ui.css").permitAll()
 
-                        // Public auth, login and docs
+
                         .requestMatchers(
                                 "/login", "/register", "/forgot-password", "/reset-password",
                                 "/swagger-ui/**", "/v3/api-docs/**", "/docs/**", "/actuator/health"
                         ).permitAll()
 
-                        // Public HTML pages - GET only
+
                         .requestMatchers(HttpMethod.GET, "/", "/catalog").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tracks/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/authors/**").permitAll()
 
-                        // Protected HTML pages
+
                         .requestMatchers("/upload", "/newupload").authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // API endpoints
+
                         .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/tracks/*/like").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/tracks/*/like").authenticated()
@@ -78,17 +78,17 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .exceptionHandling(exceptions -> exceptions
-                        // 401 only for API requests
+
                         .defaultAuthenticationEntryPointFor(
                                 new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
                                 new AntPathRequestMatcher("/api/**")
                         )
-                        // For HTML pages, default entry point will redirect to /login
+
                         .accessDeniedHandler(new AccessDeniedHandlerImpl())
                 )
                 .requestCache(cache -> cache.requestCache(new NullRequestCache()));
 
-        // Add request logging filter
+
         http.addFilterBefore((request, response, chain) -> {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             HttpServletResponse httpResponse = (HttpServletResponse) response;

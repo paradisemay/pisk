@@ -1,6 +1,5 @@
 BEGIN;
 
--- ТВОЙ ИСХОДНЫЙ БЛОК DROP (оставляю без изменений)
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS track CASCADE;
 DROP TABLE IF EXISTS album CASCADE;

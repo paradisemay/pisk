@@ -168,13 +168,13 @@ public class TrackService {
         UserEntity user = userService.requireUser(command.userId());
         Long albumId = track.getAlbum() != null ? track.getAlbum().getId() : null;
 
-        // Use database function to rate
+
         List<Object[]> results = trackRepository.rateTrack(command.userId(), command.trackId(), command.value());
 
-        // Analyze result to check for deletion
+
         if (!results.isEmpty()) {
             Object[] row = results.get(0);
-            // row content from fn_track_rate: track_id, rate_count, rating_sum, rating_avg
+
             if (row.length >= 4 && row[3] != null && row[1] != null) {
                 Integer rateCount = ((Number) row[1]).intValue();
                 java.math.BigDecimal avgRating = (java.math.BigDecimal) row[3];
@@ -186,7 +186,7 @@ public class TrackService {
                      if (albumId != null) {
                          albumService.deleteIfEmpty(albumId);
                      }
-                     // Track deleted
+
                      return new RateResult(
                          new RatingInfo(0L, command.trackId(), command.userId(), (short)command.value(), command.comment(), Instant.now()),
                          true
@@ -195,12 +195,12 @@ public class TrackService {
             }
         }
 
-        // We still fetch the rating entity to return consistent info
+
         Optional<RatingEntity> ratingOpt = ratingRepository.findByTrackAndUser(track, user);
         if (ratingOpt.isEmpty()) {
             entityManager.clear();
             if (!trackRepository.existsById(command.trackId())) {
-                 // Track deleted - should have been caught above, but safety check
+
                  if (albumId != null) {
                      albumService.deleteIfEmpty(albumId);
                  }
@@ -275,7 +275,7 @@ public class TrackService {
 
     @Transactional
     public void likeTrack(Long trackId, Long userId) {
-        // Validation (optional, as DB function checks FKs, but good for application logic/exceptions)
+
         requireTrack(trackId);
         userService.requireUser(userId);
         trackLikeRepository.likeTrack(userId, trackId);

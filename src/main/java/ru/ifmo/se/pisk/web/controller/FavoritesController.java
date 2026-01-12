@@ -46,7 +46,7 @@ public class FavoritesController {
 
         model.addAttribute("tracks", tracks);
         model.addAttribute("langLinks", LanguageLinks.build(request));
-        // We assume CurrentUserAdvice adds "currentUser" to the model for the header
+
 
         return "favorites";
     }

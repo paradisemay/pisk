@@ -119,13 +119,13 @@ public class AlbumService {
         AlbumEntity album = albumRepository.findById(albumId).orElse(null);
         if (album == null) return;
 
-        // Check if there are any tracks referencing this album
-        // Using direct count query on tracks would be better, but assuming bidirectional or use repo
-        // Since we don't have TrackRepository injected here, and assuming cyclic dep avoidance:
-        // We will rely on album entity's lazy collection if loaded, or injected dependency.
-        // But AlbumService injecting TrackRepository is dangerous (cycles).
-        // Better: Query Count in AlbumRepository or use EntityManager.
-        // Actually, we can check via a new method in AlbumRepository.
+
+
+
+
+
+
+
         int trackCount = albumRepository.countTracksInAlbum(albumId);
         if (trackCount == 0) {
             if (album.getCoverUrl() != null) {

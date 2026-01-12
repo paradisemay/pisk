@@ -47,7 +47,7 @@
         </div>
         <audio controls th:src="${track.downloadUrl}" class="player" id="audioPlayer"></audio>
 
-        <!-- Dynamic Comment Section (Initially Hidden) -->
+        
         <div id="dynamicCommentSection" class="card" style="margin-top: 1rem; display: none; border-left: 4px solid #6366f1;">
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <img id="dynAvatar" src="" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
@@ -128,7 +128,7 @@
             }
         </style>
 
-        <!-- All Comments Section -->
+        
         <div class="comments-list" style="margin-top: 2rem;">
             <h2>Комментарии</h2>
             <div th:each="comment : ${comments}" class="comment-item" style="border-bottom: 1px solid #eee; padding: 1rem 0; display: flex; gap: 1rem;">
@@ -152,7 +152,7 @@
         </div>
     </section>
 
-    <!-- Comment Modal -->
+    
     <dialog id="commentModal">
         <h3>Новый комментарий</h3>
         <p>Время: <span id="modalTimeDisplay">00:00</span></p>

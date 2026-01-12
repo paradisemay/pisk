@@ -13,7 +13,7 @@
                     <span th:text="#{album.by-artist} + ': '">Исполнитель:</span>
                     <span th:text="${album.artistName}">Artist</span>
                     <span th:if="${album.uploaderIsArtist}" style="color: #6366f1;">
-                        <!-- Using a checkmark symbol, you can replace with SVG if needed -->
+                        
                         &#10003;
                     </span>
                 </p>
@@ -69,7 +69,7 @@
                         <span class="tag" th:if="${t.inoagent}" th:text="#{track.metadata.inoagent}"></span>
                     </div>
                 </div>
-                <!-- Плеер для конкретного трека -->
+                
                 <div style="margin-top: 10px;">
                     <audio controls preload="metadata" class="player"
                            th:if="${t.downloadUrl != null}"

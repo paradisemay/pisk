@@ -1,7 +1,5 @@
--- Align users table with JPA entity expectations
 BEGIN;
 
--- Ensure textual credentials instead of bytea
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash_tmp VARCHAR(255);
 UPDATE users SET password_hash_tmp = CASE
     WHEN pg_typeof(password_hash) = 'bytea'::regtype THEN encode(password_hash, 'hex')
@@ -20,7 +18,6 @@ WHERE password_salt_tmp IS NULL;
 ALTER TABLE users DROP COLUMN password_salt;
 ALTER TABLE users RENAME COLUMN password_salt_tmp TO password_salt;
 
--- Add essential profile columns
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS email VARCHAR(128),
     ADD COLUMN IF NOT EXISTS status VARCHAR(16) DEFAULT 'PENDING' NOT NULL,
@@ -28,7 +25,6 @@ ALTER TABLE users
     ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now() NOT NULL,
     ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
 
--- Backfill missing values
 UPDATE users SET email = CONCAT(username, '@example.com') WHERE email IS NULL;
 DO $$
 BEGIN
@@ -44,7 +40,6 @@ BEGIN
 END $$;
 UPDATE users SET updated_at = COALESCE(updated_at, created_at);
 
--- Convert numeric roles to textual values
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role_tmp VARCHAR(16) DEFAULT 'USER' NOT NULL;
 UPDATE users SET role_tmp = CASE
     WHEN role::text = '1' THEN 'ADMIN'
@@ -55,7 +50,6 @@ END;
 ALTER TABLE users DROP COLUMN role;
 ALTER TABLE users RENAME COLUMN role_tmp TO role;
 
--- Enforce constraints
 ALTER TABLE users ALTER COLUMN email SET NOT NULL;
 ALTER TABLE users ALTER COLUMN username TYPE VARCHAR(64);
 ALTER TABLE users ALTER COLUMN password_salt TYPE VARCHAR(64);

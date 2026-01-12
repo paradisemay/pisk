@@ -1,4 +1,3 @@
--- Базовая схема музыкальной платформы (без дропа существующих объектов)
 CREATE TYPE roletype AS ENUM ('user','admin');
 
 CREATE TABLE users(

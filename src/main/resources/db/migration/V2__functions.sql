@@ -1,18 +1,6 @@
--- ===================================================================
--- Хранимые функции/процедуры и триггеры для музыкальной платформы
--- Схема: как в твоём DDL (users, artist, album, track, genre, label,
---        liked, user_rating, comments, artist_track, track_genre)
--- PostgreSQL 15+, язык plpgsql
--- ===================================================================
 
--- На всякий случай (обычно уже есть)
--- CREATE EXTENSION IF NOT EXISTS plpgsql;
 
--- ---------------------------------------------------------------
--- УТИЛИТЫ / ПОМОЩНИКИ
--- ---------------------------------------------------------------
 
--- Проверка: является ли пользователь админом (users.role = 'ADMIN')
 CREATE OR REPLACE FUNCTION fn_is_admin(p_user_id bigint)
 RETURNS boolean
 LANGUAGE sql
@@ -23,7 +11,6 @@ AS $$
   );
 $$;
 
--- Маленький helper: бросить ошибку, если не админ
 CREATE OR REPLACE FUNCTION fn_require_admin(p_requestor_id bigint)
 RETURNS void
 LANGUAGE plpgsql
@@ -36,11 +23,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------
--- A) ПОЛЬЗОВАТЕЛИ И РОЛИ
--- ---------------------------------------------------------------
 
--- Создать пользователя (hash/salt/alg вычислены в приложении)
 CREATE OR REPLACE FUNCTION fn_user_create(
   p_username       text,
   p_password_hash  text,
@@ -70,7 +53,6 @@ BEGIN
 END;
 $$;
 
--- Смена пароля
 CREATE OR REPLACE FUNCTION fn_user_change_password(
   p_user_id   bigint,
   p_new_hash  text,
@@ -92,7 +74,6 @@ BEGIN
 END;
 $$;
 
--- Получить пользователя по нику
 CREATE OR REPLACE FUNCTION fn_user_get_by_username(p_username text)
 RETURNS users
 LANGUAGE plpgsql
@@ -107,7 +88,6 @@ BEGIN
 END;
 $$;
 
--- Админ: сменить роль пользователю (не давать удалить последнего админа)
 CREATE OR REPLACE FUNCTION fn_admin_set_role(
   p_requestor_id   bigint,
   p_target_user_id bigint,
@@ -136,11 +116,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------
--- B) АЛЬБОМЫ / ТРЕКИ (CRUD)
--- ---------------------------------------------------------------
 
--- Создать альбом
 CREATE OR REPLACE FUNCTION fn_album_create(
   p_name             text,
   p_description      text,
@@ -171,7 +147,6 @@ BEGIN
 END;
 $$;
 
--- Создать трек
 CREATE OR REPLACE FUNCTION fn_track_create(
   p_name             text,
   p_author_id        bigint,
@@ -199,7 +174,6 @@ BEGIN
   PERFORM 1 FROM artist WHERE id = p_artist_id; IF NOT FOUND THEN RAISE EXCEPTION 'Артист id=% не найден', p_artist_id; END IF;
   PERFORM 1 FROM genre  WHERE id = p_genre_id;  IF NOT FOUND THEN RAISE EXCEPTION 'Жанр id=% не найден',   p_genre_id; END IF;
 
-  -- Проверка уникальности номера в альбоме (т.к. в схеме нет индекса)
   SELECT COUNT(*) INTO v_dup
   FROM track WHERE album_id = p_album_id AND number_on_album = p_number_on_album;
   IF v_dup > 0 THEN
@@ -210,7 +184,6 @@ BEGIN
   VALUES(p_name, p_author_id, p_duration_sec, p_filesize_bytes, 0, 0, p_album_id, p_artist_id, p_genre_id, p_filepath, p_number_on_album, COALESCE(p_explicit,false), COALESCE(p_inoagent,false))
   RETURNING id INTO v_id;
 
-  -- Привязка в artist_track (1:1 основного)
   INSERT INTO artist_track(artist_id, track_id) VALUES (p_artist_id, v_id)
   ON CONFLICT DO NOTHING;
 
@@ -218,7 +191,6 @@ BEGIN
 END;
 $$;
 
--- Обновление метаданных трека (только автор или админ)
 CREATE OR REPLACE FUNCTION fn_track_update_metadata(
   p_track_id         bigint,
   p_requestor_id     bigint,
@@ -282,7 +254,6 @@ BEGIN
 END;
 $$;
 
--- Удалить трек (автор или админ)
 CREATE OR REPLACE FUNCTION fn_track_delete(
   p_track_id     bigint,
   p_requestor_id bigint
@@ -301,7 +272,6 @@ BEGIN
     RAISE EXCEPTION 'Недостаточно прав удалять трек id=%', p_track_id USING ERRCODE='42501';
   END IF;
 
-  -- Сносим зависимые (PK/FK каскадов нет, поэтому вручную)
   DELETE FROM liked WHERE track_id = p_track_id;
   DELETE FROM user_rating WHERE track_id = p_track_id;
   DELETE FROM comments WHERE track_id = p_track_id;
@@ -310,7 +280,6 @@ BEGIN
 
   DELETE FROM track WHERE id = p_track_id;
 
-  -- После удаления пересчитаем агрегаты альбома/жанра/лейбла
   SELECT label_id INTO v_label FROM album WHERE id = v_album;
   PERFORM fn_recalc_album_avg(v_album);
   PERFORM fn_recalc_genre_avg(v_genre);
@@ -318,10 +287,9 @@ BEGIN
 END;
 $$;
 
--- Перенумеровать треки в альбоме
 CREATE OR REPLACE FUNCTION fn_resequence_album_track_numbers(
   p_album_id bigint,
-  p_order_by text DEFAULT 'number_on_album' -- 'name'|'upload_date'|'number_on_album'
+  p_order_by text DEFAULT 'number_on_album'
 ) RETURNS void
 LANGUAGE plpgsql
 AS $$
@@ -333,7 +301,6 @@ BEGIN
     v_order := p_order_by;
   END IF;
 
-  -- Динамически сортируем и ставим row_number()
   EXECUTE format(
     'WITH s AS (
        SELECT id, ROW_NUMBER() OVER (ORDER BY %I, id) AS rn
@@ -347,11 +314,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------
--- C) РЕЙТИНГИ И АГРЕГАТЫ
--- ---------------------------------------------------------------
 
--- Поставить/обновить оценку (триггеры пересчитают агрегаты)
 CREATE OR REPLACE FUNCTION fn_track_rate(
   p_user_id  bigint,
   p_track_id bigint,
@@ -369,7 +332,6 @@ BEGIN
     RAISE EXCEPTION 'Оценка вне диапазона 1..5' USING ERRCODE='22023';
   END IF;
 
-  -- Убедимся, что трек существует
   PERFORM 1 FROM track WHERE id = p_track_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Трек id=% не найден', p_track_id USING ERRCODE='02000';
@@ -380,7 +342,6 @@ BEGIN
   ON CONFLICT (user_id, track_id)
   DO UPDATE SET rate = EXCLUDED.rate;
 
-  -- Триггер уже обновил track.*; возвращаем агрегаты
   RETURN QUERY
   SELECT t.id,
          t.rate_count,
@@ -391,7 +352,6 @@ BEGIN
 END;
 $$;
 
--- Полный пересчёт агрегатов одного трека (из user_rating)
 CREATE OR REPLACE FUNCTION fn_recalc_track_rating(
   p_track_id bigint
 ) RETURNS TABLE (
@@ -422,7 +382,6 @@ BEGIN
 END;
 $$;
 
--- Средняя по альбому (по всем оценкам его треков)
 CREATE OR REPLACE FUNCTION fn_recalc_album_avg(p_album_id bigint)
 RETURNS real
 LANGUAGE plpgsql
@@ -442,7 +401,6 @@ BEGIN
 END;
 $$;
 
--- Средняя по жанру
 CREATE OR REPLACE FUNCTION fn_recalc_genre_avg(p_genre_id bigint)
 RETURNS real
 LANGUAGE plpgsql
@@ -462,7 +420,6 @@ BEGIN
 END;
 $$;
 
--- Средняя по лейблу
 CREATE OR REPLACE FUNCTION fn_recalc_label_avg(p_label_id bigint)
 RETURNS real
 LANGUAGE plpgsql
@@ -483,39 +440,30 @@ BEGIN
 END;
 $$;
 
--- Пакетный пересчёт всех агрегатов (ночной/админ)
 CREATE OR REPLACE PROCEDURE proc_recalc_all_aggregates()
 LANGUAGE plpgsql
 AS $$
 DECLARE rec record;
 BEGIN
-  -- Треки
   FOR rec IN SELECT id FROM track LOOP
     PERFORM fn_recalc_track_rating(rec.id);
   END LOOP;
 
-  -- Альбомы
   FOR rec IN SELECT id FROM album LOOP
     PERFORM fn_recalc_album_avg(rec.id);
   END LOOP;
 
-  -- Жанры
   FOR rec IN SELECT id FROM genre LOOP
     PERFORM fn_recalc_genre_avg(rec.id);
   END LOOP;
 
-  -- Лейблы
   FOR rec IN SELECT id FROM label LOOP
     PERFORM fn_recalc_label_avg(rec.id);
   END LOOP;
 END;
 $$;
 
--- ---------------------------------------------------------------
--- D) ЛАЙКИ
--- ---------------------------------------------------------------
 
--- Добавить лайк (идемпотентно)
 CREATE OR REPLACE FUNCTION fn_like_add(p_user_id bigint, p_track_id bigint)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -536,7 +484,6 @@ BEGIN
 END;
 $$;
 
--- Удалить лайк (идемпотентно)
 CREATE OR REPLACE FUNCTION fn_like_remove(p_user_id bigint, p_track_id bigint)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -549,7 +496,6 @@ BEGIN
 END;
 $$;
 
--- Лайкнутые треки пользователя
 CREATE OR REPLACE FUNCTION fn_user_liked_tracks(
   p_user_id bigint,
   p_limit   integer DEFAULT 20,
@@ -573,11 +519,7 @@ AS $$
   LIMIT p_limit OFFSET p_offset;
 $$;
 
--- ---------------------------------------------------------------
--- E) КОММЕНТАРИИ
--- ---------------------------------------------------------------
 
--- Добавить/обновить комментарий (по твоему PK один комментарий на пару user/track)
 CREATE OR REPLACE FUNCTION fn_comment_add(
   p_user_id   bigint,
   p_track_id  bigint,
@@ -604,7 +546,6 @@ BEGIN
 END;
 $$;
 
--- Удалить комментарий (владелец или админ)
 CREATE OR REPLACE FUNCTION fn_comment_delete(
   p_requestor_id bigint,
   p_user_id      bigint,
@@ -615,7 +556,6 @@ AS $$
 DECLARE v_owner boolean;
 DECLARE v_deleted boolean := false;
 BEGIN
-  -- владелец?
   v_owner := (p_requestor_id = p_user_id) OR fn_is_admin(p_requestor_id);
   IF NOT v_owner THEN
     RAISE EXCEPTION 'Недостаточно прав удалить комментарий' USING ERRCODE='42501';
@@ -627,7 +567,6 @@ BEGIN
 END;
 $$;
 
--- Комментарии трека
 CREATE OR REPLACE FUNCTION fn_track_comments(
   p_track_id bigint,
   p_limit    integer DEFAULT 20,
@@ -649,17 +588,13 @@ AS $$
   LIMIT p_limit OFFSET p_offset;
 $$;
 
--- ---------------------------------------------------------------
--- F) ПОИСК / КАТАЛОГ
--- ---------------------------------------------------------------
 
--- Поиск треков с фильтрами и сортировкой (простой ILIKE; без FTS)
 CREATE OR REPLACE FUNCTION fn_search_tracks(
   p_query        text DEFAULT NULL,
   p_genre_ids    bigint[] DEFAULT NULL,
   p_artist_ids   bigint[] DEFAULT NULL,
   p_label_ids    bigint[] DEFAULT NULL,
-  p_explicit     boolean  DEFAULT NULL,  -- NULL = без фильтра
+  p_explicit     boolean  DEFAULT NULL,
   p_sort         text     DEFAULT 'relevance',
   p_limit        integer  DEFAULT 20,
   p_offset       integer  DEFAULT 0
@@ -682,7 +617,6 @@ DECLARE where_clauses text := 'WHERE 1=1';
 DECLARE params jsonb := '{}'::jsonb;
 DECLARE qpattern text;
 BEGIN
-  -- WHERE
   IF p_query IS NOT NULL AND btrim(p_query) <> '' THEN
     qpattern := '%' || replace(p_query, '%','\%') || '%';
     where_clauses := where_clauses || ' AND (t.name ILIKE $q OR al.name ILIKE $q OR ar.name ILIKE $q)';
@@ -709,12 +643,6 @@ BEGIN
     params := params || jsonb_build_object('e', p_explicit);
   END IF;
 
-  -- ORDER BY
-  -- relevance -> по совпадению имени трека/альбома/артиста, затем средняя оценка
-  -- rating    -> по среднему рейтингу (sum/count), затем сумме/кол-ву
-  -- newest    -> по дате публикации альбома
-  -- popular   -> по rate_count
-  -- name_asc/name_desc
   sql := format($Q$
     SELECT
       t.id AS track_id,
@@ -745,7 +673,6 @@ BEGIN
   ELSIF p_sort = 'name_desc' THEN
     sql := sql || ' ORDER BY t.name DESC, t.id';
   ELSE
-    -- relevance
     IF params ? 'q' THEN
       sql := sql || ' ORDER BY (t.name ILIKE $q)::int DESC, (al.name ILIKE $q)::int DESC, (ar.name ILIKE $q)::int DESC, t.id';
     ELSE
@@ -755,16 +682,14 @@ BEGIN
 
   sql := sql || ' LIMIT $lim OFFSET $off';
 
-  -- EXECUTE с подстановкой параметров
   RETURN QUERY EXECUTE sql
     USING params->>'q', params#>'{g}', params#>'{a}', params#>'{l}', (params->>'e')::boolean, p_limit, p_offset;
 END;
 $$;
 
--- Треки альбома (сортировка)
 CREATE OR REPLACE FUNCTION fn_album_tracks(
   p_album_id bigint,
-  p_sort     text    DEFAULT 'number_on_album',  -- 'name'|'rating'|'newest'
+  p_sort     text    DEFAULT 'number_on_album',
   p_limit    integer DEFAULT 50,
   p_offset   integer DEFAULT 0
 ) RETURNS TABLE (
@@ -799,11 +724,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------
--- G) ТОПЫ / ФИД
--- ---------------------------------------------------------------
 
--- Топ треков (all-time), p_metric: 'avg' | 'sum'
 CREATE OR REPLACE FUNCTION fn_top_tracks(
   p_limit   integer DEFAULT 20,
   p_metric  text    DEFAULT 'avg'
@@ -837,7 +758,6 @@ BEGIN
 END;
 $$;
 
--- "Лента" по жанрам, которые юзер лайкал или оценивал; сортировка по дате релиза альбома
 CREATE OR REPLACE FUNCTION fn_user_feed_new_tracks(
   p_user_id bigint,
   p_limit   integer DEFAULT 20
@@ -870,11 +790,7 @@ ORDER BY al.publication_date DESC NULLS LAST, t.id
 LIMIT p_limit;
 $$;
 
--- ---------------------------------------------------------------
--- H) АДМИН-УТИЛИТЫ
--- ---------------------------------------------------------------
 
--- Анонимизация пользователя
 CREATE OR REPLACE PROCEDURE proc_anonymize_user(p_user_id bigint)
 LANGUAGE plpgsql
 AS $$
@@ -891,7 +807,6 @@ BEGIN
 END;
 $$;
 
--- Удаление пользователя (с возможной передачей авторства треков)
 CREATE OR REPLACE PROCEDURE proc_delete_user(
   p_requestor_id bigint,
   p_user_id      bigint,
@@ -904,14 +819,12 @@ BEGIN
   PERFORM fn_require_admin(p_requestor_id);
 
   IF p_transfer_tracks_to IS NOT NULL THEN
-    -- Проверим получателя
     PERFORM 1 FROM users WHERE id = p_transfer_tracks_to;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Получатель авторства id=% не найден', p_transfer_tracks_to;
     END IF;
     UPDATE track SET author_id = p_transfer_tracks_to WHERE author_id = p_user_id;
   ELSE
-    -- Нельзя удалять автора, если у него есть треки
     SELECT COUNT(*) INTO v_cnt FROM track WHERE author_id = p_user_id;
     IF v_cnt > 0 THEN
       RAISE EXCEPTION 'У пользователя есть треки; укажите p_transfer_tracks_to' USING ERRCODE='23503';
@@ -929,7 +842,6 @@ BEGIN
 END;
 $$;
 
--- Чистка "висящих" ссылок
 CREATE OR REPLACE PROCEDURE proc_compact_orphans()
 LANGUAGE plpgsql
 AS $$
@@ -948,12 +860,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------
--- ТРИГГЕРЫ ДЛЯ АВТО-АГРЕГАЦИЙ
--- ---------------------------------------------------------------
 
--- Триггер-функция: после INSERT/UPDATE/DELETE в user_rating — пересчитать
--- track.rate_count/rating и обновить avg альбома/жанра/лейбла
 CREATE OR REPLACE FUNCTION tr_user_rating_aggregate()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -969,10 +876,8 @@ BEGIN
     v_track_id := NEW.track_id;
   END IF;
 
-  -- Пересчёт трека
   PERFORM fn_recalc_track_rating(v_track_id);
 
-  -- Сопутствующие агрегаты
   SELECT t.album_id, t.genre_id INTO v_album_id, v_genre_id FROM track t WHERE t.id = v_track_id;
   IF v_album_id IS NOT NULL THEN
     PERFORM fn_recalc_album_avg(v_album_id);
@@ -989,13 +894,11 @@ BEGIN
 END;
 $$;
 
--- Привязка триггера к user_rating
 DROP TRIGGER IF EXISTS trg_user_rating_aiud ON user_rating;
 CREATE TRIGGER trg_user_rating_aiud
 AFTER INSERT OR UPDATE OR DELETE ON user_rating
 FOR EACH ROW EXECUTE FUNCTION tr_user_rating_aggregate();
 
--- Триггер при УДАЛЕНИИ трека: обновить агрегаты альбома/жанра/лейбла
 CREATE OR REPLACE FUNCTION tr_track_after_delete_recalc()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -1017,7 +920,6 @@ CREATE TRIGGER trg_track_ad
 AFTER DELETE ON track
 FOR EACH ROW EXECUTE FUNCTION tr_track_after_delete_recalc();
 
--- Триггер при переносе трека между альбомами/жанрами: пересчитать старые и новые
 CREATE OR REPLACE FUNCTION tr_track_after_update_move()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -1048,7 +950,4 @@ CREATE TRIGGER trg_track_au_move
 AFTER UPDATE OF album_id, genre_id ON track
 FOR EACH ROW EXECUTE FUNCTION tr_track_after_update_move();
 
--- ===================================================================
--- КОНЕЦ НАБОРА
--- ===================================================================
 

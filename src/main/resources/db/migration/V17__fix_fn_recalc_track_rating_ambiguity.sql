@@ -1,7 +1,4 @@
--- Fix ambiguous column reference in fn_recalc_track_rating and ensure 'value' column usage
--- Also update other functions that might be affected by 'rate' -> 'value' rename
 
--- 1. Fix fn_recalc_track_rating
 DROP FUNCTION IF EXISTS fn_recalc_track_rating(bigint) CASCADE;
 CREATE OR REPLACE FUNCTION fn_recalc_track_rating(
   p_track_id bigint
@@ -15,8 +12,6 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_cnt integer; DECLARE v_sum bigint;
 BEGIN
-  -- Use explicit alias 'ur' to avoid ambiguity with output parameter 'track_id'
-  -- Use 'value' column instead of 'rate'
   SELECT COUNT(*), COALESCE(SUM(ur.value),0)
   INTO v_cnt, v_sum
   FROM user_rating ur WHERE ur.track_id = p_track_id;
@@ -35,7 +30,6 @@ BEGIN
 END;
 $$;
 
--- 2. Update fn_track_rate to use 'value' and explicit aliases
 DROP FUNCTION IF EXISTS fn_track_rate(bigint, bigint, smallint) CASCADE;
 CREATE OR REPLACE FUNCTION fn_track_rate(
   p_user_id  bigint,
@@ -59,7 +53,6 @@ BEGIN
     RAISE EXCEPTION 'Трек id=% не найден', p_track_id USING ERRCODE='02000';
   END IF;
 
-  -- Use 'value' column
   INSERT INTO user_rating(user_id, track_id, value)
   VALUES (p_user_id, p_track_id, p_rate)
   ON CONFLICT (user_id, track_id)
@@ -75,7 +68,6 @@ BEGIN
 END;
 $$;
 
--- 3. Update fn_recalc_album_avg to use 'value'
 DROP FUNCTION IF EXISTS fn_recalc_album_avg(bigint) CASCADE;
 CREATE OR REPLACE FUNCTION fn_recalc_album_avg(p_album_id bigint)
 RETURNS real
@@ -96,7 +88,6 @@ BEGIN
 END;
 $$;
 
--- 4. Update fn_recalc_genre_avg to use 'value'
 DROP FUNCTION IF EXISTS fn_recalc_genre_avg(bigint) CASCADE;
 CREATE OR REPLACE FUNCTION fn_recalc_genre_avg(p_genre_id bigint)
 RETURNS real
@@ -117,7 +108,6 @@ BEGIN
 END;
 $$;
 
--- 5. Update fn_recalc_label_avg to use 'value'
 DROP FUNCTION IF EXISTS fn_recalc_label_avg(bigint) CASCADE;
 CREATE OR REPLACE FUNCTION fn_recalc_label_avg(p_label_id bigint)
 RETURNS real
@@ -139,9 +129,6 @@ BEGIN
 END;
 $$;
 
--- 6. Restore triggers that might be dropped by CASCADE
--- We need to redefine tr_user_rating_aggregate because it calls the functions we just dropped/recreated.
--- And we need to re-bind the trigger.
 
 CREATE OR REPLACE FUNCTION tr_user_rating_aggregate()
 RETURNS trigger
@@ -158,10 +145,8 @@ BEGIN
     v_track_id := NEW.track_id;
   END IF;
 
-  -- Пересчёт трека
   PERFORM fn_recalc_track_rating(v_track_id);
 
-  -- Сопутствующие агрегаты
   SELECT t.album_id, t.genre_id INTO v_album_id, v_genre_id FROM track t WHERE t.id = v_track_id;
   IF v_album_id IS NOT NULL THEN
     PERFORM fn_recalc_album_avg(v_album_id);
@@ -183,8 +168,6 @@ CREATE TRIGGER trg_user_rating_aiud
 AFTER INSERT OR UPDATE OR DELETE ON user_rating
 FOR EACH ROW EXECUTE FUNCTION tr_user_rating_aggregate();
 
--- Recreate other triggers just in case they were dropped due to dependencies (e.g. if they called functions we dropped)
--- tr_track_after_delete_recalc calls fn_recalc_album_avg, fn_recalc_genre_avg, fn_recalc_label_avg
 CREATE OR REPLACE FUNCTION tr_track_after_delete_recalc()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -206,7 +189,6 @@ CREATE TRIGGER trg_track_ad
 AFTER DELETE ON track
 FOR EACH ROW EXECUTE FUNCTION tr_track_after_delete_recalc();
 
--- tr_track_after_update_move calls fn_recalc_album_avg, fn_recalc_genre_avg, fn_recalc_label_avg
 CREATE OR REPLACE FUNCTION tr_track_after_update_move()
 RETURNS trigger
 LANGUAGE plpgsql

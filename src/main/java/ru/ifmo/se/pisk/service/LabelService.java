@@ -23,10 +23,10 @@ public class LabelService {
     @Transactional
     public LabelEntity findOrCreateByName(String name) {
         if (!org.springframework.util.StringUtils.hasText(name)) {
-            // If label name is not provided, return null (optional association)
-            // But wait, AlbumService.createAlbum throws if Label is null.
-            // However, AlbumService.findOrCreateSimple does NOT check for label currently.
-            // I will return null if name is empty, and handle it in the caller.
+
+
+
+
             return null;
         }
         return labelRepository.findByNameIgnoreCase(name.trim())

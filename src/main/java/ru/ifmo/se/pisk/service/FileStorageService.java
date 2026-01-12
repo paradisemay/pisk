@@ -149,7 +149,7 @@ public class FileStorageService {
             Path file = root.resolve(path);
             Files.deleteIfExists(file);
         } catch (IOException e) {
-            // Log warning
+
         }
     }
 }

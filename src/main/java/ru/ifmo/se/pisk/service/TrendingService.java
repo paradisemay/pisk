@@ -25,9 +25,9 @@ public class TrendingService {
 
     @Transactional(readOnly = true)
     public Page<TrackCardView> getTrendingTracks(Pageable pageable, String sortDirection) {
-        // The pageable passed here might have sort info, but we need to ignore it for the DB query
-        // because the queries have hardcoded sorting.
-        // We reconstruct a Pageable with just page and size.
+
+
+
         Pageable dbPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
         Page<TrackEntity> trackPage;
@@ -39,7 +39,7 @@ public class TrendingService {
 
         List<TrackCardView> views = trackPage.stream()
                 .map(t -> {
-                    // Calculate rank based on page offset + index + 1
+
                     long rank = pageable.getOffset() + trackPage.getContent().indexOf(t) + 1;
 
                     double avgRating = 0.0;

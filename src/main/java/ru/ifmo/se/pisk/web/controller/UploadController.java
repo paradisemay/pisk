@@ -90,12 +90,12 @@ public class UploadController {
             }
             model.addAttribute("albumMetaForm", form);
         } else {
-            // Если форма уже была в модели (например, после ошибки валидации), проверяем роль
+
             if (authentication != null && authentication.getName() != null) {
                 userRepository.findByUsernameIgnoreCase(authentication.getName()).ifPresent(user -> {
                     if (user.getRole() == ru.ifmo.se.pisk.domain.UserRole.ARTIST) {
                         model.addAttribute("isArtist", true);
-                        // Force artist name back just in case
+
                         ((UploadAlbumMetaForm) model.getAttribute("albumMetaForm")).setArtistName(user.getUsername());
                     }
                 });
@@ -129,7 +129,7 @@ public class UploadController {
             String coverPath = null;
             MultipartFile cover = form.getCover();
             if (cover != null && !cover.isEmpty()) {
-                // Обложка = картинка (по тем же правилам, что и аватар)
+
                 fileStorageService.validateAvatar(cover.getOriginalFilename(), cover.getContentType(), cover.getSize());
                 byte[] coverBytes = cover.getBytes();
                 coverPath = fileStorageService.storeCover(cover.getOriginalFilename(), coverBytes);
@@ -138,7 +138,7 @@ public class UploadController {
             GenreEntity genre = genreService.findOrCreateByName(form.getGenreName());
             LabelEntity label = labelService.findOrCreateByName(form.getLabelName());
 
-            // Создаём (или дополняем) альбом сразу на шаге 1 — чтобы корректно сохранить trackCount и обложку.
+
             albumService.findOrCreateSimple(
                     form.getAlbumName(),
                     genre,
@@ -206,7 +206,7 @@ public class UploadController {
             return "redirect:/upload";
         }
 
-        // Дополнительная валидация MultipartFile (javax/jakarta-валидация не умеет проверять .isEmpty())
+
         if (form.getTracks() == null || form.getTracks().size() != draft.getTrackCount()) {
             bindingResult.reject("error.tracks", "Неверное количество треков");
         } else {
@@ -249,7 +249,7 @@ public class UploadController {
 
                 int numberOnAlbum = i + 1;
 
-                // Если пользователь не загрузил обложку на шаге 1 — попробуем взять из метаданных первого трека.
+
                 byte[] coverData = (!draft.isCoverProvided() && i == 0) ? metadata.coverData() : null;
                 String coverContentType = (!draft.isCoverProvided() && i == 0) ? metadata.coverContentType() : null;
 
@@ -278,7 +278,7 @@ public class UploadController {
                 }
             }
 
-            // Сбрасываем черновик сессии — альбом уже загружен.
+
             sessionStatus.setComplete();
 
             redirectAttributes.addFlashAttribute("uploadSuccess", true);

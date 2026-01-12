@@ -53,7 +53,7 @@ public class AlbumPageController {
 
             List<TrackInfo> tracks = trackService.listAlbumTracks(id);
 
-            // artist/uploader берём с первого трека (обычно #1)
+
             TrackInfo first = tracks.isEmpty() ? null : tracks.get(0);
 
             String uploaderName = "-";
